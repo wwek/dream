@@ -30,17 +30,19 @@ dream --help
 
 ```
 
-## 查看dream_status
-```
-socat UNIX-CONNECT:/tmp/dream_status.sock -
-```
-
 ## 特性
 
 ✅ **xHE-AAC 解码支持**
 - 使用 FDK-AAC v2 编解码器
 - 支持 USAC (Unified Speech and Audio Coding)
 - 应用了所有 SourceForge 论坛修复补丁
+
+✅ **支持监听本地sock记录状态 dream_status**
+在终端查看
+```
+socat UNIX-CONNECT:/tmp/dream_status.sock -
+```
+
 
 ✅ **Console 模式**
 - 无 Qt GUI 依赖
