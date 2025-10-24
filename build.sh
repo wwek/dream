@@ -56,9 +56,6 @@ echo "Building Dream..."
 qmake CONFIG+=console CONFIG+=fdk-aac dream.pro
 make -j$(nproc)
 
-# Copy binary
-cp dream dream-2.
-
 echo ""
 echo "✓ Build Complete!"
 echo "Binary: $SCRIPT_DIR/dream"
