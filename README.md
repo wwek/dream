@@ -30,6 +30,11 @@ dream --help
 
 ```
 
+## 查看dream_status
+```
+socat UNIX-CONNECT:/tmp/dream_status.sock -
+```
+
 ## 特性
 
 ✅ **xHE-AAC 解码支持**
