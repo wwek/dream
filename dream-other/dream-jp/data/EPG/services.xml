@@ -1,0 +1,9 @@
+<!DOCTYPE serviceInformation>
+<serviceInformation>
+ <ensemble>
+  <service>
+   <serviceID id="e1c248"/>
+   <shortName>BBC &amp; DW</shortName>
+  </service>
+ </ensemble>
+</serviceInformation>

@@ -1,0 +1,23 @@
+# Build artifacts
+dream
+*.o
+obj/
+Makefile
+.qmake.stash
+
+# Test data and temporary output
+output/
+*.wav
+!doc/*.wav
+*.log
+/tmp/dream_*.log
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store

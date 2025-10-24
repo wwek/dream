@@ -1,0 +1,119 @@
+[AM Demodulation]
+agc=0
+autofreqacq=0
+demodulation=0
+enablepll=0
+filterbwam=10000
+filterbwcw=150
+filterbwfm=6000
+filterbwlsb=5000
+filterbwusb=5000
+noisered=0
+noiseredlvl=-12
+
+[Dialog]
+plotstyle=0
+
+[DRM Dialog]
+height=385
+width=566
+x=4
+y=29
+
+[EPG Dialog]
+visible=0
+
+[FrontEnd]
+automeasurementbandwidth=1
+calfactoram=0
+calfactordrm=0
+defaultmeasurementbandwidth=0
+ifcentrefrequency=12000
+smeterbandwidth=0
+smetercorrectiontype=0
+
+[GPS]
+host=localhost
+port=2947
+usegpsd=0
+
+[Hamlib]
+ensmeter=0
+
+[Journaline Dialog]
+fontfamily=Noto Sans
+fontitalic=0
+fontpointsize=10
+fontweight=50
+height=485
+visible=0
+width=531
+x=831
+y=243
+
+[Live Schedule Dialog]
+preview=0
+showall=0
+sortascending=1
+sortcolumn=0
+visibledrm=0
+
+[Logfile]
+delay=0
+enablelog=0
+enablepositiondata=0
+enablerxl=0
+
+[Receiver]
+datafilesdirectory=data/
+filter=0
+flipspectrum=0
+freqint=2
+frequency=0
+inchansel=8
+measurepsdalways=0
+mlciter=1
+mode=0
+modmetric=0
+muteaudio=0
+outchansel=0
+reverb=1
+samplerateaud=48000
+sampleratesig=48000
+serialnumber=vw5dws
+sigupratio=1
+snddevin=Loopback.monitor
+snddevout=alsa_output.pci-0000_00_1b.0.analog-stereo
+timeint=1
+timesync=0
+
+[SlideShow Dialog]
+visible=0
+
+[Stations Dialog]
+ANALOG URL=http://eibispace.de/dx/sked-b19.csv
+columnparamanalog=
+columnparamdrm=
+countryfilteranalog=
+countryfilterdrm=
+DRM URL=http://www.baseportal.com/cgi-bin/baseportal.pl?htx=/drmdx/scheduleini2
+languagefilteranalog=
+languagefilterdrm=
+preview=0
+showall=0
+sortascendinganalog=1
+sortascendingdrm=1
+sortcolumnanalog=0
+sortcolumndrm=0
+targetfilteranalog=
+targetfilterdrm=
+visibledrm=0
+
+[System Evaluation Dialog]
+height=635
+numchartwin=0
+plottype=Input Spectrum
+visible=0
+width=979
+x=383
+y=29

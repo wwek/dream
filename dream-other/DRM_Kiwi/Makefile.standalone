@@ -1,0 +1,77 @@
+# Standalone Makefile for KiwiSDR DRM implementation
+# This builds the dream binary independently from the KiwiSDR project
+
+CC = gcc
+CXX = g++
+CFLAGS = -O2 -Wall -Wextra -fPIC
+CXXFLAGS = -O2 -Wall -Wextra -fPIC -std=c++11
+
+# Defines from KiwiSDR DRM Makefile (removed HAVE_LIBFDK_AAC and HAVE_USAC as FDK-AAC not available in Debian)
+DEFINES = -DDRM -DHAVE_DLFCN_H -DHAVE_MEMORY_H -DHAVE_STDINT_H -DHAVE_STDLIB_H \
+          -DHAVE_STRINGS_H -DHAVE_STRING_H -DSTDC_HEADERS -DHAVE_INTTYPES_H \
+          -DHAVE_SYS_STAT_H -DHAVE_SYS_TYPES_H -DHAVE_UNISTD_H -DHAVE_LIBZ \
+          -DHAVE_LIBSNDFILE -DUSE_CONSOLEIO -DUSE_KIWI
+
+# Include paths (excluding dream/linux)
+INCLUDES = -I. -Ikiwi-stubs -Idream -Idream/sourcedecoders -Idream/sound \
+           -Idream/chanest -Idream/datadecoding -Idream/datadecoding/journaline \
+           -Idream/drmchannel -Idream/FAC -Idream/interleaver -Idream/matlib \
+           -Idream/MDI -Idream/MLC -Idream/MSC -Idream/OFDMcellmapping \
+           -Idream/resample -Idream/SDC -Idream/sync -Idream/tables -Idream/util \
+           -IFDK-AAC
+
+# Libraries (removed -lfdk-aac as it's not available in Debian, using libfaad for AAC decoding)
+LIBS = -lz -lsndfile -lfaad -lfftw3 -lfftw3f -lm -lpthread -ldl
+
+# Source directories (excluding dream/linux which is KiwiSDR-specific)
+DRM_SUBDIRS = dream dream/sourcedecoders dream/sound dream/chanest \
+              dream/datadecoding dream/datadecoding/journaline dream/drmchannel \
+              dream/FAC dream/interleaver dream/matlib dream/MDI dream/MLC dream/MSC \
+              dream/OFDMcellmapping dream/resample dream/SDC dream/sync dream/tables dream/util
+
+# Find all source files (excluding KiwiSDR-specific files)
+SOURCES = $(foreach dir,$(DRM_SUBDIRS),$(wildcard $(dir)/*.cpp))
+# Exclude KiwiSDR-specific files
+SOURCES := $(filter-out dream/sound/drm_kiwiaudio.cpp dream/DRM_main.cpp dream/sound/AudioFileIn.cpp, $(SOURCES))
+# Add standalone main and stub implementations
+SOURCES += dream_main.cpp kiwi-stubs/fir.cpp kiwi-stubs/DRM_stub.cpp kiwi-stubs/str_stub.cpp kiwi-stubs/timer_stub.cpp kiwi-stubs/drm_kiwiaudio.cpp
+OBJECTS = $(SOURCES:.cpp=.o)
+
+# FDK-AAC library (pre-built)
+FDK_AAC_LIB = FDK-AAC/lib
+
+# Target binary (renamed to avoid conflict with dream/ directory)
+TARGET = drm
+
+.PHONY: all clean install
+
+all: $(TARGET)
+
+$(TARGET): $(OBJECTS)
+	@echo "Linking $@..."
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS)
+	@echo "Build complete: $@"
+
+%.o: %.cpp
+	@echo "Compiling $<..."
+	$(CXX) $(CXXFLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@
+
+clean:
+	@echo "Cleaning build files..."
+	rm -f $(OBJECTS) $(TARGET)
+	@echo "Clean complete"
+
+install: $(TARGET)
+	@echo "Installing $(TARGET) to /usr/local/bin..."
+	install -m 0755 $(TARGET) /usr/local/bin/$(TARGET)
+	@echo "Installation complete"
+
+# Help target
+help:
+	@echo "KiwiSDR DRM Standalone Build System"
+	@echo ""
+	@echo "Targets:"
+	@echo "  all     - Build the dream binary (default)"
+	@echo "  clean   - Remove build artifacts"
+	@echo "  install - Install dream to /usr/local/bin"
+	@echo "  help    - Show this help message"

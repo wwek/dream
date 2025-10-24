@@ -1,0 +1,1 @@
+If you are building Dream on Windows and not shadow building, put the .h files for fftw3, qwt and any optional libraries you are using in this folder before running qmake.

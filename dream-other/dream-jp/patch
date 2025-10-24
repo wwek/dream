@@ -1,0 +1,114 @@
+Index: dream.pro
+===================================================================
+--- dream.pro	(revision 1338)
++++ dream.pro	(working copy)
+@@ -153,6 +153,9 @@
+ }
+ linux-* {
+   LIBS += -ldl -lrt
++  packagesExist(fdk-aac) {
++     CONFIG += fdk-aac
++  }
+   contains(QT,multimedia) {
+ 	CONFIG += sound
+   }
+Index: src/MSC/xheaacsuperframe.cpp
+===================================================================
+--- src/MSC/xheaacsuperframe.cpp	(revision 1338)
++++ src/MSC/xheaacsuperframe.cpp	(working copy)
+@@ -109,8 +109,8 @@
+             break;
+         default: // boundary in this superframe
+             borders[0] += start;
+-            if(borders[0]<2) return false;
+-            borders[0] -= 2; // header not in payload
++            //if(borders[0]<2) return false;
++            //borders[0] -= 2; // header not in payload
+             frameSize[0] = borders[0];
+             //cerr << "border 0 is " << borders[0] << " bytes from start of payload" << endl;
+             break;
+@@ -117,12 +117,16 @@
+         }
+         for(unsigned i=1; i<borders.size(); i++) {
+             borders[i] += start;
+-            borders[i] -= 2; // header not in payload
++            //borders[i] -= 2; // header not in payload
+             unsigned bytes = borders[i]-borders[i-1];
+             frameSize[i] = bytes;
+             //cerr << "border " << i << " is " << borders[i] << " bytes from start of payload" << endl;
+         }
+     }
++    else{
++        audioFrame.resize(0);
++        return ok;
++    }
+     size_t bytesInFrames = 0; for(size_t i=0; i<frameSize.size(); i++) bytesInFrames+=frameSize[i];
+     size_t next = payload.size()-bytesInFrames;
+     //cerr << "payload is " << payload.size() << " bytes of which " << bytesInFrames << " are for this superframe and " << next << " are for the next superframe" << endl;
+Index: src/sound/drm_pulseaudio.cpp
+===================================================================
+--- src/sound/drm_pulseaudio.cpp	(revision 1338)
++++ src/sound/drm_pulseaudio.cpp	(working copy)
+@@ -810,6 +810,7 @@
+ 
+ 		/* Close the previous input */
+ 		Close_HW();
++        
+ 
+ 		/* Open the new input */
+ 		Init_HW();
+@@ -822,6 +823,9 @@
+ 			/* Save buffer size */
+ 			iBufferSize = iNewBufferSize;
+ 
++            if(pa_s == nullptr) {
++        	Init_HW();
++            }
+ 			/* Set buffer size */
+ 			SetBufferSize_HW();
+ 		}
+Index: src/sourcedecoders/AudioSourceDecoder.cpp
+===================================================================
+--- src/sourcedecoders/AudioSourceDecoder.cpp	(revision 1338)
++++ src/sourcedecoders/AudioSourceDecoder.cpp	(working copy)
+@@ -356,6 +356,7 @@
+         /* Since we do not do Mode E or correct for sample rate offsets here (yet), we do not
+            have to consider larger buffers. An audio frame always corresponds to 400 ms */
+         iMaxLenResamplerOutput = int(_REAL(outputSampleRate) * 0.4 /* 400ms */  * 2 /* for stereo */ );
++        iMaxLenResamplerOutput *= 2;    // to prevent buffer overruns with xHE-AAC (as detected by clang asan)
+ 
+         if(inputSampleRate != outputSampleRate) {
+             _REAL rRatio = _REAL(outputSampleRate) / _REAL(inputSampleRate);
+@@ -363,9 +364,13 @@
+             ResampleObjL.Init(iLenDecOutPerChan, rRatio);
+             ResampleObjR.Init(iLenDecOutPerChan, rRatio);
+         }
++        
++        int iResOutBlockSize;
++        if (inputSampleRate == 0)
++            iResOutBlockSize = iLenDecOutPerChan;
++        else
++            iResOutBlockSize = outputSampleRate * iLenDecOutPerChan / inputSampleRate;
+ 
+-        int iResOutBlockSize = outputSampleRate * iLenDecOutPerChan / inputSampleRate;
+-
+         //cerr << "output block size per channel " << iResOutBlockSize << " = samples " << iLenDecOutPerChan << " * " << Parameters.GetAudSampleRate() << " / " << iAudioSampleRate << endl;
+ 
+         /* Additional buffers needed for resampling since we need conversation
+Index: src/sourcedecoders/fdk_aac_codec.cpp
+===================================================================
+--- src/sourcedecoders/fdk_aac_codec.cpp	(revision 1338)
++++ src/sourcedecoders/fdk_aac_codec.cpp	(working copy)
+@@ -86,12 +86,10 @@
+         }
+         return true;
+     }
+-#ifdef HAVE_USAC
+     if(eAudioCoding == CAudioParam::AC_xHE_AAC) {
+         if((linfo.flags & CAPF_AAC_USAC) != 0)
+             return true;
+     }
+-#endif
+     return false;
+ }
+ 

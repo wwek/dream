@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ChannelWidget</class>
+ <widget class="QWidget" name="ChannelWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>623</width>
+    <height>231</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="DRMDetail" name="drmDetail" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="1" column="0">
+      <widget class="QToolButton" name="showOptions">
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QTreeWidget" name="chartSelector">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="showDropIndicator" stdset="0">
+        <bool>false</bool>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>16</width>
+         <height>16</height>
+        </size>
+       </property>
+       <property name="verticalScrollMode">
+        <enum>QAbstractItemView::ScrollPerPixel</enum>
+       </property>
+       <property name="indentation">
+        <number>10</number>
+       </property>
+       <property name="rootIsDecorated">
+        <bool>true</bool>
+       </property>
+       <attribute name="headerVisible">
+        <bool>false</bool>
+       </attribute>
+       <column>
+        <property name="text">
+         <string>Chart Selector</string>
+        </property>
+       </column>
+       <item>
+        <property name="text">
+         <string>Spectrum</string>
+        </property>
+        <property name="flags">
+         <set>ItemIsDragEnabled|ItemIsUserCheckable|ItemIsEnabled</set>
+        </property>
+        <item>
+         <property name="text">
+          <string>Input PSD</string>
+         </property>
+         <property name="icon">
+          <iconset resource="res/icons.qrc">
+           <normaloff>:/icons/CSSpectrumInpPSD.png</normaloff>:/icons/CSSpectrumInpPSD.png</iconset>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Input Spectrum</string>
+         </property>
+         <property name="icon">
+          <iconset resource="res/icons.qrc">
+           <normaloff>:/icons/CSSpectrumInpSpectr.png</normaloff>:/icons/CSSpectrumInpSpectr.png</iconset>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Waterfall Input Spectrum</string>
+         </property>
+         <property name="icon">
+          <iconset resource="res/icons.qrc">
+           <normaloff>:/icons/CSSpectrumWaterf.png</normaloff>:/icons/CSSpectrumWaterf.png</iconset>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Shifted PSD</string>
+         </property>
+         <property name="icon">
+          <iconset resource="res/icons.qrc">
+           <normaloff>:/icons/CSSpectrumShiftedPSD.png</normaloff>:/icons/CSSpectrumShiftedPSD.png</iconset>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>SNR Spectrum</string>
+         </property>
+         <property name="icon">
+          <iconset resource="res/icons.qrc">
+           <normaloff>:/icons/CSSpectrumSNR.png</normaloff>:/icons/CSSpectrumSNR.png</iconset>
+         </property>
+        </item>
+       </item>
+       <item>
+        <property name="text">
+         <string>Channel</string>
+        </property>
+        <property name="flags">
+         <set>ItemIsDragEnabled|ItemIsUserCheckable|ItemIsEnabled</set>
+        </property>
+        <item>
+         <property name="text">
+          <string>Impulse Response</string>
+         </property>
+         <property name="icon">
+          <iconset resource="res/icons.qrc">
+           <normaloff>:/icons/CSChannel.png</normaloff>:/icons/CSChannel.png</iconset>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Transfer Function</string>
+         </property>
+         <property name="icon">
+          <iconset resource="res/icons.qrc">
+           <normaloff>:/icons/CSTF.png</normaloff>:/icons/CSTF.png</iconset>
+         </property>
+        </item>
+       </item>
+       <item>
+        <property name="text">
+         <string>Constellation</string>
+        </property>
+        <property name="flags">
+         <set>ItemIsDragEnabled|ItemIsUserCheckable|ItemIsEnabled</set>
+        </property>
+        <item>
+         <property name="text">
+          <string>FAC / SDC / MSC</string>
+         </property>
+         <property name="icon">
+          <iconset resource="res/icons.qrc">
+           <normaloff>:/icons/CSConstellation.png</normaloff>:/icons/CSConstellation.png</iconset>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>FAC</string>
+         </property>
+         <property name="icon">
+          <iconset resource="res/icons.qrc">
+           <normaloff>:/icons/CSFAC.png</normaloff>:/icons/CSFAC.png</iconset>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>SDC</string>
+         </property>
+         <property name="icon">
+          <iconset resource="res/icons.qrc">
+           <normaloff>:/icons/CSSDC.png</normaloff>:/icons/CSSDC.png</iconset>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>MSC</string>
+         </property>
+         <property name="icon">
+          <iconset resource="res/icons.qrc">
+           <normaloff>:/icons/CSMSC.png</normaloff>:/icons/CSMSC.png</iconset>
+         </property>
+        </item>
+       </item>
+       <item>
+        <property name="text">
+         <string>History</string>
+        </property>
+        <property name="flags">
+         <set>ItemIsDragEnabled|ItemIsUserCheckable|ItemIsEnabled</set>
+        </property>
+        <item>
+         <property name="text">
+          <string>SNR / Audio</string>
+         </property>
+         <property name="icon">
+          <iconset resource="res/icons.qrc">
+           <normaloff>:/icons/CSAudSNRHist.png</normaloff>:/icons/CSAudSNRHist.png</iconset>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Delay / Doppler</string>
+         </property>
+         <property name="icon">
+          <iconset resource="res/icons.qrc">
+           <normaloff>:/icons/CSHistoryDelDopp.png</normaloff>:/icons/CSHistoryDelDopp.png</iconset>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Frequency / Sample Rate</string>
+         </property>
+         <property name="icon">
+          <iconset resource="res/icons.qrc">
+           <normaloff>:/icons/CSHistoryFreqSam.png</normaloff>:/icons/CSHistoryFreqSam.png</iconset>
+         </property>
+        </item>
+       </item>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <layout class="QVBoxLayout" name="plotLayout"/>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="DRMOptions" name="drmOptions" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="autoFillBackground">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>DRMOptions</class>
+   <extends>QWidget</extends>
+   <header>drmoptions.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>DRMDetail</class>
+   <extends>QWidget</extends>
+   <header>drmdetail.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="res/icons.qrc"/>
+ </resources>
+ <connections/>
+</ui>
