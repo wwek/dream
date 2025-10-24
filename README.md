@@ -1,67 +1,73 @@
 # Dream DRM Receiver 2.2.x
 
-独立的 DRM (Digital Radio Mondiale) 解码器,支持 xHE-AAC 音频解码。
+Standalone DRM (Digital Radio Mondiale) decoder with xHE-AAC audio decoding support.
 
-## 快速开始
+## Quick Start
 
-### 使用 Docker 构建 (推荐)
+### Build with Docker (Recommended)
 
 ```bash
-# 构建 Docker 镜像
+# Build Docker image
 docker build -t dream-drm:2.2 .
 
-# 提取编译好的二进制
+# Extract compiled binary
 docker run --rm -v "$(pwd):/output" dream-drm:2.2 \
     sh -c "cp /usr/local/bin/dream /output/dream"
 
-# 运行
+# Run
 ./dream --help
 
 ```
 
-### 使用本地构建脚本
+### Build with Local Script
 
 ```bash
-# 构建 Dream (console模式,无GUI)
+# Build Dream (console mode, no GUI)
 ./build.sh
 
-# 运行
+# Run
 dream --help
 
 ```
 
-## 特性
+## Features
 
-✅ **xHE-AAC 解码支持**
-- 使用 FDK-AAC v2 编解码器
-- 支持 USAC (Unified Speech and Audio Coding)
-- 应用了所有 SourceForge 论坛修复补丁
+✅ **xHE-AAC Decoding Support**
+- Uses FDK-AAC v2 codec
+- Supports USAC (Unified Speech and Audio Coding)
+- All SourceForge forum fix patches applied
 
-✅ **Console 模式**
-- 无 Qt GUI 依赖
-- 适合服务器/无头系统
-- 可通过管道接收 SDR 数据流
-- 独立二进制文件
+✅ **Local Socket Status Monitoring**
+View status in terminal:
+```
+socat UNIX-CONNECT:/tmp/dream_status.sock -
+```
 
-✅ **已修复的问题**
-- 帧边界计算错误 (`xheaacsuperframe.cpp`)
-- 缓冲区溢出 (`AudioSourceDecoder.cpp`)
-- 除零崩溃 (`AudioSourceDecoder.cpp`)
-- USAC 编译支持 (`fdk_aac_codec.cpp`)
 
-## 文档
+✅ **Console Mode**
+- No Qt GUI dependency
+- Suitable for server/headless systems
+- Can receive SDR data streams via pipe
+- Standalone binary
 
-- **[README-BUILD.md](README-BUILD.md)** - 完整的构建和使用文档
-- **[SourceForge 论坛](https://sourceforge.net/p/drm/discussion/general/thread/01c6e64c3b/)** - xHE-AAC 修复讨论
+✅ **Fixed Issues**
+- Frame boundary calculation error (`xheaacsuperframe.cpp`)
+- Buffer overflow (`AudioSourceDecoder.cpp`)
+- Division by zero crash (`AudioSourceDecoder.cpp`)
+- USAC compilation support (`fdk_aac_codec.cpp`)
 
-## 许可证
+## Documentation
 
-GPL v2 - 详见 LICENSE 文件
+- **[SourceForge Forum](https://sourceforge.net/p/drm/discussion/general/thread/01c6e64c3b/)** - xHE-AAC fixes discussion
 
-## 致谢
+## License
 
-xHE-AAC 修复贡献者:
-- John (KiwiSDR) - 原始补丁
-- Tarmo Tanilsoo - Linux 验证
-- Rafael Diniz - 集成测试
-- Julian Cable - Dream 维护
+GPL v2 - See LICENSE file for details
+
+## Acknowledgments
+
+xHE-AAC fix contributors:
+- John (KiwiSDR) - Original patches
+- Tarmo Tanilsoo - Linux validation
+- Rafael Diniz - Integration testing
+- Julian Cable - Dream maintenance
