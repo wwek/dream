@@ -24,6 +24,7 @@ sudo apt-get install -y \
     libopus-dev \
     libhamlib-dev \
     libpcap-dev \
+    libpcap0.8 \
     wget
 
 # Build and install FDK-AAC 2.0.2
