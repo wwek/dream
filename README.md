@@ -64,6 +64,29 @@ socat UNIX-CONNECT:/tmp/dream_status.sock -
 - Division by zero crash (`AudioSourceDecoder.cpp`)
 - USAC compilation support (`fdk_aac_codec.cpp`)
 
+## Libraries
+```
+# libpcap and libspeexdsp
+apt-get update && apt-get install -y libpcap0.8 libspeexdsp1
+
+
+# FDK-AAC
+## arm64
+wget http://mirrors.aliyun.com/debian/pool/non-free/f/fdk-aac/libfdk-aac2_2.0.2-1_arm64.deb
+dpkg -i libfdk-aac2_2.0.2-1_arm64.deb
+
+## armv7
+wget http://mirrors.aliyun.com/debian/pool/non-free/f/fdk-aac/libfdk-aac2_2.0.2-1_armhf.deb
+dpkg -i libfdk-aac2_2.0.2-1_armhf.deb
+
+## amd64
+wget http://mirrors.aliyun.com/debian/pool/non-free/f/fdk-aac/libfdk-aac2_2.0.2-1_amd64.deb
+dpkg -i libfdk-aac2_2.0.2-1_amd64.deb
+
+
+apt -f install -y
+```
+
 ## Documentation
 
 - **[SourceForge Forum](https://sourceforge.net/p/drm/discussion/general/thread/01c6e64c3b/)** - xHE-AAC fixes discussion
