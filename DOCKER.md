@@ -7,7 +7,12 @@
 ## arm64
 docker buildx build --platform linux/arm64 -t dream-drm:2.2 .
 docker run --rm -v "$(pwd)/output:/output" dream-drm:2.2 \
-    sh -c "cp /usr/local/bin/dream /output/"
+    sh -c "cp /usr/local/bin/dream /output/dream-arm64"
+
+## armv7
+docker buildx build --platform linux/arm/v7 -t dream-drm:2.2 .
+docker run --rm -v "$(pwd)/output:/output" dream-drm:2.2 \
+    sh -c "cp /usr/local/bin/dream /output/dream-armv7"
 
 ## amd64
 docker buildx build --platform linux/amd64 -t dream-drm:2.2 .
