@@ -3,12 +3,16 @@
 ## Quick Start
 
 ```bash
-# Build
-docker build -t dream-drm:2.2 .
-
-# Extract binary
-docker run --rm -v "$(pwd):/output" dream-drm:2.2 \
+# Build (Multi-architecture)
+## arm64
+docker buildx build --platform linux/arm64 -t dream-drm:2.2 .
+docker run --rm -v "$(pwd)/output:/output" dream-drm:2.2 \
     sh -c "cp /usr/local/bin/dream /output/"
+
+## amd64
+docker buildx build --platform linux/amd64 -t dream-drm:2.2 .
+docker run --rm -v "$(pwd)/output:/output" dream-drm:2.2 \
+    sh -c "cp /usr/local/bin/dream /output/dream-amd64"
 
 # Test
 ./dream --help
@@ -65,8 +69,8 @@ docker run --rm -v "$(pwd):/data" dream-drm:2.2 \
 ## Common Commands
 
 ```bash
-# Build without cache
-docker build --no-cache -t dream-drm:2.2 .
+# Build without cache (Multi-architecture)
+docker buildx build --no-cache --platform linux/amd64,linux/arm64 -t dream-drm:2.2 .
 
 # Interactive shell
 docker run --rm -it dream-drm:2.2 /bin/bash
