@@ -610,6 +610,12 @@ CSettings::ParseArguments(int argc, char **argv)
 			continue;
 		}
 
+		/* Status socket path ----------------------------------------------- */
+		if (GetStringArgument(argc, argv, i, "--status-socket", "--status-socket", strArgument))
+		{
+			Put("command", "status-socket", strArgument);
+			continue;
+		}
 
 		/* Help (usage) flag ------------------------------------------------ */
 		if ((!strcmp(argv[i], "--help")) ||
@@ -704,6 +710,7 @@ CSettings::UsageArguments()
 		"  -T <b>, --ensmeter <b>       enable S-Meter (0: off; 1: on)\n"
 #endif
 		"  --test <n>                   if 1 then some test setup will be done\n"
+		"  --status-socket <s>          Unix domain socket path for status broadcast\n"
 		"  -h, -?, --help               this help text\n"
 		"\n"
 		"Example: $EXECNAME -p --sampleoff -0.23 -i 2"
