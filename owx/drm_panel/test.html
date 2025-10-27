@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DRM Panel Test</title>
+    <link rel="stylesheet" href="drm_panel.css">
+    <style>
+        body {
+            background: #1a1a1a;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .test-controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button.clear {
+            background: #f44336;
+        }
+        button.clear:hover {
+            background: #da190b;
+        }
+        .data-display {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+        }
+        h2 {
+            color: #2196F3;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 DRM Panel 测试页面</h1>
+
+        <div class="test-controls">
+            <h2>测试控制</h2>
+            <button onclick="loadTestData()">加载测试数据</button>
+            <button onclick="loadNoSignalData()">模拟无信号</button>
+            <button onclick="loadErrorData()">模拟错误状态</button>
+            <button class="clear" onclick="clearPanel()">清空面板</button>
+        </div>
+
+        <h2>DRM 状态面板</h2>
+        <div id="openwebrx-panel-metadata-drm" class="openwebrx-panel openwebrx-meta-panel">
+            <!-- DrmPanel 将在这里渲染 -->
+        </div>
+
+        <h2>接收的数据</h2>
+        <div class="data-display" id="data-display">等待数据...</div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // 模拟 MetaPanel 基类
+        function MetaPanel(el) {
+            this.el = el;
+        }
+        MetaPanel.prototype = {};
+
+        // 加载 DrmPanel 类
+        var scriptLoaded = false;
+        $.getScript('DrmPanel.class.js').done(function() {
+            scriptLoaded = true;
+            console.log('[Test] DrmPanel class loaded');
+            initPanel();
+        }).fail(function(jqxhr, settings, exception) {
+            console.error('[Test] Failed to load DrmPanel:', exception);
+        });
+
+        var drmPanel = null;
+
+        function initPanel() {
+            if (!scriptLoaded || !window.DrmPanel) {
+                console.error('[Test] DrmPanel not available');
+                return;
+            }
+            var el = document.getElementById('openwebrx-panel-metadata-drm');
+            drmPanel = new DrmPanel(el);
+            console.log('[Test] DrmPanel initialized');
+        }
+
+        // 测试数据（来自真实 WebSocket 数据 - 2025-01-XX）
+        var testData = {
+            "timestamp": 1761527104,
+            "status": {
+                "io": 0,
+                "time": 0,
+                "frame": 0,
+                "fac": 0,
+                "sdc": 0,
+                "msc": 1
+            },
+            "signal": {
+                "if_level_db": -26.2,
+                "snr_db": 3.2
+            },
+            "mode": {
+                "robustness": 1,
+                "bandwidth": 3,
+                "bandwidth_khz": 10,
+                "interleaver": 0
+            },
+            "coding": {
+                "sdc_qam": 0,
+                "msc_qam": 1,
+                "protection_a": 0,
+                "protection_b": 0
+            },
+            "services": {
+                "audio": 1,
+                "data": 0
+            },
+            "service_list": [
+                {
+                    "id": "1",
+                    "label": "CNR-1",
+                    "is_audio": true,
+                    "audio_coding": 3,
+                    "bitrate_kbps": 11.64
+                }
+            ]
+        };
+
+        // 无信号数据
+        var noSignalData = {
+            "timestamp": Date.now(),
+            "status": {
+                "io": 0,
+                "time": -1,
+                "frame": -1,
+                "fac": -1,
+                "sdc": -1,
+                "msc": -1
+            },
+            "signal": {
+                "if_level_db": -65.0,
+                "snr_db": 0.0
+            }
+        };
+
+        // 错误状态数据
+        var errorData = {
+            "timestamp": Date.now(),
+            "status": {
+                "io": 0,
+                "time": 0,
+                "frame": 0,
+                "fac": 2,
+                "sdc": 3,
+                "msc": 5
+            },
+            "signal": {
+                "if_level_db": -45.0,
+                "snr_db": 1.2
+            },
+            "mode": {
+                "robustness": 1,
+                "bandwidth": 4,
+                "bandwidth_khz": 18,
+                "interleaver": 1
+            }
+        };
+
+        function loadTestData() {
+            if (!drmPanel) {
+                alert('DrmPanel 未初始化，请刷新页面');
+                return;
+            }
+            displayData(testData);
+            drmPanel.update({
+                type: 'drm_status',
+                value: testData
+            });
+            console.log('[Test] Loaded test data');
+        }
+
+        function loadNoSignalData() {
+            if (!drmPanel) {
+                alert('DrmPanel 未初始化，请刷新页面');
+                return;
+            }
+            displayData(noSignalData);
+            drmPanel.update({
+                type: 'drm_status',
+                value: noSignalData
+            });
+            console.log('[Test] Loaded no-signal data');
+        }
+
+        function loadErrorData() {
+            if (!drmPanel) {
+                alert('DrmPanel 未初始化，请刷新页面');
+                return;
+            }
+            displayData(errorData);
+            drmPanel.update({
+                type: 'drm_status',
+                value: errorData
+            });
+            console.log('[Test] Loaded error data');
+        }
+
+        function clearPanel() {
+            if (!drmPanel) {
+                alert('DrmPanel 未初始化，请刷新页面');
+                return;
+            }
+            drmPanel.clear();
+            displayData(null);
+            console.log('[Test] Cleared panel');
+        }
+
+        function displayData(data) {
+            var display = document.getElementById('data-display');
+            if (data) {
+                display.textContent = JSON.stringify(data, null, 2);
+            } else {
+                display.textContent = '面板已清空';
+            }
+        }
+    </script>
+</body>
+</html>

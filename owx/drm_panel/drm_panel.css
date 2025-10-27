@@ -1,0 +1,581 @@
+/**
+ * DRM Panel CSS Styles - Dream DRM Style
+ * 模仿 Dream DRM 原生界面的紧凑专业布局
+ */
+
+/* ========== 容器样式 ========== */
+.drm-container {
+    padding: 8px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.4;
+    background: #575757;
+    color: #fff;
+}
+
+/* ========== 第一行：状态指示灯 ========== */
+.drm-status-row {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+}
+
+.drm-indicator {
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 35px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.drm-indicator-ok {
+    background: #0f0;
+    color: #000;
+}
+
+.drm-indicator-off {
+    background: #666;
+    color: #ccc;
+}
+
+.drm-indicator-err {
+    background: #f00;
+    color: #fff;
+}
+
+/* ========== 第二行：信号质量 ========== */
+.drm-signal-row {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 15px;
+    margin-bottom: 6px;
+    padding: 3px 0;
+}
+
+.drm-signal-item {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.drm-value {
+    font-weight: 700;
+    color: #fff;
+}
+
+.drm-snr {
+    color: #0f0;
+}
+
+/* ========== 第三行：DRM 模式和信道 ========== */
+.drm-mode-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 6px;
+    padding: 3px 0;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.drm-mode-group,
+.drm-chan-group,
+.drm-ilv-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+/* Badge 样式 - 模仿 Dream 的按钮外观 */
+.drm-badge,
+.drm-chan-badge {
+    display: inline-block;
+    padding: 2px 5px;
+    background: #444;
+    color: #aaa;
+    border: 1px solid #666;
+    border-radius: 2px;
+    font-size: 10px;
+    font-weight: 600;
+    min-width: 20px;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.drm-badge.drm-active,
+.drm-chan-badge.drm-active {
+    background: #0f0;
+    color: #000;
+    border-color: #0f0;
+    box-shadow: 0 0 4px rgba(0, 255, 0, 0.5);
+}
+
+.drm-mode-badges,
+.drm-chan-badges {
+    display: inline-flex;
+    gap: 2px;
+}
+
+/* ========== 第四行：调制方式和保护级别 ========== */
+.drm-qam-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 6px;
+    padding: 3px 0;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 12px;
+}
+
+.drm-qam-group,
+.drm-protect-group,
+.drm-services-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+/* ========== 服务列表 ========== */
+.drm-services-header {
+    font-weight: 600;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #444;
+    font-size: 13px;
+}
+
+/* ========== 时间显示 ========== */
+.drm-time-row {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 15px;
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid #444;
+    font-size: 12px;
+}
+
+.drm-time-item {
+    color: #aaa;
+}
+
+.drm-time-item .drm-value {
+    color: #0cf;
+    font-weight: 600;
+}
+
+.drm-services-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.drm-service-item {
+    padding: 6px 8px;
+    background: #3a3a3a;
+    border-left: 3px solid #06f;
+    font-size: 12px;
+    line-height: 1.5;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;  /* 增加间距，让信息分组更明显 */
+}
+
+.drm-service-item:hover {
+    background: #4a4a4a;
+    transform: translateX(2px);  /* 添加微妙的移动效果 */
+    cursor: default;
+}
+
+/* 信息分组间距优化 */
+.drm-service-label {
+    margin-right: 4px;  /* 电台标识后增加间距 */
+}
+
+.drm-service-progtype {
+    margin-left: 4px;   /* 节目类型前增加间距 */
+    margin-right: 4px;  /* 节目类型后增加间距 */
+}
+
+.drm-service-codec {
+    margin-left: 4px;   /* 编码前增加间距，形成视觉分组 */
+}
+
+.drm-service-protection {
+    margin-left: 8px;   /* 技术参数前增加更大间距 */
+}
+
+/* 服务列表元素样式 - 优化后的视觉层级 */
+
+/* 序号 - 辅助信息 */
+.drm-service-num {
+    color: #999;
+    font-size: 11px;
+    font-weight: 400;
+    min-width: 15px;
+    opacity: 0.7;
+}
+
+/* 服务类型标识徽章 */
+.drm-service-type-badge {
+    display: inline-block;
+    color: #fff;
+    padding: 2px 5px;
+    border-radius: 2px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+/* 音频服务标识 (A = Audio) */
+.drm-audio-badge {
+    background: #4CAF50;  /* 绿色表示音频服务 */
+}
+
+/* 数据服务标识 (D = Data) */
+.drm-service-type-badge:not(.drm-audio-badge) {
+    background: #f00;  /* 红色表示数据服务 */
+}
+
+/* Service ID - 次要信息 */
+.drm-service-id {
+    color: #757575;
+    font-size: 10px;
+    font-weight: 400;
+}
+
+/* 电台标识 - 第一视觉焦点（最重要）*/
+.drm-service-label {
+    color: #FFFF50;  /* 亮黄色 - 电台标识 */
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* 语言信息 - 辅助信息 */
+.drm-service-language {
+    color: #FFFF50;  /* 亮黄色 - 与电台标识同色 */
+    font-size: 10px;
+    font-weight: 400;
+    opacity: 0.85;
+}
+
+/* 国家信息 - 地理标识，辅助信息 */
+.drm-service-country {
+    color: #3498db;  /* 蓝色 - 地理标识色 */
+    font-size: 10px;
+    font-weight: 400;
+    opacity: 0.75;   /* 略低于语言的 0.85 */
+}
+
+/* 节目类型 - 第二视觉焦点 */
+.drm-service-progtype {
+    color: #FFD700;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* 音频编码 - 第三层信息 */
+.drm-service-codec {
+    color: #4CAF50;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+/* 音频比特率 - 第三层信息 */
+.drm-service-bitrate {
+    color: #4CAF50;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+/* 技术参数 - 最低层级 */
+.drm-service-protection {
+    color: #9E9E9E;
+    font-size: 10px;
+    font-weight: 400;
+    opacity: 0.75;
+}
+
+/* Audio Type - 不再单独显示，改用类型徽章 */
+.drm-service-audiotype {
+    display: none;
+}
+
+/* ========== 通用样式 ========== */
+.drm-label {
+    color: #aaa;
+}
+
+/* 非零值绿色高亮 */
+.drm-value-active {
+    color: #0f0 !important;
+    font-weight: 600;
+}
+
+/* ========== 响应式设计 ========== */
+@media (max-width: 768px) {
+    .drm-container {
+        padding: 6px;
+        font-size: 12px;
+    }
+
+    .drm-status-row {
+        gap: 3px;
+    }
+
+    .drm-indicator {
+        padding: 3px 8px;
+        font-size: 11px;
+        min-width: 40px;
+    }
+
+    .drm-signal-row {
+        flex-wrap: nowrap;
+        gap: 10px;
+    }
+
+    .drm-mode-row,
+    .drm-qam-row {
+        gap: 10px;
+        font-size: 11px;
+    }
+
+    .drm-badge,
+    .drm-chan-badge {
+        padding: 2px 6px;
+        font-size: 10px;
+    }
+
+    .drm-service-item {
+        font-size: 11px;
+        padding: 4px 6px;
+    }
+
+    .drm-time-row {
+        flex-wrap: nowrap;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .drm-container {
+        padding: 4px;
+        font-size: 11px;
+    }
+
+    .drm-status-row {
+        gap: 2px;
+    }
+
+    .drm-indicator {
+        padding: 2px 6px;
+        font-size: 10px;
+        min-width: 35px;
+    }
+
+    .drm-signal-item {
+        font-size: 12px;
+    }
+
+    .drm-mode-row,
+    .drm-qam-row {
+        gap: 8px;
+        font-size: 10px;
+    }
+
+    .drm-chan-badges {
+        gap: 1px;
+    }
+
+    .drm-badge,
+    .drm-chan-badge {
+        padding: 2px 5px;
+        font-size: 9px;
+        min-width: 20px;
+    }
+
+    .drm-service-item {
+        font-size: 10px;
+        padding: 4px;
+        gap: 4px;
+    }
+
+    .drm-time-row {
+        font-size: 11px;
+    }
+}
+
+/* ========== 暗色主题优化 ========== */
+@media (prefers-color-scheme: dark) {
+    .drm-container {
+        background: #575757;
+    }
+
+    .drm-service-item {
+        background: #3a3a3a;
+    }
+
+    .drm-service-item:hover {
+        background: #4a4a4a;
+    }
+
+    .drm-badge,
+    .drm-chan-badge {
+        background: #444;
+        border-color: #666;
+    }
+}
+
+/* ========== 打印样式 ========== */
+@media print {
+    .drm-container {
+        background: white;
+        color: black;
+    }
+
+    .drm-indicator-ok {
+        background: #90EE90 !important;
+        color: black !important;
+    }
+
+    .drm-indicator-err {
+        background: #FFB6C1 !important;
+        color: black !important;
+    }
+
+    .drm-indicator-off {
+        background: #D3D3D3 !important;
+        color: black !important;
+    }
+
+    .drm-badge.drm-active,
+    .drm-chan-badge.drm-active {
+        background: #90EE90 !important;
+        color: black !important;
+        border-color: #000 !important;
+        box-shadow: none !important;
+    }
+
+    .drm-service-item {
+        page-break-inside: avoid;
+        background: #f9f9f9;
+        border-color: #333;
+    }
+}
+
+/* ========== 无障碍支持 ========== */
+@media (prefers-reduced-motion: reduce) {
+    .drm-indicator,
+    .drm-badge,
+    .drm-chan-badge,
+    .drm-service-item {
+        transition: none;
+    }
+}
+
+/* ========== 高对比度模式 ========== */
+@media (prefers-contrast: high) {
+    .drm-indicator-ok {
+        background: #00ff00;
+        color: #000;
+        border: 2px solid #000;
+    }
+
+    .drm-indicator-err {
+        background: #ff0000;
+        color: #fff;
+        border: 2px solid #fff;
+    }
+
+    .drm-indicator-off {
+        background: #808080;
+        color: #fff;
+        border: 2px solid #fff;
+    }
+
+    .drm-badge.drm-active,
+    .drm-chan-badge.drm-active {
+        border: 2px solid #000;
+    }
+}
+
+/* ========== 文本内容按钮样式 ========== */
+.drm-service-text-btn {
+    display: inline-block;
+    padding: 1px 5px;
+    margin-left: 4px;
+    background: #444;
+    color: #aaa;
+    border: 1px solid #666;
+    border-radius: 2px;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    vertical-align: middle;
+}
+
+.drm-service-text-btn:hover {
+    background: #4a7ba7;
+    color: #fff;
+    border-color: #5a8bc7;
+    transform: scale(1.05);
+}
+
+.drm-service-text-btn.drm-text-expanded {
+    background: #4a7ba7;
+    color: #fff;
+    border-color: #5a8bc7;
+}
+
+/* ========== 文本内容展开区域样式 ========== */
+.drm-service-text-content {
+    margin: 4px 0 0 20px;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border-left: 3px solid #4a7ba7;
+    border-radius: 2px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #ddd;
+}
+
+.drm-text-icon {
+    margin-right: 6px;
+    font-size: 14px;
+}
+
+.drm-text-body {
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .drm-service-text-content {
+        margin-left: 10px;
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 480px) {
+    .drm-service-text-content {
+        margin-left: 5px;
+        font-size: 10px;
+    }
+
+    .drm-service-text-btn {
+        font-size: 9px;
+        padding: 1px 4px;
+    }
+}
