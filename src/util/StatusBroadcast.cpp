@@ -29,6 +29,7 @@
 #include "StatusBroadcast.h"
 #include "../DrmReceiver.h"
 #include "../Parameter.h"
+#include "../tables/TableFAC.h"
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/stat.h>
@@ -356,12 +357,50 @@ std::string CStatusBroadcast::CollectStatusJSON()
                     {
                         json << ",\"text\":\"" << EscapeJSON(service.AudioParam.strTextMessage) << "\"";
                     }
+
+                    // Language information (audio services only)
+                    const std::string& strLangCode = service.strLanguageCode;
+                    if (!strLangCode.empty() && strLangCode != "---")
+                    {
+                        // SDC language (ISO 639-2, 3-letter code) - preferred
+                        json << ",\"language\":{";
+                        json << "\"code\":\"" << strLangCode << "\",";
+                        json << "\"name\":\"" << EscapeJSON(GetISOLanguageName(strLangCode)) << "\"";
+                        json << "}";
+                    }
+                    else if (service.iLanguage > 0 && service.iLanguage < LEN_TABLE_LANGUAGE_CODE)
+                    {
+                        // FAC language (0-15) - fallback
+                        json << ",\"language\":{";
+                        json << "\"fac_id\":" << service.iLanguage << ",";
+                        json << "\"name\":\"" << EscapeJSON(strTableLanguageCode[service.iLanguage]) << "\"";
+                        json << "}";
+                    }
+
+                    // Program type (audio services only)
+                    if (service.iServiceDescr > 0 && service.iServiceDescr < LEN_TABLE_PROG_TYPE_CODE)
+                    {
+                        json << ",\"program_type\":{";
+                        json << "\"id\":" << service.iServiceDescr << ",";
+                        json << "\"name\":\"" << EscapeJSON(strTableProgTypCod[service.iServiceDescr]) << "\"";
+                        json << "}";
+                    }
                 }
                 else
                 {
                     json << std::setprecision(2);
                     json << "\"bitrate_kbps\":" << Parameters.GetBitRateKbps(i, true);
                     json << std::setprecision(1);
+                }
+
+                // Country code (both audio and data services)
+                const std::string& strCntryCode = service.strCountryCode;
+                if (!strCntryCode.empty() && strCntryCode != "--")
+                {
+                    json << ",\"country\":{";
+                    json << "\"code\":\"" << strCntryCode << "\",";
+                    json << "\"name\":\"" << EscapeJSON(GetISOCountryName(strCntryCode)) << "\"";
+                    json << "}";
                 }
 
                 json << "}";
