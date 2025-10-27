@@ -446,8 +446,9 @@ _REAL CStatusBroadcast::GetBandwidthKHz(int iBandwidthIndex)
 std::string CStatusBroadcast::EscapeJSON(const std::string& str)
 {
     // Escape special characters for JSON string
+    // Preserve UTF-8 multi-byte sequences (for non-ASCII labels)
     std::ostringstream escaped;
-    for (char c : str)
+    for (unsigned char c : str)
     {
         switch (c)
         {
@@ -459,13 +460,16 @@ std::string CStatusBroadcast::EscapeJSON(const std::string& str)
         case '\r': escaped << "\\r";  break;
         case '\t': escaped << "\\t";  break;
         default:
-            if (c < 32 || c > 126)
+            // Only escape control characters (0x00-0x1F)
+            // Preserve UTF-8 multi-byte sequences (0x80-0xFF)
+            if (c < 0x20)
             {
-                // Escape non-printable characters
-                escaped << "\\u" << std::hex << std::setw(4) << std::setfill('0') << (int)(unsigned char)c;
+                // Escape control characters
+                escaped << "\\u" << std::hex << std::setw(4) << std::setfill('0') << (int)c;
             }
             else
             {
+                // Preserve all other bytes (including UTF-8 sequences)
                 escaped << c;
             }
             break;
