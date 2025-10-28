@@ -289,6 +289,27 @@ std::string CStatusBroadcast::CollectStatusJSON()
     json << "{";
     json << "\"timestamp\":" << std::time(nullptr) << ",";
 
+    // Received time from DRM transmission (UTC timestamp)
+    json << "\"received_time\":";
+    if (Parameters.iYear == 0 && Parameters.iMonth == 0 && Parameters.iDay == 0 &&
+        Parameters.iUTCHour == 0 && Parameters.iUTCMin == 0)
+    {
+        json << "0,";
+    }
+    else
+    {
+        // Convert to Unix timestamp
+        struct tm timeinfo = {0};
+        timeinfo.tm_year = Parameters.iYear - 1900;
+        timeinfo.tm_mon = Parameters.iMonth - 1;
+        timeinfo.tm_mday = Parameters.iDay;
+        timeinfo.tm_hour = Parameters.iUTCHour;
+        timeinfo.tm_min = Parameters.iUTCMin;
+        timeinfo.tm_sec = 0;
+        time_t timestamp = timegm(&timeinfo);  // timegm for UTC
+        json << timestamp << ",";
+    }
+
     // Status indicators
     json << "\"status\":{";
     json << "\"io\":" << inter << ",";
@@ -313,6 +334,12 @@ std::string CStatusBroadcast::CollectStatusJSON()
             json << ",\"wmer_db\":" << Parameters.rWMERMSC;
         }
 
+        // MER (Modulation Error Ratio) - MSC quality indicator
+        if (Parameters.rMER >= 0.0)
+        {
+            json << ",\"mer_db\":" << Parameters.rMER;
+        }
+
         // Doppler frequency estimate (Hz) - channel variation speed
         if (Parameters.rSigmaEstimate >= 0.0)
         {
@@ -333,6 +360,19 @@ std::string CStatusBroadcast::CollectStatusJSON()
         }
     }
 
+    json << "},";
+
+    // Frequency parameters
+    json << "\"frequency\":{";
+    json << "\"dc_offset_hz\":" << std::setprecision(2) << Parameters.GetDCFrequency();
+
+    _REAL rSampleOffset = Parameters.rResampleOffset;
+    _REAL rSampleRate = Parameters.GetSigSampleRate();
+    int iSampleOffsetPPM = (rSampleRate > 0) ? (int)(rSampleOffset / rSampleRate * 1e6) : 0;
+
+    json << ",\"sample_offset_hz\":" << std::setprecision(2) << rSampleOffset;
+    json << ",\"sample_offset_ppm\":" << iSampleOffsetPPM;
+    json << std::setprecision(1);
     json << "}";
 
     if (signal)
@@ -381,6 +421,24 @@ std::string CStatusBroadcast::CollectStatusJSON()
                     json << std::setprecision(2);
                     json << "\"bitrate_kbps\":" << Parameters.GetBitRateKbps(i, false);
                     json << std::setprecision(1);
+
+                    // Audio mode (Mono/Stereo/P-Stereo)
+                    json << ",\"audio_mode\":";
+                    switch (service.AudioParam.eAudioMode)
+                    {
+                    case CAudioParam::AM_MONO:
+                        json << "\"Mono\"";
+                        break;
+                    case CAudioParam::AM_STEREO:
+                        json << "\"Stereo\"";
+                        break;
+                    case CAudioParam::AM_P_STEREO:
+                        json << "\"P-Stereo\"";
+                        break;
+                    default:
+                        json << "\"Unknown\"";
+                        break;
+                    }
 
                     // Text message if available
                     if (service.AudioParam.bTextflag && !service.AudioParam.strTextMessage.empty())
