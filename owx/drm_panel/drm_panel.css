@@ -17,7 +17,7 @@
 .drm-status-row {
     display: flex;
     gap: 3px;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     flex-wrap: wrap;
 }
 
@@ -55,8 +55,8 @@
     display: flex;
     flex-wrap: nowrap;
     gap: 15px;
-    margin-bottom: 6px;
-    padding: 3px 0;
+    margin-bottom: 4px;
+    padding: 2px 0;
 }
 
 .drm-signal-item {
@@ -78,8 +78,8 @@
 .drm-mode-row {
     display: flex;
     gap: 10px;
-    margin-bottom: 6px;
-    padding: 3px 0;
+    margin-bottom: 4px;
+    padding: 2px 0;
     align-items: center;
     flex-wrap: wrap;
 }
@@ -126,8 +126,8 @@
 .drm-qam-row {
     display: flex;
     gap: 10px;
-    margin-bottom: 6px;
-    padding: 3px 0;
+    margin-bottom: 4px;
+    padding: 2px 0;
     align-items: center;
     flex-wrap: wrap;
     font-size: 12px;
@@ -145,9 +145,9 @@
 .drm-media-row {
     display: flex;
     gap: 12px;
-    margin-bottom: 8px;
-    margin-top: 6px;
-    padding: 3px 0;
+    margin-bottom: 6px;
+    margin-top: 4px;
+    padding: 2px 0;
     align-items: center;
     flex-wrap: wrap;
     font-size: 12px;
@@ -419,8 +419,8 @@
 /* ========== 服务列表 ========== */
 .drm-services-header {
     font-weight: 600;
-    margin-bottom: 6px;
-    padding-bottom: 4px;
+    margin-bottom: 4px;
+    padding-bottom: 3px;
     border-bottom: 1px solid #444;
     font-size: 13px;
 }
@@ -430,8 +430,8 @@
     display: flex;
     flex-wrap: nowrap;
     gap: 15px;
-    margin-top: 8px;
-    padding-top: 6px;
+    margin-top: 6px;
+    padding-top: 4px;
     border-top: 1px solid #444;
     font-size: 12px;
 }
