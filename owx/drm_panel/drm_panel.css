@@ -53,19 +53,15 @@
 /* ========== 第二行：信号质量 ========== */
 .drm-signal-row {
     display: flex;
-    flex-wrap: nowrap;
-    gap: 8px;
+    flex-wrap: wrap;
+    gap: 10px;
     margin-bottom: 4px;
     padding: 2px 0;
-    white-space: nowrap;
-    overflow-x: auto;
 }
 
 .drm-signal-item {
     font-size: 13px;
     font-weight: 500;
-    white-space: nowrap;
-    flex-shrink: 0;
 }
 
 .drm-value {
@@ -631,16 +627,12 @@
     }
 
     .drm-signal-row {
-        flex-wrap: nowrap;
-        gap: 6px;
-        white-space: nowrap;
-        overflow-x: auto;
+        flex-wrap: wrap;
+        gap: 8px;
     }
 
     .drm-signal-item {
         font-size: 12px;
-        white-space: nowrap;
-        flex-shrink: 0;
     }
 
     .drm-mode-row,
@@ -683,7 +675,7 @@
     }
 
     .drm-signal-row {
-        gap: 4px;
+        gap: 6px;
     }
 
     .drm-signal-item {
