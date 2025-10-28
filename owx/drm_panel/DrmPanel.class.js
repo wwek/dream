@@ -224,9 +224,14 @@ DrmPanel.prototype.update = function(data) {
         this.$container.find('[data-drm-services]').empty();
     }
 
-    // 更新时间显示 (从 timestamp 字段获取)
-    if (status.timestamp) {
-        this.updateTime(status.timestamp);
+    // 更新时间显示 (从 received_time 字段获取 DRM 传输时间)
+    // 如果 received_time 为 0 或不存在，则不显示时间
+    if (status.received_time && status.received_time !== 0) {
+        this.updateTime(status.received_time);
+    } else {
+        // 时间不可用时显示提示
+        this.updateValue('time_utc', 'Service not available');
+        this.updateValue('time_local', 'Service not available');
     }
 };
 
@@ -378,8 +383,15 @@ DrmPanel.prototype.updateServices = function(services) {
             ? '<span class="drm-service-type-badge drm-audio-badge">A</span> '
             : '<span class="drm-service-type-badge">D</span> ';
 
-        // 保护模式 (如果有)
+        // 保护模式 (EEP/UEP)
         var protectionMode = service.protection_mode || 'EEP';
+        var protectionDisplay = protectionMode;
+        if (protectionMode === 'UEP' && service.protection_percent != null) {
+            protectionDisplay = protectionMode + ' (' + service.protection_percent.toFixed(1) + '%)';
+        }
+
+        // 音频模式 (Mono/Stereo/P-Stereo)
+        var audioMode = service.audio_mode || '';
 
         // 语言信息 (如果有) - 只显示语言名称，不显示 FAC:x
         var languageInfo = '';
@@ -441,9 +453,10 @@ DrmPanel.prototype.updateServices = function(services) {
             languageInfo +
             countryInfo +
             (service.program_type && service.program_type.name ? '<span class="drm-service-progtype">' + me.escapeHtml(service.program_type.name) + '</span> ' : '') +
-            '<span class="drm-service-codec">' + me.escapeHtml(codecName) + '</span> ' +
             '<span class="drm-service-bitrate">' + bitrateStr + ' kbps</span> ' +
-            techParamsHtml +
+            '<span class="drm-service-protection">' + protectionDisplay + '</span> ' +
+            '<span class="drm-service-codec">' + me.escapeHtml(codecName) + '</span> ' +
+            (audioMode ? '<span class="drm-service-audiomode">' + me.escapeHtml(audioMode) + '</span> ' : '') +
             (textButton ? ' ' + textButton : '');
 
         $service.html(serviceHtml);

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -64,35 +64,35 @@
 </head>
 <body>
     <div class="test-container">
-        <h1>🧪 DRM Panel 测试页面</h1>
+        <h1>🧪 DRM Panel Test Page</h1>
 
         <div class="test-controls">
-            <h2>测试控制</h2>
-            <button onclick="loadTestData()">测试数据 1 (完整)</button>
-            <button onclick="loadTestDataWithText()">测试数据 2 (Text)</button>
-            <button onclick="loadNoSignalData()">模拟无信号</button>
-            <button onclick="loadErrorData()">模拟错误状态</button>
-            <button class="clear" onclick="clearPanel()">清空面板</button>
+            <h2>Test Controls</h2>
+            <button onclick="loadTestData()">Test Data 1 (Complete)</button>
+            <button onclick="loadTestDataWithText()">Test Data 2 (with Text)</button>
+            <button onclick="loadNoSignalData()">Simulate No Signal</button>
+            <button onclick="loadErrorData()">Simulate Error State</button>
+            <button class="clear" onclick="clearPanel()">Clear Panel</button>
         </div>
 
-        <h2>DRM 状态面板</h2>
+        <h2>DRM Status Panel</h2>
         <div id="openwebrx-panel-metadata-drm" class="openwebrx-panel openwebrx-meta-panel">
-            <!-- DrmPanel 将在这里渲染 -->
+            <!-- DrmPanel will be rendered here -->
         </div>
 
-        <h2>接收的数据</h2>
-        <div class="data-display" id="data-display">等待数据...</div>
+        <h2>Received Data</h2>
+        <div class="data-display" id="data-display">Waiting for data...</div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        // 模拟 MetaPanel 基类
+        // Simulate MetaPanel base class
         function MetaPanel(el) {
             this.el = el;
         }
         MetaPanel.prototype = {};
 
-        // 加载 DrmPanel 类
+        // Load DrmPanel class
         var scriptLoaded = false;
         $.getScript('DrmPanel.class.js').done(function() {
             scriptLoaded = true;
@@ -114,9 +114,10 @@
             console.log('[Test] DrmPanel initialized');
         }
 
-        // 测试数据 1: 完整数据（包含语言、节目类型、国家、扩展信号参数）
+        // Test Data 1: Complete data (including all new fields)
         var testData = {
             "timestamp": 1761640323,
+            "received_time": 1736948400,  // DRM transmission time: 2025-01-15 14:30:00 UTC
             "status": {
                 "io": 0,
                 "time": 0,
@@ -129,9 +130,15 @@
                 "if_level_db": -22.9,
                 "snr_db": 14.0,
                 "wmer_db": 13.8,
+                "mer_db": 13.5,  // New: MER
                 "doppler_hz": 0.6,
                 "delay_min_ms": 3.9,
                 "delay_max_ms": 6.56
+            },
+            "frequency": {  // New: Frequency parameters object
+                "dc_offset_hz": 9998.43,
+                "sample_offset_hz": 0.12,
+                "sample_offset_ppm": 2
             },
             "mode": {
                 "robustness": 1,
@@ -151,11 +158,13 @@
             },
             "service_list": [
                 {
-                    "id": "1",
+                    "id": "3E9",
                     "label": "CNR-1",
                     "is_audio": true,
                     "audio_coding": 3,
                     "bitrate_kbps": 11.64,
+                    "audio_mode": "Mono",  // New: Audio mode
+                    "protection_mode": "EEP",  // New: Protection mode
                     "language": {
                         "fac_id": 3,
                         "name": "Chinese (Mandarin)"
@@ -168,9 +177,10 @@
             ]
         };
 
-        // 测试数据 2: 包含 text 和多服务
+        // Test Data 2: With text and multiple services (UEP protection mode example)
         var testDataWithText = {
             "timestamp": 1761560992,
+            "received_time": 1736950000,  // DRM transmission time: 2025-01-15 14:56:40 UTC
             "status": {
                 "io": 0,
                 "time": 0,
@@ -181,7 +191,17 @@
             },
             "signal": {
                 "if_level_db": -29.6,
-                "snr_db": 16.3
+                "snr_db": 16.3,
+                "wmer_db": 15.2,
+                "mer_db": 14.8,
+                "doppler_hz": 0.4,
+                "delay_min_ms": 2.1,
+                "delay_max_ms": 4.8
+            },
+            "frequency": {
+                "dc_offset_hz": 10002.56,
+                "sample_offset_hz": -0.08,
+                "sample_offset_ppm": -1
             },
             "mode": {
                 "robustness": 0,
@@ -192,8 +212,8 @@
             "coding": {
                 "sdc_qam": 1,
                 "msc_qam": 2,
-                "protection_a": 0,
-                "protection_b": 0
+                "protection_a": 1,
+                "protection_b": 2
             },
             "services": {
                 "audio": 1,
@@ -206,20 +226,25 @@
                     "is_audio": true,
                     "audio_coding": 3,
                     "bitrate_kbps": 10.08,
+                    "audio_mode": "Stereo",
+                    "protection_mode": "UEP",
+                    "protection_percent": 35.5,
                     "text": "\u4e0a\u6d77\u827a\u672f\u8282\u4e0a\u6f14\u7cbe\u5f69\u5267\u76ee\u3002\u8d5b\u3002"
                 },
                 {
                     "id": "222222",
                     "label": "DRM Service B",
                     "is_audio": false,
-                    "bitrate_kbps": 9.6
+                    "bitrate_kbps": 9.6,
+                    "protection_mode": "EEP"
                 }
             ]
         };
 
-        // 无信号数据
+        // No signal data
         var noSignalData = {
             "timestamp": Date.now(),
+            "received_time": 0,  // Time unavailable
             "status": {
                 "io": 0,
                 "time": -1,
@@ -231,12 +256,18 @@
             "signal": {
                 "if_level_db": -65.0,
                 "snr_db": 0.0
+            },
+            "frequency": {
+                "dc_offset_hz": 0.0,
+                "sample_offset_hz": 0.0,
+                "sample_offset_ppm": 0
             }
         };
 
-        // 错误状态数据
+        // Error state data
         var errorData = {
             "timestamp": Date.now(),
+            "received_time": 1736948800,
             "status": {
                 "io": 0,
                 "time": 0,
@@ -247,7 +278,9 @@
             },
             "signal": {
                 "if_level_db": -45.0,
-                "snr_db": 1.2
+                "snr_db": 1.2,
+                "wmer_db": 3.5,
+                "mer_db": 2.8
             },
             "mode": {
                 "robustness": 1,
@@ -259,7 +292,7 @@
 
         function loadTestData() {
             if (!drmPanel) {
-                alert('DrmPanel 未初始化，请刷新页面');
+                alert('DrmPanel not initialized, please refresh the page');
                 return;
             }
             displayData(testData);
@@ -272,7 +305,7 @@
 
         function loadTestDataWithText() {
             if (!drmPanel) {
-                alert('DrmPanel 未初始化，请刷新页面');
+                alert('DrmPanel not initialized, please refresh the page');
                 return;
             }
             displayData(testDataWithText);
@@ -285,7 +318,7 @@
 
         function loadNoSignalData() {
             if (!drmPanel) {
-                alert('DrmPanel 未初始化，请刷新页面');
+                alert('DrmPanel not initialized, please refresh the page');
                 return;
             }
             displayData(noSignalData);
@@ -298,7 +331,7 @@
 
         function loadErrorData() {
             if (!drmPanel) {
-                alert('DrmPanel 未初始化，请刷新页面');
+                alert('DrmPanel not initialized, please refresh the page');
                 return;
             }
             displayData(errorData);
@@ -309,10 +342,10 @@
             console.log('[Test] Loaded error data');
         }
 
-        // 测试良好信号（黄色）
+        // Test good signal (yellow)
         function loadGoodSignal() {
             if (!drmPanel) {
-                alert('DrmPanel 未初始化，请刷新页面');
+                alert('DrmPanel not initialized, please refresh the page');
                 return;
             }
             var goodSignalData = JSON.parse(JSON.stringify(testData));
@@ -326,10 +359,10 @@
             console.log('[Test] Loaded good signal (yellow)');
         }
 
-        // 测试差信号（红色）
+        // Test poor signal (red)
         function loadPoorSignal() {
             if (!drmPanel) {
-                alert('DrmPanel 未初始化，请刷新页面');
+                alert('DrmPanel not initialized, please refresh the page');
                 return;
             }
             var poorSignalData = JSON.parse(JSON.stringify(testData));
@@ -345,7 +378,7 @@
 
         function clearPanel() {
             if (!drmPanel) {
-                alert('DrmPanel 未初始化，请刷新页面');
+                alert('DrmPanel not initialized, please refresh the page');
                 return;
             }
             drmPanel.clear();
@@ -358,7 +391,7 @@
             if (data) {
                 display.textContent = JSON.stringify(data, null, 2);
             } else {
-                display.textContent = '面板已清空';
+                display.textContent = 'Panel cleared';
             }
         }
     </script>

@@ -304,12 +304,18 @@
     font-weight: 500;
 }
 
-/* 技术参数 - 最低层级 */
+/* 保护模式 - 第三层信息 */
 .drm-service-protection {
-    color: #9E9E9E;
-    font-size: 10px;
-    font-weight: 400;
-    opacity: 0.75;
+    color: #4CAF50;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+/* 音频模式 - 第三层信息 */
+.drm-service-audiomode {
+    color: #4CAF50;
+    font-size: 11px;
+    font-weight: 500;
 }
 
 /* Audio Type - 不再单独显示，改用类型徽章 */
