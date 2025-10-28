@@ -303,6 +303,36 @@ std::string CStatusBroadcast::CollectStatusJSON()
     json << "\"signal\":{";
     json << "\"if_level_db\":" << rIFLevel << ",";
     json << "\"snr_db\":" << rSNR;
+
+    // Extended signal quality parameters (only with signal)
+    if (signal)
+    {
+        // WMER (Weighted Modulation Error Ratio) - MSC quality indicator
+        if (Parameters.rWMERMSC >= 0.0)
+        {
+            json << ",\"wmer_db\":" << Parameters.rWMERMSC;
+        }
+
+        // Doppler frequency estimate (Hz) - channel variation speed
+        if (Parameters.rSigmaEstimate >= 0.0)
+        {
+            json << ",\"doppler_hz\":" << std::setprecision(2) << Parameters.rSigmaEstimate;
+            json << std::setprecision(1);
+        }
+
+        // Delay spread (ms) - multipath propagation
+        if (Parameters.rMinDelay >= 0.0)
+        {
+            json << ",\"delay_min_ms\":" << std::setprecision(2) << Parameters.rMinDelay;
+
+            if (Parameters.rMaxDelay >= 0.0)
+            {
+                json << ",\"delay_max_ms\":" << std::setprecision(2) << Parameters.rMaxDelay;
+            }
+            json << std::setprecision(1);
+        }
+    }
+
     json << "}";
 
     if (signal)
