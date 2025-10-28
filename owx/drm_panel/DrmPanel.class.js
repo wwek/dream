@@ -69,7 +69,7 @@ function DrmPanel(el) {
                 '<span class="drm-signal-item">IF: <span class="drm-value" data-drm-val="if_level">--</span> dB</span>' +
                 '<span class="drm-signal-item">SNR: <span class="drm-value drm-snr" data-drm-val="snr">--</span> dB</span>' +
                 '<span class="drm-signal-item">WMER/MER: <span class="drm-value" data-drm-val="wmer">--</span>/<span class="drm-value" data-drm-val="mer">--</span> dB</span>' +
-                '<span class="drm-signal-item">Dop/Dly: <span class="drm-value" data-drm-val="doppler">--</span>/<span class="drm-value" data-drm-val="delay">--</span></span>' +
+                '<span class="drm-signal-item">Doppler/Delay: <span class="drm-value" data-drm-val="doppler">--</span>/<span class="drm-value" data-drm-val="delay">--</span></span>' +
             '</div>' +
 
             // 第三行：DRM 模式和信道
