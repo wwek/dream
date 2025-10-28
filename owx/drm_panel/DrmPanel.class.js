@@ -30,7 +30,7 @@ function DrmPanel(el) {
                 '<span class="drm-signal-item">IF: <span class="drm-value" data-drm-val="if_level">--</span> dB</span>' +
                 '<span class="drm-signal-item">SNR: <span class="drm-value drm-snr" data-drm-val="snr">--</span> dB</span>' +
                 '<span class="drm-signal-item">WMER/MER: <span class="drm-value" data-drm-val="wmer">--</span>/<span class="drm-value" data-drm-val="mer">--</span> dB</span>' +
-                '<span class="drm-signal-item">Doppler/Delay: <span class="drm-value" data-drm-val="doppler">--</span>/<span class="drm-value" data-drm-val="delay">--</span></span>' +
+                '<span class="drm-signal-item">Dop/Dly: <span class="drm-value" data-drm-val="doppler">--</span>/<span class="drm-value" data-drm-val="delay">--</span></span>' +
             '</div>' +
 
             // 第三行：DRM 模式和信道
@@ -82,6 +82,23 @@ function DrmPanel(el) {
                 '<span class="drm-services-stat">' +
                     'Services: A=<span data-drm-val="audio_count">0</span> ' +
                     'D=<span data-drm-val="data_count">0</span>' +
+                '</span>' +
+            '</div>' +
+
+            // Media 内容行（Program Guide, Journaline, Slideshow）
+            '<div class="drm-media-row">' +
+                '<span class="drm-label">Media:</span> ' +
+                '<span class="drm-media-item">' +
+                    '<input type="checkbox" id="drm-media-program-guide" data-drm-media="program_guide" disabled>' +
+                    '<label for="drm-media-program-guide">Program Guide</label>' +
+                '</span> ' +
+                '<span class="drm-media-item">' +
+                    '<input type="checkbox" id="drm-media-journaline" data-drm-media="journaline" disabled>' +
+                    '<label for="drm-media-journaline">Journaline®</label>' +
+                '</span> ' +
+                '<span class="drm-media-item">' +
+                    '<input type="checkbox" id="drm-media-slideshow" data-drm-media="slideshow" disabled>' +
+                    '<label for="drm-media-slideshow">Slideshow</label>' +
                 '</span>' +
             '</div>' +
 
