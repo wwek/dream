@@ -12,6 +12,45 @@ function DrmPanel(el) {
     // 音频编码类型名称
     this.audioCodecNames = ['AAC', 'OPUS', 'RESERVED', 'xHE-AAC'];
 
+    // Media 内容缓存 (LRU cache, 最多5条, 1小时过期)
+    this.mediaCache = {
+        maxSize: 5,
+        maxAge: 3600000,  // 1 hour in ms
+        data: new Map(),
+
+        set: function(key, value) {
+            // LRU: 删除最旧的条目
+            if (this.data.size >= this.maxSize) {
+                var firstKey = this.data.keys().next().value;
+                this.data.delete(firstKey);
+            }
+            this.data.set(key, {
+                content: value,
+                timestamp: Date.now()
+            });
+        },
+
+        get: function(key) {
+            var item = this.data.get(key);
+            if (!item) return null;
+
+            // 检查过期
+            if (Date.now() - item.timestamp > this.maxAge) {
+                this.data.delete(key);
+                return null;
+            }
+
+            // LRU: 移到最后
+            this.data.delete(key);
+            this.data.set(key, item);
+            return item.content;
+        },
+
+        clear: function() {
+            this.data.clear();
+        }
+    };
+
     // 创建容器结构（一次性创建，后续只更新内容）- Dream DRM 风格布局
     var $container = $(
         '<div class="drm-container">' +
@@ -88,15 +127,15 @@ function DrmPanel(el) {
             // Media 内容行（Program Guide, Journaline, Slideshow）- 使用方框指示灯
             '<div class="drm-media-row">' +
                 '<span class="drm-label">Media:</span> ' +
-                '<span class="drm-media-item">' +
+                '<span class="drm-media-item drm-media-clickable" data-media-type="program_guide">' +
                     '<span class="drm-media-box drm-media-off" data-drm-media="program_guide"></span>' +
                     '<span class="drm-media-text">Program Guide</span>' +
                 '</span>' +
-                '<span class="drm-media-item">' +
+                '<span class="drm-media-item drm-media-clickable" data-media-type="journaline">' +
                     '<span class="drm-media-box drm-media-off" data-drm-media="journaline"></span>' +
                     '<span class="drm-media-text">Journaline®</span>' +
                 '</span>' +
-                '<span class="drm-media-item">' +
+                '<span class="drm-media-item drm-media-clickable" data-media-type="slideshow">' +
                     '<span class="drm-media-box drm-media-off" data-drm-media="slideshow"></span>' +
                     '<span class="drm-media-text">Slideshow</span>' +
                 '</span>' +
@@ -124,6 +163,13 @@ function DrmPanel(el) {
     this.$container.on('click', '.drm-service-text-btn', function() {
         var index = $(this).data('service-index');
         me.toggleTextContent(index, $(this));
+    });
+
+    // 添加 Media 点击事件委托
+    this.$container.on('click', '.drm-media-clickable', function() {
+        var mediaType = $(this).data('media-type');
+        var isAvailable = $(this).find('.drm-media-box').hasClass('drm-media-on');
+        me.showMediaContent(mediaType, isAvailable);
     });
 
     // 保存展开状态的 Map: index -> boolean
@@ -257,6 +303,11 @@ DrmPanel.prototype.update = function(data) {
         this.updateMediaIndicator('journaline', status.media.journaline);
         this.updateMediaIndicator('slideshow', status.media.slideshow);
     }
+
+    // 处理 Media 内容 (一次性推送,客户端缓存)
+    if (status.media_content) {
+        this.handleMediaContent(status.media_content);
+    }
 };
 
 DrmPanel.prototype.mapStatusValue = function(value) {
@@ -294,6 +345,254 @@ DrmPanel.prototype.updateMediaIndicator = function(mediaType, isAvailable) {
             $box.addClass('drm-media-off');  // 灰色方框
         }
     }
+};
+
+// 缓存单个 Media 项
+DrmPanel.prototype.cacheMediaItem = function(type, content) {
+    if (content) {
+        var key = type + '_' + content.timestamp;
+        this.mediaCache.set(key, content);
+
+        // 构建日志信息
+        var logInfo = '[DrmPanel] Cached ' + type;
+        if (content.name) {
+            logInfo += ': ' + content.name;
+        }
+        if (content.size) {
+            logInfo += ' (size: ' + content.size + ' bytes)';
+        }
+        console.log(logInfo);
+    }
+};
+
+// 处理 Media 内容 (一次性推送,客户端缓存)
+DrmPanel.prototype.handleMediaContent = function(mediaContent) {
+    this.cacheMediaItem('slideshow', mediaContent.slideshow);
+    this.cacheMediaItem('program_guide', mediaContent.program_guide);
+    this.cacheMediaItem('journaline', mediaContent.journaline);
+};
+
+// 展示 Media 内容 (KISS 方案: 简单模态框)
+DrmPanel.prototype.showMediaContent = function(mediaType, isAvailable) {
+    var self = this;
+
+    // 如果没有内容,显示提示
+    if (!isAvailable) {
+        this.showSimpleAlert('No ' + this.getMediaTypeName(mediaType) + ' available', 'info');
+        return;
+    }
+
+    // 从缓存获取最新内容 (比较内容自身的时间戳,而非缓存时间戳)
+    var latestContent = null;
+    var latestTimestamp = 0;
+    this.mediaCache.data.forEach(function(item, key) {
+        if (key.startsWith(mediaType + '_')) {
+            // 使用内容自身的时间戳 (Unix 秒), 而非缓存条目的时间戳 (毫秒)
+            var contentTimestamp = item.content.timestamp || 0;
+            if (contentTimestamp > latestTimestamp) {
+                latestTimestamp = contentTimestamp;
+                latestContent = item.content;
+            }
+        }
+    });
+
+    if (!latestContent) {
+        this.showSimpleAlert('No ' + this.getMediaTypeName(mediaType) + ' content cached yet', 'info');
+        return;
+    }
+
+    // 根据类型显示内容
+    switch (mediaType) {
+        case 'slideshow':
+            this.showSlideshowModal(latestContent);
+            break;
+        case 'program_guide':
+            this.showProgramGuideModal(latestContent);
+            break;
+        case 'journaline':
+            this.showJournalineModal(latestContent);
+            break;
+    }
+};
+
+// 获取 Media 类型名称
+DrmPanel.prototype.getMediaTypeName = function(mediaType) {
+    var names = {
+        'slideshow': 'Slideshow',
+        'program_guide': 'Program Guide',
+        'journaline': 'Journaline'
+    };
+    return names[mediaType] || mediaType;
+};
+
+// 显示 Slideshow 模态框
+DrmPanel.prototype.showSlideshowModal = function(content) {
+    var timeStr = new Date(content.timestamp * 1000).toLocaleString();
+    var sizeKB = (content.size / 1024).toFixed(2);
+
+    var html = '<div class="drm-media-modal-overlay">' +
+        '<div class="drm-media-modal">' +
+            '<div class="drm-media-modal-header">' +
+                '<h3>📷 Slideshow</h3>' +
+                '<button class="drm-media-modal-close">&times;</button>' +
+            '</div>' +
+            '<div class="drm-media-modal-body">' +
+                '<div class="drm-media-preview">' +
+                    '<img src="data:' + content.mime + ';base64,' + content.data + '" alt="' + content.name + '">' +
+                '</div>' +
+                '<div class="drm-media-info">' +
+                    '<p><strong>Name:</strong> ' + content.name + '</p>' +
+                    '<p><strong>Size:</strong> ' + sizeKB + ' KB</p>' +
+                    '<p><strong>Type:</strong> ' + content.mime + '</p>' +
+                    '<p><strong>Time:</strong> ' + timeStr + '</p>' +
+                '</div>' +
+            '</div>' +
+            '<div class="drm-media-modal-footer">' +
+                '<button class="drm-media-download-btn" data-filename="' + content.name + '" data-mime="' + content.mime + '" data-base64="' + content.data + '">💾 Download</button>' +
+                '<button class="drm-media-modal-close">Close</button>' +
+            '</div>' +
+        '</div>' +
+    '</div>';
+
+    this.showModal(html);
+};
+
+// 显示 Program Guide 模态框
+DrmPanel.prototype.showProgramGuideModal = function(content) {
+    var timeStr = new Date(content.timestamp * 1000).toLocaleString();
+    var sizeKB = (content.size / 1024).toFixed(2);
+
+    var html = '<div class="drm-media-modal-overlay">' +
+        '<div class="drm-media-modal">' +
+            '<div class="drm-media-modal-header">' +
+                '<h3>📺 Program Guide</h3>' +
+                '<button class="drm-media-modal-close">&times;</button>' +
+            '</div>' +
+            '<div class="drm-media-modal-body">' +
+                '<div class="drm-media-info">' +
+                    '<p><strong>Name:</strong> ' + content.name + '</p>' +
+                    '<p><strong>Description:</strong> ' + content.description + '</p>' +
+                    '<p><strong>Size:</strong> ' + sizeKB + ' KB</p>' +
+                    '<p><strong>Time:</strong> ' + timeStr + '</p>' +
+                '</div>' +
+                '<div class="drm-media-text-content">' +
+                    '<pre>' + atob(content.data) + '</pre>' +
+                '</div>' +
+            '</div>' +
+            '<div class="drm-media-modal-footer">' +
+                '<button class="drm-media-modal-close">Close</button>' +
+            '</div>' +
+        '</div>' +
+    '</div>';
+
+    this.showModal(html);
+};
+
+// 显示 Journaline 模态框
+DrmPanel.prototype.showJournalineModal = function(content) {
+    var timeStr = new Date(content.timestamp * 1000).toLocaleString();
+
+    var html = '<div class="drm-media-modal-overlay">' +
+        '<div class="drm-media-modal">' +
+            '<div class="drm-media-modal-header">' +
+                '<h3>📰 Journaline</h3>' +
+                '<button class="drm-media-modal-close">&times;</button>' +
+            '</div>' +
+            '<div class="drm-media-modal-body">' +
+                '<div class="drm-media-info">' +
+                    '<p><strong>Time:</strong> ' + timeStr + '</p>' +
+                    '<p><strong>Status:</strong> Available</p>' +
+                '</div>' +
+                '<div class="drm-media-text-content">' +
+                    '<p>Journaline content viewer - Full implementation pending</p>' +
+                '</div>' +
+            '</div>' +
+            '<div class="drm-media-modal-footer">' +
+                '<button class="drm-media-modal-close">Close</button>' +
+            '</div>' +
+        '</div>' +
+    '</div>';
+
+    this.showModal(html);
+};
+
+// 下载 Media 文件
+DrmPanel.prototype.downloadMediaFile = function(filename, mime, base64) {
+    try {
+        // 将 Base64 转换为 Blob
+        var byteCharacters = atob(base64);
+        var byteNumbers = new Array(byteCharacters.length);
+        for (var i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        var byteArray = new Uint8Array(byteNumbers);
+        var blob = new Blob([byteArray], { type: mime });
+
+        // 创建下载链接
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        console.log('[DrmPanel] Downloaded:', filename);
+    } catch (e) {
+        console.error('[DrmPanel] Failed to download file:', e);
+        alert('Failed to download file: ' + e.message);
+    }
+};
+
+// 显示模态框
+DrmPanel.prototype.showModal = function(html) {
+    var self = this;
+    var $modal = $(html);
+    $('body').append($modal);
+
+    // 点击下载按钮
+    $modal.find('.drm-media-download-btn').on('click', function() {
+        var filename = $(this).data('filename');
+        var mime = $(this).data('mime');
+        var base64 = $(this).data('base64');
+        self.downloadMediaFile(filename, mime, base64);
+    });
+
+    // 点击关闭按钮或遮罩层关闭
+    $modal.find('.drm-media-modal-close').on('click', function() {
+        $modal.remove();
+    });
+    $modal.on('click', function(e) {
+        if ($(e.target).hasClass('drm-media-modal-overlay')) {
+            $modal.remove();
+        }
+    });
+
+    // ESC 键关闭
+    $(document).on('keydown.drm-modal', function(e) {
+        if (e.key === 'Escape') {
+            $modal.remove();
+            $(document).off('keydown.drm-modal');
+        }
+    });
+};
+
+// 显示简单提示
+DrmPanel.prototype.showSimpleAlert = function(message, type) {
+    var icon = type === 'info' ? 'ℹ️' : '⚠️';
+    var html = '<div class="drm-media-modal-overlay">' +
+        '<div class="drm-media-modal drm-media-modal-small">' +
+            '<div class="drm-media-modal-body">' +
+                '<p style="text-align:center;font-size:14px;">' + icon + ' ' + message + '</p>' +
+            '</div>' +
+            '<div class="drm-media-modal-footer">' +
+                '<button class="drm-media-modal-close">OK</button>' +
+            '</div>' +
+        '</div>' +
+    '</div>';
+
+    this.showModal(html);
 };
 
 // 更新数值并根据是否为0添加绿色高亮

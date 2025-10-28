@@ -186,6 +186,236 @@
     font-weight: 400;
 }
 
+/* Media 可点击项样式 */
+.drm-media-clickable {
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.drm-media-clickable:hover {
+    opacity: 0.8;
+}
+
+/* ========== Media 内容模态框样式 ========== */
+.drm-media-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.drm-media-modal {
+    background: #2a2a2a;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.drm-media-modal-small {
+    max-width: 400px;
+}
+
+.drm-media-modal-header {
+    padding: 16px 20px;
+    background: #333;
+    border-bottom: 1px solid #444;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.drm-media-modal-header h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.drm-media-modal-close {
+    background: #444;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    line-height: 1;
+    padding: 4px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.drm-media-modal-close:hover {
+    background: #555;
+}
+
+.drm-media-modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+    color: #ddd;
+}
+
+.drm-media-info {
+    margin-bottom: 16px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.drm-media-info p {
+    margin: 8px 0;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.drm-media-info strong {
+    color: #fff;
+    font-weight: 600;
+    min-width: 80px;
+    display: inline-block;
+}
+
+.drm-media-preview {
+    text-align: center;
+    margin-top: 16px;
+}
+
+.drm-media-preview img {
+    max-width: 100%;
+    max-height: 400px;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.drm-media-text-content {
+    margin-top: 16px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.drm-media-text-content pre {
+    margin: 0;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #ddd;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.drm-media-modal-footer {
+    padding: 12px 20px;
+    background: #333;
+    border-top: 1px solid #444;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.drm-media-modal-footer button {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* 下载按钮样式 */
+.drm-media-download-btn {
+    background: #4a7ba7;
+    color: #fff;
+}
+
+.drm-media-download-btn:hover {
+    background: #5a8bc7;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(74, 123, 167, 0.4);
+}
+
+/* 关闭按钮样式 */
+.drm-media-modal-close {
+    background: #0f0;
+    color: #000;
+}
+
+.drm-media-modal-close:hover {
+    background: #0c0;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .drm-media-modal {
+        max-width: 95%;
+        max-height: 95vh;
+    }
+
+    .drm-media-modal-header h3 {
+        font-size: 16px;
+    }
+
+    .drm-media-info p {
+        font-size: 12px;
+    }
+
+    .drm-media-preview img {
+        max-height: 300px;
+    }
+}
+
+@media (max-width: 480px) {
+    .drm-media-modal-header {
+        padding: 12px 16px;
+    }
+
+    .drm-media-modal-body {
+        padding: 16px;
+    }
+
+    .drm-media-preview img {
+        max-height: 250px;
+    }
+
+    .drm-media-info strong {
+        min-width: 60px;
+    }
+
+    .drm-media-modal-footer {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .drm-media-modal-footer button {
+        width: 100%;
+    }
+}
+
 /* ========== 服务列表 ========== */
 .drm-services-header {
     font-weight: 600;

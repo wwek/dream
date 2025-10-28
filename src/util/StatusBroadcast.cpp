@@ -38,6 +38,7 @@
 #include <fcntl.h>
 #include <cerrno>
 #include <cstring>
+#include <map>
 #include <cstdio>
 #include <ctime>
 #include <sstream>
@@ -536,6 +537,8 @@ std::string CStatusBroadcast::CollectStatusJSON()
     bool bHasProgramGuide = false;
     bool bHasJournaline = false;
     bool bHasSlideshow = false;
+    bool bHasMediaContent = false;
+    std::ostringstream mediaContentJson;
 
     if (pDataDecoder != nullptr)
     {
@@ -543,28 +546,103 @@ std::string CStatusBroadcast::CollectStatusJSON()
         for (int iPacketID = 0; iPacketID < MAX_NUM_PACK_PER_STREAM; iPacketID++)
         {
             CMOTDABDec* pMOTApp = pDataDecoder->getApplication(iPacketID);
-            if (pMOTApp != nullptr)
+            if (pMOTApp != nullptr && pMOTApp->NewObjectAvailable())
             {
-                // Check if new objects are available in the queue
-                if (pMOTApp->NewObjectAvailable())
-                {
-                    // Determine application type
-                    CDataDecoder::EAppType eAppType = pDataDecoder->GetAppType();
+                // Get application type for this specific packet ID
+                CDataDecoder::EAppType eAppType = pDataDecoder->GetAppType(iPacketID);
 
-                    switch (eAppType)
-                    {
-                        case CDataDecoder::AT_EPG:
-                            bHasProgramGuide = true;
-                            break;
-                        case CDataDecoder::AT_JOURNALINE:
-                            bHasJournaline = true;
-                            break;
-                        case CDataDecoder::AT_MOTSLIDESHOW:
-                            bHasSlideshow = true;
-                            break;
-                        default:
-                            break;
-                    }
+                // Extract new object from queue (EVENT-DRIVEN: only when available)
+                CMOTObject NewObj;
+                pMOTApp->GetNextObject(NewObj);
+
+                // Generate unique key for tracking: "type_transportID"
+                std::ostringstream keyStream;
+                keyStream << (int)eAppType << "_" << NewObj.TransportID;
+                std::string strMediaKey = keyStream.str();
+
+                // Check if this is truly new content (compare with last pushed timestamp)
+                time_t currentObjTime = time(nullptr);  // Use current time as timestamp
+                bool bIsNewContent = false;
+
+                auto it = mapLastPushedMedia.find(strMediaKey);
+                if (it == mapLastPushedMedia.end() || NewObj.iUniqueBodyVersion != it->second)
+                {
+                    bIsNewContent = true;
+                    mapLastPushedMedia[strMediaKey] = NewObj.iUniqueBodyVersion;  // Store version instead of timestamp
+                }
+
+                // Set availability flags
+                switch (eAppType)
+                {
+                    case CDataDecoder::AT_EPG:
+                        bHasProgramGuide = true;
+                        // Extract EPG content if new
+                        if (bIsNewContent && NewObj.Body.Size() > 0)
+                        {
+                            const void* pData = NewObj.Body.QueryData();
+                            if (pData != nullptr)
+                            {
+                                if (bHasMediaContent) mediaContentJson << ",";
+                                mediaContentJson << "\"program_guide\":{";
+                                mediaContentJson << "\"timestamp\":" << currentObjTime;
+                                mediaContentJson << ",\"name\":\"" << JsonEscape(NewObj.strName) << "\"";
+                                mediaContentJson << ",\"description\":\"" << JsonEscape(NewObj.strContentDescription) << "\"";
+                                mediaContentJson << ",\"size\":" << NewObj.Body.Size();
+                                // Base64 encode body data
+                                std::string base64Data = Base64Encode(
+                                    reinterpret_cast<const unsigned char*>(pData),
+                                    NewObj.Body.Size()
+                                );
+                                mediaContentJson << ",\"data\":\"" << base64Data << "\"";
+                                mediaContentJson << "}";
+                                bHasMediaContent = true;
+                            }
+                        }
+                        break;
+
+                    case CDataDecoder::AT_JOURNALINE:
+                        bHasJournaline = true;
+                        // Journaline uses different handling via GetNews()
+                        // For now, just mark as available
+                        if (bIsNewContent)
+                        {
+                            if (bHasMediaContent) mediaContentJson << ",";
+                            mediaContentJson << "\"journaline\":{";
+                            mediaContentJson << "\"timestamp\":" << currentObjTime;
+                            mediaContentJson << ",\"available\":true";
+                            mediaContentJson << "}";
+                            bHasMediaContent = true;
+                        }
+                        break;
+
+                    case CDataDecoder::AT_MOTSLIDESHOW:
+                        bHasSlideshow = true;
+                        // Extract Slideshow image if new
+                        if (bIsNewContent && NewObj.Body.Size() > 0)
+                        {
+                            const void* pData = NewObj.Body.QueryData();
+                            if (pData != nullptr)
+                            {
+                                if (bHasMediaContent) mediaContentJson << ",";
+                                mediaContentJson << "\"slideshow\":{";
+                                mediaContentJson << "\"timestamp\":" << currentObjTime;
+                                mediaContentJson << ",\"name\":\"" << JsonEscape(NewObj.strName) << "\"";
+                                mediaContentJson << ",\"mime\":\"" << JsonEscape(NewObj.strMimeType) << "\"";
+                                mediaContentJson << ",\"size\":" << NewObj.Body.Size();
+                                // Base64 encode image data
+                                std::string base64Data = Base64Encode(
+                                    reinterpret_cast<const unsigned char*>(pData),
+                                    NewObj.Body.Size()
+                                );
+                                mediaContentJson << ",\"data\":\"" << base64Data << "\"";
+                                mediaContentJson << "}";
+                                bHasMediaContent = true;
+                            }
+                        }
+                        break;
+
+                    default:
+                        break;
                 }
             }
         }
@@ -575,9 +653,82 @@ std::string CStatusBroadcast::CollectStatusJSON()
     json << ",\"slideshow\":" << (bHasSlideshow ? "true" : "false");
     json << "}";
 
+    // Append media_content section only if there's new content (ONE-TIME PUSH)
+    if (bHasMediaContent)
+    {
+        json << ",\"media_content\":{" << mediaContentJson.str() << "}";
+    }
+
     json << "}";
 
     return json.str();
+}
+
+std::string CStatusBroadcast::Base64Encode(const unsigned char* data, size_t len)
+{
+    static const char base64_chars[] =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+    std::string ret;
+    int i = 0;
+    int j = 0;
+    unsigned char char_array_3[3];
+    unsigned char char_array_4[4];
+
+    while (len--) {
+        char_array_3[i++] = *(data++);
+        if (i == 3) {
+            char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
+            char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
+            char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
+            char_array_4[3] = char_array_3[2] & 0x3f;
+
+            for(i = 0; (i <4) ; i++)
+                ret += base64_chars[char_array_4[i]];
+            i = 0;
+        }
+    }
+
+    if (i)
+    {
+        for(j = i; j < 3; j++)
+            char_array_3[j] = '\0';
+
+        char_array_4[0] = ( char_array_3[0] & 0xfc) >> 2;
+        char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
+        char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
+
+        for (j = 0; (j < i + 1); j++)
+            ret += base64_chars[char_array_4[j]];
+
+        while((i++ < 3))
+            ret += '=';
+    }
+
+    return ret;
+}
+
+std::string CStatusBroadcast::JsonEscape(const std::string& str)
+{
+    std::ostringstream o;
+    for (auto c : str) {
+        switch (c) {
+            case '"':  o << "\\\""; break;
+            case '\\': o << "\\\\"; break;
+            case '\b': o << "\\b"; break;
+            case '\f': o << "\\f"; break;
+            case '\n': o << "\\n"; break;
+            case '\r': o << "\\r"; break;
+            case '\t': o << "\\t"; break;
+            default:
+                if ('\x00' <= c && c <= '\x1f') {
+                    o << "\\u" << std::hex << std::setw(4) << std::setfill('0') << (int)c;
+                } else {
+                    o << c;
+                }
+        }
+    }
+    return o.str();
 }
 
 int CStatusBroadcast::ETypeRxStatus2int(ETypeRxStatus eStatus)

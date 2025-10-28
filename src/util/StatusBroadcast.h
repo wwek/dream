@@ -118,6 +118,21 @@ private:
     static std::string EscapeJSON(const std::string& str);
 
     /**
+     * @brief Encode binary data to Base64 string
+     * @param data Pointer to binary data
+     * @param len Length of data in bytes
+     * @return Base64-encoded string
+     */
+    static std::string Base64Encode(const unsigned char* data, size_t len);
+
+    /**
+     * @brief Escape special characters for JSON string (implementation)
+     * @param str Input string
+     * @return JSON-escaped string
+     */
+    static std::string JsonEscape(const std::string& str);
+
+    /**
      * @brief Create socket path with PID
      * Format: /tmp/dream_status_{PID}.sock
      */
@@ -130,6 +145,9 @@ private:
     std::vector<int>        vecClientFds;
     std::thread             broadcastThread;
     std::atomic<bool>       bRunning;
+
+    // Media content tracking (to avoid duplicate pushes)
+    std::map<std::string, int> mapLastPushedMedia;  // key: "type_transportID", value: iUniqueBodyVersion
 
     // Update interval in milliseconds (same as KiwiSDR GUI_CONTROL_UPDATE_TIME)
     static const int        UPDATE_INTERVAL_MS = 500;

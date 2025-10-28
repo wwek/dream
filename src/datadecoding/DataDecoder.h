@@ -80,6 +80,12 @@ class CDataDecoder:public CReceiverModul < _BINARY, _BINARY >
     {
 		return eAppType[iServPacketID];
     }
+    EAppType GetAppType(int iPacketID)
+    {
+        if (iPacketID >= 0 && iPacketID < MAX_NUM_PACK_PER_STREAM)
+            return eAppType[iPacketID];
+        return AT_NOT_SUP;
+    }
 
   protected:
     class CDataUnit
