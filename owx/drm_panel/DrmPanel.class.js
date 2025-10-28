@@ -27,8 +27,10 @@ function DrmPanel(el) {
 
             // 第二行：信号质量（横向显示）
             '<div class="drm-signal-row">' +
-                '<span class="drm-signal-item">IF Level: <span class="drm-value" data-drm-val="if_level">--</span> dB</span>' +
+                '<span class="drm-signal-item">IF: <span class="drm-value" data-drm-val="if_level">--</span> dB</span>' +
                 '<span class="drm-signal-item">SNR: <span class="drm-value drm-snr" data-drm-val="snr">--</span> dB</span>' +
+                '<span class="drm-signal-item">WMER/MER: <span class="drm-value" data-drm-val="wmer">--</span>/<span class="drm-value" data-drm-val="mer">--</span> dB</span>' +
+                '<span class="drm-signal-item">Doppler/Delay: <span class="drm-value" data-drm-val="doppler">--</span>/<span class="drm-value" data-drm-val="delay">--</span></span>' +
             '</div>' +
 
             // 第三行：DRM 模式和信道
@@ -144,11 +146,23 @@ DrmPanel.prototype.update = function(data) {
     var snr = (status.signal && status.signal.snr_db != null) ? status.signal.snr_db : status.snr;
     var ifLevel = (status.signal && status.signal.if_level_db != null) ? status.signal.if_level_db : status.if_level;
 
+    // 更新 SNR（保持绿色点亮，不分级）
     this.updateValue('snr', snr != null ? snr.toFixed(1) : '--');
     this.updateValue('if_level', ifLevel != null ? ifLevel.toFixed(1) : '--');
-    this.updateValue('wmer', status.wmer != null ? status.wmer.toFixed(2) : '--');
-    this.updateValue('delay', status.delay != null ? status.delay.toFixed(2) : '--');
-    this.updateValue('doppler', status.doppler != null ? status.doppler.toFixed(2) : '--');
+
+    // 更新扩展信号参数
+    var wmer = status.signal && status.signal.wmer_db != null ? status.signal.wmer_db : null;
+    var mer = status.signal && status.signal.mer_db != null ? status.signal.mer_db : null;
+    var doppler = status.signal && status.signal.doppler_hz != null ? status.signal.doppler_hz : null;
+    var delayMin = status.signal && status.signal.delay_min_ms != null ? status.signal.delay_min_ms : null;
+
+    // 更新 WMER/MER（与界面一致的格式）
+    this.updateValue('wmer', wmer != null ? wmer.toFixed(1) : '--');
+    this.updateValue('mer', mer != null ? mer.toFixed(1) : '--');
+
+    // 更新 Doppler/Delay（与界面一致：仅显示最小delay）
+    this.updateValue('doppler', doppler != null ? doppler.toFixed(2) + ' Hz' : '--');
+    this.updateValue('delay', delayMin != null ? delayMin.toFixed(2) + ' ms' : '--');
 
     // 更新模式信息 (支持嵌套 mode.* 格式)
     var modeData = status.mode || {};

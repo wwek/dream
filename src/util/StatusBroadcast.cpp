@@ -306,8 +306,23 @@ std::string CStatusBroadcast::CollectStatusJSON()
         timeinfo.tm_hour = Parameters.iUTCHour;
         timeinfo.tm_min = Parameters.iUTCMin;
         timeinfo.tm_sec = 0;
-        time_t timestamp = timegm(&timeinfo);  // timegm for UTC
-        json << timestamp << ",";
+
+        // Convert to UTC timestamp (cross-platform)
+#ifdef _WIN32
+        time_t timestamp = _mkgmtime(&timeinfo);
+#else
+        time_t timestamp = timegm(&timeinfo);
+#endif
+
+        // Check for invalid date (timegm/mkgmtime returns -1 on error)
+        if (timestamp == -1)
+        {
+            json << "0,";
+        }
+        else
+        {
+            json << timestamp << ",";
+        }
     }
 
     // Status indicators
@@ -438,6 +453,20 @@ std::string CStatusBroadcast::CollectStatusJSON()
                     default:
                         json << "\"Unknown\"";
                         break;
+                    }
+
+                    // Protection mode (EEP/UEP)
+                    _REAL rPartABLenRat = Parameters.PartABLenRatio(i);
+                    if (rPartABLenRat != (_REAL) 0.0)
+                    {
+                        // UEP mode with percentage
+                        json << ",\"protection_mode\":\"UEP\"";
+                        json << ",\"protection_percent\":" << std::setprecision(1) << (rPartABLenRat * 100.0);
+                    }
+                    else
+                    {
+                        // EEP mode
+                        json << ",\"protection_mode\":\"EEP\"";
                     }
 
                     // Text message if available

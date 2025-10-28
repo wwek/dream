@@ -114,9 +114,9 @@
             console.log('[Test] DrmPanel initialized');
         }
 
-        // 测试数据 1: 完整数据（包含语言、节目类型、国家）
+        // 测试数据 1: 完整数据（包含语言、节目类型、国家、扩展信号参数）
         var testData = {
-            "timestamp": 1761535865,
+            "timestamp": 1761640323,
             "status": {
                 "io": 0,
                 "time": 0,
@@ -126,11 +126,15 @@
                 "msc": 0
             },
             "signal": {
-                "if_level_db": -30.0,
-                "snr_db": 13.9
+                "if_level_db": -22.9,
+                "snr_db": 14.0,
+                "wmer_db": 13.8,
+                "doppler_hz": 0.6,
+                "delay_min_ms": 3.9,
+                "delay_max_ms": 6.56
             },
             "mode": {
-                "robustness": 0,
+                "robustness": 1,
                 "bandwidth": 3,
                 "bandwidth_khz": 10.0,
                 "interleaver": 0
@@ -147,11 +151,11 @@
             },
             "service_list": [
                 {
-                    "id": "3E9",
+                    "id": "1",
                     "label": "CNR-1",
                     "is_audio": true,
                     "audio_coding": 3,
-                    "bitrate_kbps": 11.6,
+                    "bitrate_kbps": 11.64,
                     "language": {
                         "fac_id": 3,
                         "name": "Chinese (Mandarin)"
@@ -303,6 +307,40 @@
                 value: errorData
             });
             console.log('[Test] Loaded error data');
+        }
+
+        // 测试良好信号（黄色）
+        function loadGoodSignal() {
+            if (!drmPanel) {
+                alert('DrmPanel 未初始化，请刷新页面');
+                return;
+            }
+            var goodSignalData = JSON.parse(JSON.stringify(testData));
+            goodSignalData.signal.snr_db = 12.5;
+            goodSignalData.signal.wmer_db = 11.8;
+            displayData(goodSignalData);
+            drmPanel.update({
+                type: 'drm_status',
+                value: goodSignalData
+            });
+            console.log('[Test] Loaded good signal (yellow)');
+        }
+
+        // 测试差信号（红色）
+        function loadPoorSignal() {
+            if (!drmPanel) {
+                alert('DrmPanel 未初始化，请刷新页面');
+                return;
+            }
+            var poorSignalData = JSON.parse(JSON.stringify(testData));
+            poorSignalData.signal.snr_db = 8.2;
+            poorSignalData.signal.wmer_db = 7.5;
+            displayData(poorSignalData);
+            drmPanel.update({
+                type: 'drm_status',
+                value: poorSignalData
+            });
+            console.log('[Test] Loaded poor signal (red)');
         }
 
         function clearPanel() {

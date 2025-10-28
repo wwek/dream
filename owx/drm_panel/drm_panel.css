@@ -69,6 +69,7 @@
     color: #fff;
 }
 
+/* SNR 绿色点亮 */
 .drm-snr {
     color: #0f0;
 }
@@ -213,6 +214,13 @@
 }
 
 /* 服务列表元素样式 - 优化后的视觉层级 */
+
+/* 分隔符 */
+.drm-sep {
+    color: #666;
+    font-weight: 400;
+    margin: 0 4px;
+}
 
 /* 序号 - 辅助信息 */
 .drm-service-num {
