@@ -9,17 +9,17 @@ Standalone DRM (Digital Radio Mondiale) decoder with xHE-AAC audio decoding supp
 ```bash
 # Build with docker (Multi-architecture)
 ## arm64
-docker buildx build --platform linux/arm64 -t dream-drm:2.2 .
+docker buildx build --no-cache --platform linux/arm64 -t dream-drm:2.2 .
 docker run --rm -v "$(pwd)/output:/output" dream-drm:2.2 \
     sh -c "cp /usr/local/bin/dream /output/dream-arm64"
 
 ## armv7
-docker buildx build --platform linux/arm/v7 -t dream-drm:2.2 .
+docker buildx build --no-cache --platform linux/arm/v7 -t dream-drm:2.2 .
 docker run --rm -v "$(pwd)/output:/output" dream-drm:2.2 \
     sh -c "cp /usr/local/bin/dream /output/dream-armv7"
 
 ## amd64
-docker buildx build --platform linux/amd64 -t dream-drm:2.2 .
+docker buildx build --no-cache --platform linux/amd64 -t dream-drm:2.2 .
 docker run --rm -v "$(pwd)/output:/output" dream-drm:2.2 \
     sh -c "cp /usr/local/bin/dream /output/dream-amd64"
 

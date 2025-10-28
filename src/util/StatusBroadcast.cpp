@@ -577,26 +577,22 @@ std::string CStatusBroadcast::CollectStatusJSON()
                     case CDataDecoder::AT_EPG:
                         bHasProgramGuide = true;
                         // Extract EPG content if new
-                        if (bIsNewContent && NewObj.Body.Size() > 0)
+                        if (bIsNewContent && NewObj.Body.vecData.Size() > 0)
                         {
-                            const void* pData = NewObj.Body.QueryData();
-                            if (pData != nullptr)
-                            {
-                                if (bHasMediaContent) mediaContentJson << ",";
-                                mediaContentJson << "\"program_guide\":{";
-                                mediaContentJson << "\"timestamp\":" << currentObjTime;
-                                mediaContentJson << ",\"name\":\"" << JsonEscape(NewObj.strName) << "\"";
-                                mediaContentJson << ",\"description\":\"" << JsonEscape(NewObj.strContentDescription) << "\"";
-                                mediaContentJson << ",\"size\":" << NewObj.Body.Size();
-                                // Base64 encode body data
-                                std::string base64Data = Base64Encode(
-                                    reinterpret_cast<const unsigned char*>(pData),
-                                    NewObj.Body.Size()
-                                );
-                                mediaContentJson << ",\"data\":\"" << base64Data << "\"";
-                                mediaContentJson << "}";
-                                bHasMediaContent = true;
-                            }
+                            if (bHasMediaContent) mediaContentJson << ",";
+                            mediaContentJson << "\"program_guide\":{";
+                            mediaContentJson << "\"timestamp\":" << currentObjTime;
+                            mediaContentJson << ",\"name\":\"" << JsonEscape(NewObj.strName) << "\"";
+                            mediaContentJson << ",\"description\":\"" << JsonEscape(NewObj.strContentDescription) << "\"";
+                            mediaContentJson << ",\"size\":" << NewObj.Body.vecData.Size();
+                            // Base64 encode body data
+                            std::string base64Data = Base64Encode(
+                                reinterpret_cast<const unsigned char*>(&NewObj.Body.vecData[0]),
+                                NewObj.Body.vecData.Size()
+                            );
+                            mediaContentJson << ",\"data\":\"" << base64Data << "\"";
+                            mediaContentJson << "}";
+                            bHasMediaContent = true;
                         }
                         break;
 
@@ -618,26 +614,22 @@ std::string CStatusBroadcast::CollectStatusJSON()
                     case CDataDecoder::AT_MOTSLIDESHOW:
                         bHasSlideshow = true;
                         // Extract Slideshow image if new
-                        if (bIsNewContent && NewObj.Body.Size() > 0)
+                        if (bIsNewContent && NewObj.Body.vecData.Size() > 0)
                         {
-                            const void* pData = NewObj.Body.QueryData();
-                            if (pData != nullptr)
-                            {
-                                if (bHasMediaContent) mediaContentJson << ",";
-                                mediaContentJson << "\"slideshow\":{";
-                                mediaContentJson << "\"timestamp\":" << currentObjTime;
-                                mediaContentJson << ",\"name\":\"" << JsonEscape(NewObj.strName) << "\"";
-                                mediaContentJson << ",\"mime\":\"" << JsonEscape(NewObj.strMimeType) << "\"";
-                                mediaContentJson << ",\"size\":" << NewObj.Body.Size();
-                                // Base64 encode image data
-                                std::string base64Data = Base64Encode(
-                                    reinterpret_cast<const unsigned char*>(pData),
-                                    NewObj.Body.Size()
-                                );
-                                mediaContentJson << ",\"data\":\"" << base64Data << "\"";
-                                mediaContentJson << "}";
-                                bHasMediaContent = true;
-                            }
+                            if (bHasMediaContent) mediaContentJson << ",";
+                            mediaContentJson << "\"slideshow\":{";
+                            mediaContentJson << "\"timestamp\":" << currentObjTime;
+                            mediaContentJson << ",\"name\":\"" << JsonEscape(NewObj.strName) << "\"";
+                            mediaContentJson << ",\"mime\":\"" << JsonEscape(NewObj.strMimeType) << "\"";
+                            mediaContentJson << ",\"size\":" << NewObj.Body.vecData.Size();
+                            // Base64 encode image data
+                            std::string base64Data = Base64Encode(
+                                reinterpret_cast<const unsigned char*>(&NewObj.Body.vecData[0]),
+                                NewObj.Body.vecData.Size()
+                            );
+                            mediaContentJson << ",\"data\":\"" << base64Data << "\"";
+                            mediaContentJson << "}";
+                            bHasMediaContent = true;
                         }
                         break;
 
