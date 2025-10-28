@@ -64,7 +64,13 @@ socat UNIX-CONNECT:/tmp/dream_status.sock -
 - Division by zero crash (`AudioSourceDecoder.cpp`)
 - USAC compilation support (`fdk_aac_codec.cpp`)
 
-## Libraries
+## Base code
+code is based on:
+svn://svn.code.sf.net/p/drm/code/branches/dream-rafa
+
+xhe aac decode fix
+
+## Dream needs libraries
 ```
 # libpcap and libspeexdsp
 apt-get update && apt-get install -y libpcap0.8 libspeexdsp1
