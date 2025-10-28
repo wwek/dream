@@ -429,11 +429,30 @@
 .drm-time-row {
     display: flex;
     flex-wrap: nowrap;
+    align-items: center;
     gap: 15px;
     margin-top: 6px;
     padding-top: 4px;
     border-top: 1px solid #444;
     font-size: 12px;
+}
+
+/* 时间源标识 */
+.drm-time-source {
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    margin-right: 5px;
+    display: inline-block;
+    background: #666;
+    color: #ccc;
+}
+
+/* 为空时隐藏 */
+.drm-time-source:empty {
+    display: none;
 }
 
 .drm-time-item {
@@ -706,7 +725,23 @@
     }
 
     .drm-time-row {
-        font-size: 11px;
+        font-size: 10px;
+        gap: 5px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+    }
+
+    .drm-time-source {
+        font-size: 9px;
+        padding: 1px 4px;
+        margin-right: 3px;
+        flex-shrink: 0;
+    }
+
+    .drm-time-item {
+        font-size: 10px;
+        white-space: nowrap;
+        flex-shrink: 0;
     }
 }
 

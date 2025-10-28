@@ -147,8 +147,9 @@ function DrmPanel(el) {
             // 服务列表
             '<div class="drm-services-list" data-drm-services></div>' +
 
-            // 时间显示区域
+            // 时间显示区域（添加时间源标识）
             '<div class="drm-time-row">' +
+                '<span class="drm-time-source" data-drm-val="time_source"></span>' +
                 '<span class="drm-time-item">UTC: <span class="drm-value" data-drm-val="time_utc">---- -- -- --:--:--</span></span>' +
                 '<span class="drm-time-item">Local: <span class="drm-value" data-drm-val="time_local">---- -- -- --:--:--</span></span>' +
             '</div>' +
@@ -300,14 +301,19 @@ DrmPanel.prototype.update = function(data) {
         this.$container.find('[data-drm-services]').empty();
     }
 
-    // 更新时间显示 (从 received_time 字段获取 DRM 传输时间)
-    // 如果 received_time 为 0 或不存在，则不显示时间
+    // 更新时间显示
+    // 优先使用 received_time (DRM 传输时间), 为 0 时使用 timestamp (系统时间)
     if (status.received_time && status.received_time !== 0) {
-        this.updateTime(status.received_time);
+        // 使用 DRM 传输时间
+        this.updateTime(status.received_time, 'DRM');
+    } else if (status.timestamp && status.timestamp !== 0) {
+        // 回退到系统时间
+        this.updateTime(status.timestamp, 'System');
     } else {
-        // 时间不可用时显示提示
-        this.updateValue('time_utc', 'Service not available');
-        this.updateValue('time_local', 'Service not available');
+        // 无可用时间
+        this.updateValue('time_source', '');
+        this.updateValue('time_utc', 'No time available');
+        this.updateValue('time_local', 'No time available');
     }
 
     // 更新 Media 状态 (Program Guide, Journaline, Slideshow)
@@ -670,9 +676,10 @@ DrmPanel.prototype.updateQamBadges = function(type, qamIndex) {
     }
 };
 
-DrmPanel.prototype.updateTime = function(timestamp) {
+DrmPanel.prototype.updateTime = function(timestamp, source) {
     // 将 Unix 时间戳转换为 UTC 和本地时间
     // timestamp 是秒级时间戳,需要转换为毫秒
+    // source: 'DRM' (从 DRM 传输获取) 或 'System' (从系统时间获取)
     var date = new Date(timestamp * 1000);
 
     // UTC 时间 (YYYY-MM-DD HH:MM:SS 格式)
@@ -692,6 +699,10 @@ DrmPanel.prototype.updateTime = function(timestamp) {
     var localMinutes = date.getMinutes().toString().padStart(2, '0');
     var localSeconds = date.getSeconds().toString().padStart(2, '0');
     var localTime = localYear + '-' + localMonth + '-' + localDay + ' ' + localHours + ':' + localMinutes + ':' + localSeconds;
+
+    // 更新时间源标识
+    var sourceLabel = source === 'DRM' ? '[DRM Time]' : '[System Time]';
+    this.updateValue('time_source', sourceLabel);
 
     // 更新显示
     this.updateValue('time_utc', utcTime);
