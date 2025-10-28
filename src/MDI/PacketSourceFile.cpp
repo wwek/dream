@@ -124,9 +124,22 @@ CPacketSourceFile::SetOrigin(const string& origin)
             size_t n = fread(&c, sizeof(c), 1, (FILE *) pF);
             (void)n;
             fseek ( (FILE *) pF , 0 , SEEK_SET );
-            if(c=='A') eFileType = af;
-            if(c=='P') eFileType = pf;
-            if(c=='f') eFileType = ff;
+
+            // Detect file type by magic byte
+            if(c=='A')
+                eFileType = af;
+            else if(c=='P')
+                eFileType = pf;
+            else if(c=='f')
+                eFileType = ff;
+            else
+            {
+                // Unknown format - close file and fail
+                // Prevents type confusion bug where eFileType remains default 'pcap'
+                // which would cause segfault when calling pcap_close() on FILE*
+                fclose((FILE*)pF);
+                pF = nullptr;
+            }
         }
     }
     return pF != nullptr;
