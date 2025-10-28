@@ -174,7 +174,12 @@
                         "name": "News"
                     }
                 }
-            ]
+            ],
+            "media": {
+                "program_guide": false,
+                "journaline": false,
+                "slideshow": true
+            }
         };
 
         // Test Data 2: With text and multiple services (UEP protection mode example)
@@ -238,7 +243,12 @@
                     "bitrate_kbps": 9.6,
                     "protection_mode": "EEP"
                 }
-            ]
+            ],
+            "media": {
+                "program_guide": false,
+                "journaline": true,
+                "slideshow": true
+            }
         };
 
         // No signal data
@@ -261,6 +271,11 @@
                 "dc_offset_hz": 0.0,
                 "sample_offset_hz": 0.0,
                 "sample_offset_ppm": 0
+            },
+            "media": {
+                "program_guide": false,
+                "journaline": false,
+                "slideshow": false
             }
         };
 
@@ -287,6 +302,11 @@
                 "bandwidth": 4,
                 "bandwidth_khz": 18,
                 "interleaver": 1
+            },
+            "media": {
+                "program_guide": true,
+                "journaline": false,
+                "slideshow": false
             }
         };
 

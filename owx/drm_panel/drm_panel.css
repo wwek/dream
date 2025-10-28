@@ -144,7 +144,7 @@
 /* ========== Media 内容行 ========== */
 .drm-media-row {
     display: flex;
-    gap: 15px;
+    gap: 12px;
     margin-bottom: 8px;
     margin-top: 6px;
     padding: 3px 0;
@@ -153,31 +153,37 @@
     font-size: 12px;
 }
 
+/* Media 项（方框 + 文字） */
 .drm-media-item {
     display: inline-flex;
     align-items: center;
     gap: 4px;
 }
 
-.drm-media-item input[type="checkbox"] {
-    margin: 0;
-    cursor: pointer;
+/* Media 方框指示灯 */
+.drm-media-box {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    transition: background-color 0.2s ease;
 }
 
-.drm-media-item input[type="checkbox"]:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
+/* 方框点亮状态（绿色） */
+.drm-media-box.drm-media-on {
+    background: #0f0;
 }
 
-.drm-media-item label {
-    cursor: pointer;
+/* 方框熄灭状态（灰色） */
+.drm-media-box.drm-media-off {
+    background: #666;
+}
+
+/* Media 文字（保持白色） */
+.drm-media-text {
     color: #fff;
     font-size: 12px;
-}
-
-.drm-media-item input[type="checkbox"]:disabled + label {
-    cursor: not-allowed;
-    opacity: 0.6;
+    font-weight: 400;
 }
 
 /* ========== 服务列表 ========== */
@@ -364,7 +370,7 @@
 
 /* ========== 通用样式 ========== */
 .drm-label {
-    color: #aaa;
+    color: #fff;
 }
 
 /* 非零值绿色高亮 */

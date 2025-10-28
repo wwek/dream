@@ -30,6 +30,7 @@
 #include "../DrmReceiver.h"
 #include "../Parameter.h"
 #include "../tables/TableFAC.h"
+#include "../datadecoding/DataDecoder.h"
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/stat.h>
@@ -525,6 +526,54 @@ std::string CStatusBroadcast::CollectStatusJSON()
         }
         json << "]";
     }
+
+    // Media availability detection (Program Guide, Journaline, Slideshow)
+    json << ",\"media\":{";
+
+    // Get DataDecoder instance
+    CDataDecoder* pDataDecoder = pDRMReceiver->GetDataDecoder();
+
+    bool bHasProgramGuide = false;
+    bool bHasJournaline = false;
+    bool bHasSlideshow = false;
+
+    if (pDataDecoder != nullptr)
+    {
+        // Check all packet IDs for available media types
+        for (int iPacketID = 0; iPacketID < MAX_NUM_PACK_PER_STREAM; iPacketID++)
+        {
+            CMOTDABDec* pMOTApp = pDataDecoder->getApplication(iPacketID);
+            if (pMOTApp != nullptr)
+            {
+                // Check if new objects are available in the queue
+                if (pMOTApp->NewObjectAvailable())
+                {
+                    // Determine application type
+                    CDataDecoder::EAppType eAppType = pDataDecoder->GetAppType();
+
+                    switch (eAppType)
+                    {
+                        case CDataDecoder::AT_EPG:
+                            bHasProgramGuide = true;
+                            break;
+                        case CDataDecoder::AT_JOURNALINE:
+                            bHasJournaline = true;
+                            break;
+                        case CDataDecoder::AT_MOTSLIDESHOW:
+                            bHasSlideshow = true;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+    }
+
+    json << "\"program_guide\":" << (bHasProgramGuide ? "true" : "false");
+    json << ",\"journaline\":" << (bHasJournaline ? "true" : "false");
+    json << ",\"slideshow\":" << (bHasSlideshow ? "true" : "false");
+    json << "}";
 
     json << "}";
 

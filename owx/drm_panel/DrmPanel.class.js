@@ -85,20 +85,20 @@ function DrmPanel(el) {
                 '</span>' +
             '</div>' +
 
-            // Media 内容行（Program Guide, Journaline, Slideshow）
+            // Media 内容行（Program Guide, Journaline, Slideshow）- 使用方框指示灯
             '<div class="drm-media-row">' +
                 '<span class="drm-label">Media:</span> ' +
                 '<span class="drm-media-item">' +
-                    '<input type="checkbox" id="drm-media-program-guide" data-drm-media="program_guide" disabled>' +
-                    '<label for="drm-media-program-guide">Program Guide</label>' +
-                '</span> ' +
+                    '<span class="drm-media-box drm-media-off" data-drm-media="program_guide"></span>' +
+                    '<span class="drm-media-text">Program Guide</span>' +
+                '</span>' +
                 '<span class="drm-media-item">' +
-                    '<input type="checkbox" id="drm-media-journaline" data-drm-media="journaline" disabled>' +
-                    '<label for="drm-media-journaline">Journaline®</label>' +
-                '</span> ' +
+                    '<span class="drm-media-box drm-media-off" data-drm-media="journaline"></span>' +
+                    '<span class="drm-media-text">Journaline®</span>' +
+                '</span>' +
                 '<span class="drm-media-item">' +
-                    '<input type="checkbox" id="drm-media-slideshow" data-drm-media="slideshow" disabled>' +
-                    '<label for="drm-media-slideshow">Slideshow</label>' +
+                    '<span class="drm-media-box drm-media-off" data-drm-media="slideshow"></span>' +
+                    '<span class="drm-media-text">Slideshow</span>' +
                 '</span>' +
             '</div>' +
 
@@ -250,6 +250,13 @@ DrmPanel.prototype.update = function(data) {
         this.updateValue('time_utc', 'Service not available');
         this.updateValue('time_local', 'Service not available');
     }
+
+    // 更新 Media 状态 (Program Guide, Journaline, Slideshow)
+    if (status.media) {
+        this.updateMediaIndicator('program_guide', status.media.program_guide);
+        this.updateMediaIndicator('journaline', status.media.journaline);
+        this.updateMediaIndicator('slideshow', status.media.slideshow);
+    }
 };
 
 DrmPanel.prototype.mapStatusValue = function(value) {
@@ -275,6 +282,18 @@ DrmPanel.prototype.updateIndicator = function(name, state) {
 
 DrmPanel.prototype.updateValue = function(name, value) {
     this.$container.find('[data-drm-val="' + name + '"]').text(value);
+};
+
+DrmPanel.prototype.updateMediaIndicator = function(mediaType, isAvailable) {
+    var $box = this.$container.find('[data-drm-media="' + mediaType + '"]');
+    if ($box.length > 0) {
+        $box.removeClass('drm-media-on drm-media-off');
+        if (isAvailable) {
+            $box.addClass('drm-media-on');  // 绿色方框
+        } else {
+            $box.addClass('drm-media-off');  // 灰色方框
+        }
+    }
 };
 
 // 更新数值并根据是否为0添加绿色高亮
