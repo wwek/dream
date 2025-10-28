@@ -78,7 +78,7 @@ function DrmPanel(el) {
                     'DRM mode ' +
                     '<span class="drm-mode-badges">' +
                         '<span class="drm-badge" data-drm-mode="A">A</span>' +
-                        '<span class="drm-badge drm-active" data-drm-mode="B">B</span>' +
+                        '<span class="drm-badge" data-drm-mode="B">B</span>' +
                         '<span class="drm-badge" data-drm-mode="C">C</span>' +
                         '<span class="drm-badge" data-drm-mode="D">D</span>' +
                     '</span>' +
@@ -89,14 +89,14 @@ function DrmPanel(el) {
                         '<span class="drm-chan-badge" data-chan="4.5">4.5</span>' +
                         '<span class="drm-chan-badge" data-chan="5">5</span>' +
                         '<span class="drm-chan-badge" data-chan="9">9</span>' +
-                        '<span class="drm-chan-badge drm-active" data-chan="10">10</span>' +
+                        '<span class="drm-chan-badge" data-chan="10">10</span>' +
                         '<span class="drm-chan-badge" data-chan="18">18</span>' +
                         '<span class="drm-chan-badge" data-chan="20">20</span>' +
                     '</span> kHz' +
                 '</span>' +
                 '<span class="drm-ilv-group">' +
                     'ILV <span class="drm-badge" data-drm-val="interleaver_long">L</span> ' +
-                    '<span class="drm-badge drm-active" data-drm-val="interleaver_short">S</span>' +
+                    '<span class="drm-badge" data-drm-val="interleaver_short">S</span>' +
                 '</span>' +
             '</div>' +
 
@@ -104,13 +104,13 @@ function DrmPanel(el) {
             '<div class="drm-qam-row">' +
                 '<span class="drm-qam-group">' +
                     'SDC ' +
-                    '<span class="drm-badge drm-active" data-drm-val="sdc_4">4</span>' +
+                    '<span class="drm-badge" data-drm-val="sdc_4">4</span>' +
                     '<span class="drm-badge" data-drm-val="sdc_16">16</span>' +
                     ' QAM' +
                 '</span>' +
                 '<span class="drm-qam-group">' +
                     'MSC ' +
-                    '<span class="drm-badge drm-active" data-drm-val="msc_16">16</span>' +
+                    '<span class="drm-badge" data-drm-val="msc_16">16</span>' +
                     '<span class="drm-badge" data-drm-val="msc_64">64</span>' +
                     ' QAM' +
                 '</span>' +
@@ -234,26 +234,39 @@ DrmPanel.prototype.update = function(data) {
     var interleaver = modeData.interleaver != null ? modeData.interleaver : status.interleaver;
 
     // DRM Mode (A/B/C/D) - 基于 robustness
-    var drmModeLetters = ['A', 'B', 'C', 'D'];
-    var drmMode = robustness != null && robustness < drmModeLetters.length
-        ? drmModeLetters[robustness]
-        : 'B';
-    this.updateDrmModeBadges(drmMode);
+    // 仅在有效数据时更新 (避免无数据时错误点亮默认值)
+    if (robustness != null) {
+        var drmModeLetters = ['A', 'B', 'C', 'D'];
+        var drmMode = robustness < drmModeLetters.length
+            ? drmModeLetters[robustness]
+            : null;
+        if (drmMode) {
+            this.updateDrmModeBadges(drmMode);
+        }
+    }
 
-    // 更新信道带宽高亮
-    var bandwidthDisplay = ['4.5', '5', '9', '10', '18', '20'];
-    var bwValue = typeof bandwidth === 'number' && bandwidth < bandwidthDisplay.length
-        ? bandwidthDisplay[bandwidth]
-        : bandwidth;
-    this.updateChannelBadges(bwValue);
+    // 更新信道带宽高亮 (仅在有效数据时更新)
+    if (bandwidth != null) {
+        var bandwidthDisplay = ['4.5', '5', '9', '10', '18', '20'];
+        var bwValue = typeof bandwidth === 'number' && bandwidth < bandwidthDisplay.length
+            ? bandwidthDisplay[bandwidth]
+            : bandwidth;
+        this.updateChannelBadges(bwValue);
+    }
 
-    // 更新交织器按钮
-    this.updateInterleaverBadges(interleaver);
+    // 更新交织器按钮 (仅在有效数据时更新)
+    if (interleaver != null) {
+        this.updateInterleaverBadges(interleaver);
+    }
 
-    // 更新编码模式 (SDC/MSC QAM: 0=4-QAM, 1=16-QAM, 2=64-QAM)
+    // 更新编码模式 (SDC/MSC QAM: 0=4-QAM, 1=16-QAM, 2=64-QAM) - 仅在有效数据时更新
     var codingData = status.coding || {};
-    this.updateQamBadges('sdc', codingData.sdc_qam);
-    this.updateQamBadges('msc', codingData.msc_qam);
+    if (codingData.sdc_qam != null) {
+        this.updateQamBadges('sdc', codingData.sdc_qam);
+    }
+    if (codingData.msc_qam != null) {
+        this.updateQamBadges('msc', codingData.msc_qam);
+    }
 
     // 更新保护级别 (Protection Level: 0-3)
     var protA = codingData.protection_a != null ? codingData.protection_a : status.protection_level_a;
