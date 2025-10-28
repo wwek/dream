@@ -22,6 +22,12 @@ Plugins.drm_panel._version = 1.0;
 // 插件初始化函数
 Plugins.drm_panel.init = function() {
 
+    // 防止重复初始化
+    if (Plugins.drm_panel._initialized) {
+        console.warn('[DRM Panel Plugin] Already initialized, skipping duplicate init call');
+        return true;
+    }
+
     console.log('[DRM Panel Plugin] Initializing...');
 
     // 检查是否已经有 DrmPanel 类定义（如果从 lib 目录加载）
@@ -31,6 +37,7 @@ Plugins.drm_panel.init = function() {
         // 如果已存在，直接注册
         console.log('[DRM Panel Plugin] DrmPanel class already loaded from lib/');
         registerDrmPanel();
+        Plugins.drm_panel._initialized = true;
         return true;
     }
 
@@ -45,6 +52,7 @@ Plugins.drm_panel.init = function() {
         .done(function() {
             console.log('[DRM Panel Plugin] DrmPanel class loaded successfully');
             registerDrmPanel();
+            Plugins.drm_panel._initialized = true;
         })
         .fail(function(_jqxhr, _settings, exception) {
             console.error('[DRM Panel Plugin] Failed to load DrmPanel class:', exception);
@@ -145,6 +153,7 @@ Plugins.drm_panel.getInfo = function() {
 Plugins.drm_panel.unload = function() {
     if (typeof MetaPanel !== 'undefined' && MetaPanel.types && MetaPanel.types.drm) {
         delete MetaPanel.types.drm;
+        Plugins.drm_panel._initialized = false;
         console.log('[DRM Panel Plugin] Unregistered from MetaPanel');
         $(document).trigger('event:drm_panel_unregistered');
     }

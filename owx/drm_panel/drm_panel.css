@@ -524,6 +524,13 @@
     vertical-align: middle;
 }
 
+/* 有 text 数据时的绿色样式 */
+.drm-service-text-btn.drm-text-available {
+    background: #0a0;
+    color: #fff;
+    border-color: #0c0;
+}
+
 .drm-service-text-btn:hover {
     background: #4a7ba7;
     color: #fff;

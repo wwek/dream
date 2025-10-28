@@ -107,6 +107,9 @@ function DrmPanel(el) {
         me.toggleTextContent(index, $(this));
     });
 
+    // 保存展开状态的 Map: index -> boolean
+    this.textExpandedState = {};
+
     this.clear();
 }
 
@@ -409,7 +412,11 @@ DrmPanel.prototype.updateServices = function(services) {
         // 文本内容按钮 (如果有 text 字段)
         var textButton = '';
         if (service.text) {
-            textButton = '<span class="drm-service-text-btn" data-service-index="' + index + '">T</span>';
+            // 检查是否之前已展开
+            var isExpanded = me.textExpandedState[index];
+            var btnClass = 'drm-service-text-btn drm-text-available' + (isExpanded ? ' drm-text-expanded' : '');
+            var btnText = isExpanded ? 'T↓' : 'T';
+            textButton = '<span class="' + btnClass + '" data-service-index="' + index + '">' + btnText + '</span>';
         }
 
         var serviceHtml =
@@ -427,9 +434,11 @@ DrmPanel.prototype.updateServices = function(services) {
 
         $service.html(serviceHtml);
 
-        // 如果有文本内容,创建文本展开区域 (初始隐藏)
+        // 如果有文本内容,创建文本展开区域
         if (service.text) {
-            var $textContent = $('<div class="drm-service-text-content" data-service-index="' + index + '" style="display: none;">' +
+            var isExpanded = me.textExpandedState[index];
+            var displayStyle = isExpanded ? 'display: block;' : 'display: none;';
+            var $textContent = $('<div class="drm-service-text-content" data-service-index="' + index + '" style="' + displayStyle + '">' +
                 '<span class="drm-text-icon">📄</span> ' +
                 '<span class="drm-text-body">' + me.escapeHtml(me.decodeUnicode(service.text)) + '</span>' +
                 '</div>');
@@ -471,11 +480,15 @@ DrmPanel.prototype.toggleTextContent = function(index, $button) {
         $textContent.slideUp(200);
         $button.removeClass('drm-text-expanded').text('T');
         $button.attr('title', 'Click to view text');
+        // 保存状态
+        this.textExpandedState[index] = false;
     } else {
         // 展开
         $textContent.slideDown(200);
         $button.addClass('drm-text-expanded').text('T↓');
         $button.attr('title', 'Click to hide text');
+        // 保存状态
+        this.textExpandedState[index] = true;
     }
 };
 
