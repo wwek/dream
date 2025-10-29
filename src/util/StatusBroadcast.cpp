@@ -291,16 +291,27 @@ std::string CStatusBroadcast::CollectStatusJSON()
     json << "{";
     json << "\"timestamp\":" << std::time(nullptr) << ",";
 
-    // Received time from DRM transmission (UTC timestamp)
-    json << "\"received_time\":";
+    // DRM time information (from DRM transmission)
+    json << "\"drm_time\":{";
+
     if (Parameters.iYear == 0 && Parameters.iMonth == 0 && Parameters.iDay == 0 &&
         Parameters.iUTCHour == 0 && Parameters.iUTCMin == 0)
     {
-        json << "0,";
+        // No DRM time available
+        json << "\"valid\":false";
     }
     else
     {
-        // Convert to Unix timestamp
+        json << "\"valid\":true,";
+
+        // Raw DRM time fields (UTC time from DRM transmission)
+        json << "\"year\":" << Parameters.iYear << ",";
+        json << "\"month\":" << Parameters.iMonth << ",";
+        json << "\"day\":" << Parameters.iDay << ",";
+        json << "\"hour\":" << Parameters.iUTCHour << ",";
+        json << "\"min\":" << Parameters.iUTCMin << ",";
+
+        // UTC timestamp
         struct tm timeinfo = {0};
         timeinfo.tm_year = Parameters.iYear - 1900;
         timeinfo.tm_mon = Parameters.iMonth - 1;
@@ -309,23 +320,38 @@ std::string CStatusBroadcast::CollectStatusJSON()
         timeinfo.tm_min = Parameters.iUTCMin;
         timeinfo.tm_sec = 0;
 
-        // Convert to UTC timestamp (cross-platform)
 #ifdef _WIN32
-        time_t timestamp = _mkgmtime(&timeinfo);
+        time_t drm_timestamp = _mkgmtime(&timeinfo);
 #else
-        time_t timestamp = timegm(&timeinfo);
+        time_t drm_timestamp = timegm(&timeinfo);
 #endif
 
-        // Check for invalid date (timegm/mkgmtime returns -1 on error)
-        if (timestamp == -1)
+        if (drm_timestamp != -1)
         {
-            json << "0,";
+            json << "\"timestamp\":" << drm_timestamp << ",";
         }
         else
         {
-            json << timestamp << ",";
+            json << "\"timestamp\":0,";
+        }
+
+        // Local time offset information (if available)
+        json << "\"has_local_offset\":" << (Parameters.bValidUTCOffsetAndSense ? "true" : "false");
+
+        if (Parameters.bValidUTCOffsetAndSense)
+        {
+            // UTC offset in half-hour units (±0.5h resolution)
+            int offset_minutes = Parameters.iUTCOff * 30;
+            if (Parameters.iUTCSense == 1)
+            {
+                offset_minutes = -offset_minutes;  // Negative offset
+            }
+
+            json << ",\"offset_min\":" << offset_minutes;
         }
     }
+
+    json << "},";
 
     // Status indicators
     json << "\"status\":{";

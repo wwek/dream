@@ -147,11 +147,16 @@ function DrmPanel(el) {
             // 服务列表
             '<div class="drm-services-list" data-drm-services></div>' +
 
-            // 时间显示区域（添加时间源标识）
+            // 时间显示区域（DRM 时间和服务器时间在同一行）
             '<div class="drm-time-row">' +
-                '<span class="drm-time-source" data-drm-val="time_source"></span>' +
-                '<span class="drm-time-item">UTC: <span class="drm-value" data-drm-val="time_utc">---- -- -- --:--:--</span></span>' +
-                '<span class="drm-time-item">Local: <span class="drm-value" data-drm-val="time_local">---- -- -- --:--:--</span></span>' +
+                '<span class="drm-time-item">' +
+                    '<span class="drm-time-label">[DRM]</span> ' +
+                    '<span class="drm-value" data-drm-val="time_drm">----</span>' +
+                '</span>' +
+                '<span class="drm-time-item">' +
+                    '<span class="drm-time-label">[Server]</span> ' +
+                    '<span class="drm-value" data-drm-val="time_server">----</span>' +
+                '</span>' +
             '</div>' +
         '</div>'
     );
@@ -302,19 +307,8 @@ DrmPanel.prototype.update = function(data) {
     }
 
     // 更新时间显示
-    // 优先使用 received_time (DRM 传输时间), 为 0 时使用 timestamp (系统时间)
-    if (status.received_time && status.received_time !== 0) {
-        // 使用 DRM 传输时间
-        this.updateTime(status.received_time, 'DRM');
-    } else if (status.timestamp && status.timestamp !== 0) {
-        // 回退到系统时间
-        this.updateTime(status.timestamp, 'System');
-    } else {
-        // 无可用时间
-        this.updateValue('time_source', '');
-        this.updateValue('time_utc', 'No time available');
-        this.updateValue('time_local', 'No time available');
-    }
+    // 传递完整的 drm_time 对象（包含时区偏移信息）
+    this.updateTimeDisplay(status.drm_time, status.timestamp);
 
     // 更新 Media 状态 (Program Guide, Journaline, Slideshow)
     if (status.media) {
@@ -676,37 +670,69 @@ DrmPanel.prototype.updateQamBadges = function(type, qamIndex) {
     }
 };
 
-DrmPanel.prototype.updateTime = function(timestamp, source) {
-    // 将 Unix 时间戳转换为 UTC 和本地时间
-    // timestamp 是秒级时间戳,需要转换为毫秒
-    // source: 'DRM' (从 DRM 传输获取) 或 'System' (从系统时间获取)
-    var date = new Date(timestamp * 1000);
+DrmPanel.prototype.updateTimeDisplay = function(drmTime, serverTime) {
+    // 更新 DRM 时间
+    // 显示格式: UTC时间 + 时区偏移（如果有的话）
+    // 例如: "2025-01-15 13:40:00 UTC+8" 表示发射机在UTC+8时区，当地时间是21:40
+    if (drmTime && drmTime.valid) {
+        // 使用原始字段拼接 UTC 时间
+        var drmFormatted = drmTime.year + '-' +
+            String(drmTime.month).padStart(2, '0') + '-' +
+            String(drmTime.day).padStart(2, '0') + ' ' +
+            String(drmTime.hour).padStart(2, '0') + ':' +
+            String(drmTime.min).padStart(2, '0') + ':00';
 
-    // UTC 时间 (YYYY-MM-DD HH:MM:SS 格式)
-    var utcYear = date.getUTCFullYear();
-    var utcMonth = (date.getUTCMonth() + 1).toString().padStart(2, '0');
-    var utcDay = date.getUTCDate().toString().padStart(2, '0');
-    var utcHours = date.getUTCHours().toString().padStart(2, '0');
-    var utcMinutes = date.getUTCMinutes().toString().padStart(2, '0');
-    var utcSeconds = date.getUTCSeconds().toString().padStart(2, '0');
-    var utcTime = utcYear + '-' + utcMonth + '-' + utcDay + ' ' + utcHours + ':' + utcMinutes + ':' + utcSeconds;
+        // 添加时区偏移标记（如果DRM广播了这个信息）
+        if (drmTime.has_local_offset && drmTime.offset_min !== undefined) {
+            var offsetHours = Math.floor(Math.abs(drmTime.offset_min) / 60);
+            var offsetMins = Math.abs(drmTime.offset_min) % 60;
+            var sign = drmTime.offset_min >= 0 ? '+' : '-';
 
-    // 本地时间 (YYYY-MM-DD HH:MM:SS 格式)
-    var localYear = date.getFullYear();
-    var localMonth = (date.getMonth() + 1).toString().padStart(2, '0');
-    var localDay = date.getDate().toString().padStart(2, '0');
-    var localHours = date.getHours().toString().padStart(2, '0');
-    var localMinutes = date.getMinutes().toString().padStart(2, '0');
-    var localSeconds = date.getSeconds().toString().padStart(2, '0');
-    var localTime = localYear + '-' + localMonth + '-' + localDay + ' ' + localHours + ':' + localMinutes + ':' + localSeconds;
+            // 格式化时区偏移
+            var offsetStr = ' UTC' + sign + offsetHours;
+            if (offsetMins === 30) {
+                offsetStr += '.5'; // 30分钟显示为.5
+            }
 
-    // 更新时间源标识
-    var sourceLabel = source === 'DRM' ? '[DRM Time]' : '[System Time]';
-    this.updateValue('time_source', sourceLabel);
+            drmFormatted += offsetStr;
+        }
 
-    // 更新显示
-    this.updateValue('time_utc', utcTime);
-    this.updateValue('time_local', localTime);
+        this.updateValue('time_drm', drmFormatted);
+    } else {
+        this.updateValue('time_drm', '----');
+    }
+
+    // 更新服务器时间
+    // 服务器时间转换为浏览器本地时区
+    if (serverTime && serverTime !== 0) {
+        var serverDate = new Date(serverTime * 1000);
+        var serverFormatted = this.formatDateTimeLocal(serverDate);
+        this.updateValue('time_server', serverFormatted);
+    } else {
+        this.updateValue('time_server', '----');
+    }
+};
+
+DrmPanel.prototype.formatDateTimeUTC = function(date) {
+    // 格式化为 UTC 时间（YYYY-MM-DD HH:MM:SS 格式）
+    var year = date.getUTCFullYear();
+    var month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+    var day = date.getUTCDate().toString().padStart(2, '0');
+    var hours = date.getUTCHours().toString().padStart(2, '0');
+    var minutes = date.getUTCMinutes().toString().padStart(2, '0');
+    var seconds = date.getUTCSeconds().toString().padStart(2, '0');
+    return year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+};
+
+DrmPanel.prototype.formatDateTimeLocal = function(date) {
+    // 格式化为浏览器本地时间（YYYY-MM-DD HH:MM:SS 格式）
+    var year = date.getFullYear();
+    var month = (date.getMonth() + 1).toString().padStart(2, '0');
+    var day = date.getDate().toString().padStart(2, '0');
+    var hours = date.getHours().toString().padStart(2, '0');
+    var minutes = date.getMinutes().toString().padStart(2, '0');
+    var seconds = date.getSeconds().toString().padStart(2, '0');
+    return year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
 };
 
 DrmPanel.prototype.updateServices = function(services) {
