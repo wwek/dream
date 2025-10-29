@@ -2,7 +2,9 @@
 
 Reverb::Reverb()
 {
-
+    // Initialize only the critical state that's not set in Init()
+    bAudioWasOK = false;  // Fix undefined behavior bug
+    // bUseReverbEffect is set in Init(), no need to initialize here
 }
 
 void Reverb::Init(int outputSampleRate, bool bUse)
@@ -13,6 +15,9 @@ void Reverb::Init(int outputSampleRate, bool bUse)
     bUseReverbEffect = bUse;
     OldLeft.Init(0);
     OldRight.Init(0);
+
+    // Reset audio state - key fix for signal change issues!
+    bAudioWasOK = false;  // Reset to false, need to rebuild audio state
 }
 
 ETypeRxStatus Reverb::apply(bool bCurBlockOK, bool bCurBlockFaulty, CVector<_REAL> CurLeft, CVector<_REAL> CurRight)
