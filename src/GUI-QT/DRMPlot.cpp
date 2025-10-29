@@ -565,7 +565,7 @@ void CDRMPlot::SetData(QwtPlotCurve& curve, CVector<_COMPLEX>& veccData)
 		curve.SETDATA(&r[0], &im[0], size);
 	}
 	else
-		curve.SETDATA(nullptr, nullptr, 0);
+		curve.SETDATA((const double*)nullptr, (const double*)nullptr, 0);
 }
 
 void CDRMPlot::SetData(CVector<_COMPLEX>& veccData)
@@ -596,15 +596,15 @@ void CDRMPlot::PlotDefaults()
 	vcurvegrid.detach();
 	main1curve.detach();
 	main2curve.detach();
-	curve1.SETDATA(nullptr, nullptr, 0);
-	curve2.SETDATA(nullptr, nullptr, 0);
-	curve3.SETDATA(nullptr, nullptr, 0);
-	curve4.SETDATA(nullptr, nullptr, 0);
-	curve5.SETDATA(nullptr, nullptr, 0);
-	hcurvegrid.SETDATA(nullptr, nullptr, 0);
-	vcurvegrid.SETDATA(nullptr, nullptr, 0);
-	main1curve.SETDATA(nullptr, nullptr, 0);
-	main2curve.SETDATA(nullptr, nullptr, 0);
+	curve1.SETDATA((const double*)nullptr, (const double*)nullptr, 0);
+	curve2.SETDATA((const double*)nullptr, (const double*)nullptr, 0);
+	curve3.SETDATA((const double*)nullptr, (const double*)nullptr, 0);
+	curve4.SETDATA((const double*)nullptr, (const double*)nullptr, 0);
+	curve5.SETDATA((const double*)nullptr, (const double*)nullptr, 0);
+	hcurvegrid.SETDATA((const double*)nullptr, (const double*)nullptr, 0);
+	vcurvegrid.SETDATA((const double*)nullptr, (const double*)nullptr, 0);
+	main1curve.SETDATA((const double*)nullptr, (const double*)nullptr, 0);
+	main2curve.SETDATA((const double*)nullptr, (const double*)nullptr, 0);
 #if QWT_VERSION < 0x060000
 	curve1.setSymbol(QwtSymbol());
     curve2.setSymbol(QwtSymbol());
@@ -794,7 +794,7 @@ void CDRMPlot::SetupAudioSpec(bool bAudioDecoder)
 	else
 	{
 		plot->setTitle(tr("No audio decoding possible"));
-		main1curve.SETDATA(nullptr, nullptr, 0);
+		main1curve.SETDATA((const double*)nullptr, (const double*)nullptr, 0);
 	}
 	plot->enableAxis(QwtPlot::yRight, false);
 	plot->setAxisTitle(QwtPlot::xBottom, tr("Frequency [kHz]"));
@@ -1175,7 +1175,7 @@ void CDRMPlot::SetBWMarker(const _REAL rBWCenter, const _REAL rBWWidth)
 		curve2.SETDATA(dX, dY, 2);
 	}
 	else
-		curve2.SETDATA(nullptr, nullptr, 0);
+		curve2.SETDATA((const double*)nullptr, (const double*)nullptr, 0);
 }
 
 void CDRMPlot::SetupInpSpecWaterf()

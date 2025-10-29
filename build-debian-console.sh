@@ -11,8 +11,8 @@ cd "$SCRIPT_DIR"
 
 # Install dependencies for Ubuntu/Debian
 echo "Installing dependencies..."
-sudo apt-get update
-sudo apt-get install -y \
+apt-get update
+apt-get install -y \
     build-essential \
     qt5-qmake qtbase5-dev \
     libfftw3-dev \
@@ -40,8 +40,8 @@ cd fdk-aac-2.0.2
 
 ./configure
 make -j$(nproc)
-sudo make install
-sudo ldconfig
+make install
+ldconfig
 
 cd "$SCRIPT_DIR"
 
@@ -57,13 +57,10 @@ echo "Building Dream..."
 qmake CONFIG+=console CONFIG+=fdk-aac dream.pro
 make -j$(nproc)
 
-# Copy binary
-cp dream dream-2.
-
 echo ""
 echo "✓ Build Complete!"
 echo "Binary: $SCRIPT_DIR/dream"
 echo ""
 echo "Usage:"
 echo "  ./dream --help"
-echo "  ./dream -i input.iq -o output.wav"
+echo "  ./dream -i input.iq -w output.wav"

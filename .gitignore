@@ -4,6 +4,34 @@ dream
 obj/
 .qmake.stash
 
+# Qt build system generated files
+# Note: Makefile is kept in git for historical reasons
+Makefile.*
+*.pro.user
+*.pro.user.*
+.qmake.cache
+
+# Qt moc (Meta-Object Compiler) generated files
+moc/
+moc_*.cpp
+moc_*.h
+moc_predefs.h
+
+# Qt uic (User Interface Compiler) generated files
+ui
+ui_*.h
+
+# Qt rcc (Resource Compiler) generated files
+qrc_*.cpp
+
+# macOS app bundle
+*.app/
+dream.app/
+
+# macOS deployment artifacts
+dream/
+*.dmg
+
 # Test data and temporary output
 output/
 *.wav
@@ -20,6 +48,3 @@ output/
 
 # macOS
 .DS_Store
-
-dream
-dream

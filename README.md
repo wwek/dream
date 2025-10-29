@@ -24,7 +24,7 @@ docker run --rm -v "$(pwd)/output:/output" dream-drm:2.2 \
     sh -c "cp /usr/local/bin/dream /output/dream-amd64"
 
 
-## clear cache on demand
+## warning: clear all docker build cache on demand
 docker buildx prune -af
 
 ```
@@ -33,10 +33,11 @@ docker buildx prune -af
 
 ```bash
 # Build Dream (console mode, no GUI)
-./build.sh
+### debian build
+./build-debian-console.sh
 
 # Run
-dream --help
+./output/dream --help
 
 ```
 

@@ -5,6 +5,12 @@ OBJECTS_DIR = obj
 DEFINES += EXECUTABLE_NAME=$$TARGET
 LIBS += -L$$PWD/lib
 INCLUDEPATH += $$PWD/include
+
+# macOS Homebrew paths
+macx {
+    INCLUDEPATH += /opt/homebrew/include
+    LIBS += -L/opt/homebrew/lib
+}
 contains(QT_VERSION, ^4\\..*) {
     VERSION_MESSAGE = Qt 4
 }
@@ -386,8 +392,15 @@ qwt {
     message("with Qwt")
     QT += svg
     macx {
-        INCLUDEPATH += /Library/Frameworks/qwt.framework/Headers
-        LIBS += -framework qwt
+        # Try Homebrew installation first
+        exists(/opt/homebrew/opt/qwt-qt5/lib/qwt.framework) {
+            INCLUDEPATH += /opt/homebrew/opt/qwt-qt5/lib/qwt.framework/Headers
+            LIBS += -F/opt/homebrew/opt/qwt-qt5/lib -framework qwt
+        }
+        else {
+            INCLUDEPATH += /Library/Frameworks/qwt.framework/Headers
+            LIBS += -framework qwt
+        }
     }
     win32 {
         INCLUDEPATH += $$PWD/include/qwt

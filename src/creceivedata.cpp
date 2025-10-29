@@ -54,6 +54,7 @@ inline _REAL sample2real(_SAMPLE s) {
 
 CReceiveData::CReceiveData() :
 #ifdef QT_MULTIMEDIA_LIB
+    pAudioInput(nullptr),
     pIODevice(nullptr),
 #endif
     pSound(nullptr),

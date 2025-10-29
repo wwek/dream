@@ -31,12 +31,17 @@
 #include "../Parameter.h"
 #include "../tables/TableFAC.h"
 #include "../datadecoding/DataDecoder.h"
+
+#ifndef _WIN32
+// Unix-specific headers for Unix Domain Sockets
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <cerrno>
+#endif
+
 #include <cstring>
 #include <map>
 #include <cstdio>
@@ -60,6 +65,15 @@ CStatusBroadcast::~CStatusBroadcast()
 
 bool CStatusBroadcast::Start(CDRMReceiver* pReceiver, const std::string& strCustomPath)
 {
+#ifdef _WIN32
+    // Windows: Unix Domain Sockets not supported
+    // TODO: Implement Windows Named Pipes or TCP socket alternative
+    (void)pReceiver;
+    (void)strCustomPath;
+    fprintf(stderr, "StatusBroadcast: Not implemented on Windows\n");
+    return false;
+#else
+    // Unix/Linux/macOS: Use Unix Domain Sockets
     if (bRunning)
         return false;
 
@@ -100,7 +114,7 @@ bool CStatusBroadcast::Start(CDRMReceiver* pReceiver, const std::string& strCust
     addr.sun_family = AF_UNIX;
     strncpy(addr.sun_path, strSocketPath.c_str(), sizeof(addr.sun_path) - 1);
 
-    if (bind(iServerFd, (struct sockaddr*)&addr, sizeof(addr)) < 0)
+    if (::bind(iServerFd, (struct sockaddr*)&addr, sizeof(addr)) < 0)
     {
         fprintf(stderr, "StatusBroadcast: Failed to bind socket to %s: %s\n",
                 strSocketPath.c_str(), strerror(errno));
@@ -125,10 +139,16 @@ bool CStatusBroadcast::Start(CDRMReceiver* pReceiver, const std::string& strCust
 
     fprintf(stderr, "StatusBroadcast: Started on %s\n", strSocketPath.c_str());
     return true;
+#endif
 }
 
 void CStatusBroadcast::Stop()
 {
+#ifdef _WIN32
+    // Windows: Nothing to stop (not implemented)
+    return;
+#else
+    // Unix/Linux/macOS
     if (!bRunning)
         return;
 
@@ -165,10 +185,16 @@ void CStatusBroadcast::Stop()
     }
 
     fprintf(stderr, "StatusBroadcast: Stopped\n");
+#endif
 }
 
 void CStatusBroadcast::BroadcastLoop()
 {
+#ifdef _WIN32
+    // Windows: Not implemented
+    return;
+#else
+    // Unix/Linux/macOS
     while (bRunning)
     {
         // Accept new client connections
@@ -181,10 +207,13 @@ void CStatusBroadcast::BroadcastLoop()
         // Sleep for update interval
         std::this_thread::sleep_for(std::chrono::milliseconds(UPDATE_INTERVAL_MS));
     }
+#endif
 }
 
 void CStatusBroadcast::AcceptNewClients()
 {
+#ifndef _WIN32
+    // Unix/Linux/macOS only
     // Non-blocking accept
     int client_fd = accept(iServerFd, nullptr, nullptr);
     if (client_fd >= 0)
@@ -197,10 +226,13 @@ void CStatusBroadcast::AcceptNewClients()
         fprintf(stderr, "StatusBroadcast: Client connected (fd=%d, total=%zu)\n",
                 client_fd, vecClientFds.size());
     }
+#endif
 }
 
 void CStatusBroadcast::BroadcastToClients(const std::string& strJSON)
 {
+#ifndef _WIN32
+    // Unix/Linux/macOS only
     if (vecClientFds.empty())
         return;
 
@@ -226,6 +258,7 @@ void CStatusBroadcast::BroadcastToClients(const std::string& strJSON)
             ++it;
         }
     }
+#endif
 }
 
 std::string CStatusBroadcast::CollectStatusJSON()

@@ -1,0 +1,59 @@
+# Build artifacts
+*.o
+obj/
+.qmake.stash
+Makefile
+Makefile.*
+
+# Qt generated files
+moc_*.cpp
+moc_*.h
+moc_predefs.h
+ui_*.h
+qrc_*.cpp
+
+# macOS app bundle
+*.app/
+dream.app/
+
+# macOS deployment artifacts
+dream/
+*.dmg
+
+# Output directories
+output/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# Test data
+*.wav
+!doc/*.wav
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation (optional, uncomment if you want to exclude)
+# *.md
+# doc/
+
+# Scripts (keep build scripts)
+# build-macos-gui.sh
+# macx/
+
+# Docker files (don't copy into container)
+Dockerfile
+.dockerignore
+docker-compose.yml

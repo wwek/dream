@@ -60,6 +60,7 @@
 #include <qwt_plot_picker.h>
 #include <qwt_scale_draw.h>
 #include <qwt_symbol.h>
+#include <qwt_text.h>
 #if QWT_VERSION >= 0x060000
 # include <qwt_picker_machine.h>
 #endif
