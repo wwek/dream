@@ -48,3 +48,4 @@ output/
 
 # macOS
 .DS_Store
+Makefile

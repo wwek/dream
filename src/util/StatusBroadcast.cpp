@@ -601,7 +601,31 @@ std::string CStatusBroadcast::CollectStatusJSON()
 
     if (pDataDecoder != nullptr)
     {
-        // Check all packet IDs for available media types
+        // PHASE 1: STATE-DRIVEN detection - Check AppType to detect configured services immediately
+        // This ensures detection even when NewObjectAvailable() returns false during 500ms polling window
+        for (int iPacketID = 0; iPacketID < MAX_NUM_PACK_PER_STREAM; iPacketID++)
+        {
+            CDataDecoder::EAppType eAppType = pDataDecoder->GetAppType(iPacketID);
+
+            // Mark service as available based on AppType configuration
+            switch (eAppType)
+            {
+                case CDataDecoder::AT_EPG:
+                    bHasProgramGuide = true;
+                    break;
+                case CDataDecoder::AT_JOURNALINE:
+                    bHasJournaline = true;
+                    break;
+                case CDataDecoder::AT_MOTSLIDESHOW:
+                    bHasSlideshow = true;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        // PHASE 2: EVENT-DRIVEN processing - Extract new objects when available
+        // This handles actual content delivery (one-time push to clients)
         for (int iPacketID = 0; iPacketID < MAX_NUM_PACK_PER_STREAM; iPacketID++)
         {
             CMOTDABDec* pMOTApp = pDataDecoder->getApplication(iPacketID);
@@ -630,11 +654,10 @@ std::string CStatusBroadcast::CollectStatusJSON()
                     mapLastPushedMedia[strMediaKey] = NewObj.iUniqueBodyVersion;  // Store version instead of timestamp
                 }
 
-                // Set availability flags
+                // Extract content based on type (flags already set in Phase 1)
                 switch (eAppType)
                 {
                     case CDataDecoder::AT_EPG:
-                        bHasProgramGuide = true;
                         // Extract EPG content if new
                         if (bIsNewContent && NewObj.Body.vecData.Size() > 0)
                         {
@@ -656,23 +679,14 @@ std::string CStatusBroadcast::CollectStatusJSON()
                         break;
 
                     case CDataDecoder::AT_JOURNALINE:
-                        bHasJournaline = true;
                         // Journaline uses different handling via GetNews()
-                        // For now, just mark as available
-                        if (bIsNewContent)
-                        {
-                            if (bHasMediaContent) mediaContentJson << ",";
-                            mediaContentJson << "\"journaline\":{";
-                            mediaContentJson << "\"timestamp\":" << currentObjTime;
-                            mediaContentJson << ",\"available\":true";
-                            mediaContentJson << "}";
-                            bHasMediaContent = true;
-                        }
+                        // Note: Journaline doesn't use MOT NewObjectAvailable() mechanism
+                        // Extracting full Journaline tree is too complex for real-time broadcast
+                        // Flag is set in Phase 1, no content extraction needed here
                         break;
 
                     case CDataDecoder::AT_MOTSLIDESHOW:
-                        bHasSlideshow = true;
-                        // Extract Slideshow image if new
+                        // Extract Slideshow image if new (flag already set in Phase 1)
                         if (bIsNewContent && NewObj.Body.vecData.Size() > 0)
                         {
                             if (bHasMediaContent) mediaContentJson << ",";
