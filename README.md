@@ -37,7 +37,7 @@ docker buildx prune -af
 ./build-debian-console.sh
 
 # Run
-./output/dream --help
+./dream --help
 
 ```
 
