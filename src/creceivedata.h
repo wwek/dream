@@ -36,6 +36,7 @@
 #ifdef QT_MULTIMEDIA_LIB
 # include <QAudioInput>
 # include <QIODevice>
+# include <QMutex>
 #else
 # ifdef QT_CORE_LIB
   class QIODevice;
@@ -117,6 +118,7 @@ protected:
 #ifdef QT_MULTIMEDIA_LIB
     QAudioInput*            pAudioInput;
     QIODevice*              pIODevice;
+    mutable QMutex          audioDeviceMutex;  // Protect audio device pointers
 #endif
     CSoundInInterface*		pSound;
     CVector<_SAMPLE>		vecsSoundBuffer;

@@ -69,6 +69,7 @@ CReceiveData::~CReceiveData()
 void CReceiveData::Stop()
 {
 #ifdef QT_MULTIMEDIA_LIB
+    QMutexLocker locker(&audioDeviceMutex);  // Lock during device cleanup
     if(pIODevice!=nullptr) {
         pIODevice->close();
         pIODevice = nullptr;
@@ -115,6 +116,11 @@ void
 CReceiveData::SetSoundInterface(string device)
 {
     soundDevice = device;
+
+#ifdef QT_MULTIMEDIA_LIB
+    QMutexLocker locker(&audioDeviceMutex);  // Lock for thread-safe device switch
+#endif
+
     if(pSound != nullptr) {
         pSound->Close();
         delete pSound;
@@ -194,14 +200,22 @@ void CReceiveData::ProcessDataInternal(CParameter& Parameters)
 
 #ifdef QT_MULTIMEDIA_LIB
     bool bBad = false;
-    if(pIODevice)
+    QIODevice* pDeviceToRead = nullptr;
+
+    // Safely acquire device pointer with mutex protection
+    {
+        QMutexLocker locker(&audioDeviceMutex);
+        pDeviceToRead = pIODevice;
+    }
+
+    if(pDeviceToRead)
     {
 #if 0
 
         QTimer timer;
         timer.setSingleShot(true);
         QEventLoop loop;
-        QObject::connect(pIODevice,  SIGNAL(readyRead()), &loop, SLOT(quit()) );
+        QObject::connect(pDeviceToRead,  SIGNAL(readyRead()), &loop, SLOT(quit()) );
         QObject::connect(&timer, SIGNAL(timeout()), &loop, SLOT(quit()));
         timer.start(1000);
         loop.exec();
@@ -209,7 +223,7 @@ void CReceiveData::ProcessDataInternal(CParameter& Parameters)
         if(timer.isActive()) {
             //qDebug("data from sound card");
             qint64 n = 2*vecsSoundBuffer.Size();
-            qint64 r = pIODevice->read(reinterpret_cast<char*>(&vecsSoundBuffer[0]), n);
+            qint64 r = pDeviceToRead->read(reinterpret_cast<char*>(&vecsSoundBuffer[0]), n);
             if(r!=n) {
                 cerr << "short read" << endl;
             }
@@ -222,7 +236,7 @@ void CReceiveData::ProcessDataInternal(CParameter& Parameters)
         qint64 n = 2*vecsSoundBuffer.Size();
         char *p = reinterpret_cast<char*>(&vecsSoundBuffer[0]);
         do {
-            qint64 r = pIODevice->read(p, n);
+            qint64 r = pDeviceToRead->read(p, n);
             if(r>0) {
                 p += r;
                 n -= r;
