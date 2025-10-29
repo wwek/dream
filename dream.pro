@@ -158,14 +158,18 @@ macx {
     LIBS += -framework CoreFoundation -framework CoreServices -lpcap
     LIBS += -framework CoreAudio -framework AudioToolbox -framework AudioUnit
     DEFINES += HAVE_LIBPCAP
+
+    # Fix for modern macOS: Remove deprecated AGL framework
+    QMAKE_LIBS_OPENGL = -framework OpenGL
+    QMAKE_INCDIR_OPENGL = /System/Library/Frameworks/OpenGL.framework/Headers
     packagesExist(sndfile) {
         CONFIG += sndfile
     }
     packagesExist(hamlib) {
         CONFIG += hamlib
     }
-    packagesExist(speex) {
-        CONFIG += libspeexdsp
+    packagesExist(speexdsp) {
+        CONFIG += speexdsp
     }
     packagesExist(libgps) {
         CONFIG += gps

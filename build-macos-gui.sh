@@ -85,7 +85,7 @@ rm -f Makefile
 # Generate Makefile
 echo ""
 echo "Generating Makefile with qmake..."
-$QT5_PREFIX/bin/qmake dream.pro CONFIG+=fdk-aac
+$QT5_PREFIX/bin/qmake dream.pro CONFIG+=fdk-aac CONFIG+=speexdsp
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}❌ qmake failed!${NC}"
