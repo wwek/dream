@@ -68,10 +68,11 @@
 
         <div class="test-controls">
             <h2>Test Controls</h2>
-            <button onclick="loadTestData()">Test Data 1 (Complete)</button>
-            <button onclick="loadTestDataWithText()">Test Data 2 (with Text)</button>
+            <button onclick="loadTestData()">Test Data 1 (UTC+8)</button>
+            <button onclick="loadTestDataWithText()">Test Data 2 (UTC-5)</button>
+            <button onclick="loadErrorData()">Test Data 3 (UTC+5.5)</button>
+            <button onclick="loadNoOffsetData()">Test Data 4 (No Offset)</button>
             <button onclick="loadNoSignalData()">Simulate No Signal</button>
-            <button onclick="loadErrorData()">Simulate Error State</button>
             <button class="clear" onclick="clearPanel()">Clear Panel</button>
         </div>
 
@@ -116,8 +117,18 @@
 
         // Test Data 1: Complete data (including all new fields)
         var testData = {
-            "timestamp": 1761640323,
-            "received_time": 1736948400,  // DRM transmission time: 2025-01-15 14:30:00 UTC
+            "timestamp": 1737322200,  // Server time: 2025-01-19 21:30:00 (Local TZ)
+            "drm_time": {  // New: DRM time object with UTC + offset
+                "valid": true,
+                "year": 2025,
+                "month": 1,
+                "day": 19,
+                "hour": 13,        // UTC hour
+                "min": 30,         // UTC minute
+                "timestamp": 1737293400,  // UTC timestamp
+                "has_local_offset": true,
+                "offset_min": 480  // UTC+8 (480 minutes)
+            },
             "status": {
                 "io": 0,
                 "time": 0,
@@ -193,8 +204,18 @@
 
         // Test Data 2: With text and multiple services (UEP protection mode example)
         var testDataWithText = {
-            "timestamp": 1761560992,
-            "received_time": 1736950000,  // DRM transmission time: 2025-01-15 14:56:40 UTC
+            "timestamp": 1737295800,  // Server time
+            "drm_time": {  // Test with negative offset (UTC-5)
+                "valid": true,
+                "year": 2025,
+                "month": 1,
+                "day": 19,
+                "hour": 14,
+                "min": 10,
+                "timestamp": 1737294600,
+                "has_local_offset": true,
+                "offset_min": -300  // UTC-5 (-300 minutes)
+            },
             "status": {
                 "io": 0,
                 "time": 0,
@@ -273,10 +294,64 @@
             }
         };
 
+        // Test Data 4: No offset information (UTC only)
+        var noOffsetData = {
+            "timestamp": 1737296400,
+            "drm_time": {  // No offset info available
+                "valid": true,
+                "year": 2025,
+                "month": 1,
+                "day": 19,
+                "hour": 15,
+                "min": 20,
+                "timestamp": 1737296400,
+                "has_local_offset": false  // No offset information
+            },
+            "status": {
+                "io": 0,
+                "time": 0,
+                "frame": 0,
+                "fac": 0,
+                "sdc": 0,
+                "msc": 0
+            },
+            "signal": {
+                "if_level_db": -25.0,
+                "snr_db": 18.5,
+                "wmer_db": 17.2,
+                "mer_db": 16.8,
+                "doppler_hz": 0.3,
+                "delay_min_ms": 2.5,
+                "delay_max_ms": 5.0
+            },
+            "mode": {
+                "robustness": 0,
+                "bandwidth": 3,
+                "bandwidth_khz": 10.0,
+                "interleaver": 0
+            },
+            "services": {
+                "audio": 1,
+                "data": 0
+            },
+            "service_list": [
+                {
+                    "id": "123",
+                    "label": "Test Service",
+                    "is_audio": true,
+                    "audio_coding": 3,
+                    "bitrate_kbps": 12.0,
+                    "audio_mode": "Stereo"
+                }
+            ]
+        };
+
         // No signal data
         var noSignalData = {
-            "timestamp": Date.now(),
-            "received_time": 0,  // Time unavailable
+            "timestamp": Math.floor(Date.now() / 1000),
+            "drm_time": {  // No DRM time available
+                "valid": false
+            },
             "status": {
                 "io": 0,
                 "time": -1,
@@ -303,8 +378,18 @@
 
         // Error state data
         var errorData = {
-            "timestamp": Date.now(),
-            "received_time": 1736948800,
+            "timestamp": Math.floor(Date.now() / 1000),
+            "drm_time": {  // Test with half-hour offset (UTC+5.5, like India)
+                "valid": true,
+                "year": 2025,
+                "month": 1,
+                "day": 19,
+                "hour": 10,
+                "min": 45,
+                "timestamp": 1737282300,
+                "has_local_offset": true,
+                "offset_min": 330  // UTC+5.5 (330 minutes)
+            },
             "status": {
                 "io": 0,
                 "time": 0,
@@ -381,41 +466,20 @@
                 type: 'drm_status',
                 value: errorData
             });
-            console.log('[Test] Loaded error data');
+            console.log('[Test] Loaded error data (UTC+5.5)');
         }
 
-        // Test good signal (yellow)
-        function loadGoodSignal() {
+        function loadNoOffsetData() {
             if (!drmPanel) {
                 alert('DrmPanel not initialized, please refresh the page');
                 return;
             }
-            var goodSignalData = JSON.parse(JSON.stringify(testData));
-            goodSignalData.signal.snr_db = 12.5;
-            goodSignalData.signal.wmer_db = 11.8;
-            displayData(goodSignalData);
+            displayData(noOffsetData);
             drmPanel.update({
                 type: 'drm_status',
-                value: goodSignalData
+                value: noOffsetData
             });
-            console.log('[Test] Loaded good signal (yellow)');
-        }
-
-        // Test poor signal (red)
-        function loadPoorSignal() {
-            if (!drmPanel) {
-                alert('DrmPanel not initialized, please refresh the page');
-                return;
-            }
-            var poorSignalData = JSON.parse(JSON.stringify(testData));
-            poorSignalData.signal.snr_db = 8.2;
-            poorSignalData.signal.wmer_db = 7.5;
-            displayData(poorSignalData);
-            drmPanel.update({
-                type: 'drm_status',
-                value: poorSignalData
-            });
-            console.log('[Test] Loaded poor signal (red)');
+            console.log('[Test] Loaded no-offset data (UTC only)');
         }
 
         function clearPanel() {
