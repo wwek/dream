@@ -241,13 +241,15 @@ DrmPanel.prototype.update = function(data) {
 
     // 更新 MSC 统计信息（整体统计，无时间窗口）
     var mscStats = status.msc_stats;
-    if (mscStats) {
-        // MSC 帧数统计
-        var framesText = mscStats.total_ok + '/' + mscStats.total_frames;
+    if (mscStats && typeof mscStats.total_frames !== 'undefined' && typeof mscStats.error_rate !== 'undefined') {
+        // MSC 帧数统计（安全访问）
+        var totalFrames = mscStats.total_frames || 0;
+        var totalOk = mscStats.total_ok || 0;
+        var framesText = totalOk + '/' + totalFrames;
         this.updateValue('msc_frames', framesText);
 
-        // MSC 错误率（带颜色指示）
-        var errorRate = mscStats.error_rate;
+        // MSC 错误率（带颜色指示，安全转换）
+        var errorRate = parseFloat(mscStats.error_rate) || 0.0;
         var errorRateText = errorRate.toFixed(1) + '%';
         this.updateValue('msc_error_rate', errorRateText);
 
