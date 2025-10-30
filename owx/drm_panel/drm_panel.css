@@ -69,33 +69,6 @@
     color: #fff;
 }
 
-/* ========== MSC 统计行 ========== */
-.drm-msc-stats-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 4px;
-    padding: 2px 0;
-    border-top: 1px solid #666;
-    padding-top: 4px;
-}
-
-/* MSC 错误率颜色指示 */
-.drm-msc-good {
-    color: #00ff00 !important;  /* 绿色：优秀 < 1% */
-    font-weight: bold;
-}
-
-.drm-msc-warning {
-    color: #ffaa00 !important;  /* 橙色：良好 1-5% */
-    font-weight: bold;
-}
-
-.drm-msc-error {
-    color: #ff3333 !important;  /* 红色：较差 > 5% */
-    font-weight: bold;
-}
-
 /* SNR 绿色点亮 */
 .drm-snr {
     color: #0f0;

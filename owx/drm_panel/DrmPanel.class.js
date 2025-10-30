@@ -69,12 +69,6 @@ function DrmPanel(el) {
                 '<span class="drm-signal-item">SNR: <span class="drm-value drm-snr" data-drm-val="snr">--</span> dB</span>' +
                 '<span class="drm-signal-item">IF: <span class="drm-value" data-drm-val="if_level">--</span> dB</span>' +
                 '<span class="drm-signal-item">WMER/MER: <span class="drm-value" data-drm-val="wmer">--</span>/<span class="drm-value" data-drm-val="mer">--</span> dB</span>' +
-            '</div>' +
-
-            // MSC 统计行：帧数、错误率、Doppler/Delay（同一行显示）
-            '<div class="drm-msc-stats-row">' +
-                '<span class="drm-signal-item">MSC Frames: <span class="drm-value" data-drm-val="msc_frames">0/0</span></span>' +
-                '<span class="drm-signal-item">MSC Error Rate: <span class="drm-value drm-msc-error" data-drm-val="msc_error_rate">0.0%</span></span>' +
                 '<span class="drm-signal-item">Doppler/Delay: <span class="drm-value" data-drm-val="doppler">--</span>/<span class="drm-value" data-drm-val="delay">--</span></span>' +
             '</div>' +
 
@@ -238,36 +232,6 @@ DrmPanel.prototype.update = function(data) {
     // 更新 Doppler/Delay（与界面一致：仅显示最小delay）
     this.updateValue('doppler', doppler != null ? doppler.toFixed(2) + ' Hz' : '--');
     this.updateValue('delay', delayMin != null ? delayMin.toFixed(2) + ' ms' : '--');
-
-    // 更新 MSC 统计信息（整体统计，无时间窗口）
-    var mscStats = status.msc_stats;
-    if (mscStats && typeof mscStats.total_frames !== 'undefined' && typeof mscStats.error_rate !== 'undefined') {
-        // MSC 帧数统计（安全访问）
-        var totalFrames = mscStats.total_frames || 0;
-        var totalOk = mscStats.total_ok || 0;
-        var framesText = totalOk + '/' + totalFrames;
-        this.updateValue('msc_frames', framesText);
-
-        // MSC 错误率（带颜色指示，安全转换）
-        var errorRate = parseFloat(mscStats.error_rate) || 0.0;
-        var errorRateText = errorRate.toFixed(1) + '%';
-        this.updateValue('msc_error_rate', errorRateText);
-
-        // 根据错误率设置颜色
-        var $errorElement = this.$container.find('[data-drm-val="msc_error_rate"]');
-        $errorElement.removeClass('drm-msc-good drm-msc-warning drm-msc-error');
-
-        if (errorRate < 1.0) {
-            $errorElement.addClass('drm-msc-good');      // 绿色：< 1%
-        } else if (errorRate < 5.0) {
-            $errorElement.addClass('drm-msc-warning');   // 黄色：1-5%
-        } else {
-            $errorElement.addClass('drm-msc-error');     // 红色：> 5%
-        }
-    } else {
-        this.updateValue('msc_frames', '--');
-        this.updateValue('msc_error_rate', '--');
-    }
 
     // 更新模式信息 (支持嵌套 mode.* 格式)
     var modeData = status.mode || {};
