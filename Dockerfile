@@ -1,4 +1,5 @@
-FROM debian:bullseye-slim
+# Multi-architecture support
+FROM --platform=$BUILDPLATFORM debian:bullseye-slim
 
 LABEL maintainer="OpenWebRX Dream DRM Receiver"
 LABEL description="Dream DRM Receiver 2.2.x build environment with xHE-AAC support"
