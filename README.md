@@ -13,15 +13,15 @@ docker buildx build --no-cache --platform linux/arm64 -t dream-drm:arm64 .
 docker run --rm -v "$(pwd)/output:/output" dream-drm:arm64 \
     sh -c "cp /usr/local/bin/dream /output/dream-arm64"
 
-## armv7
-docker buildx build --no-cache --platform linux/arm/v7 -t dream-drm:armv7 .
-docker run --rm -v "$(pwd)/output:/output" dream-drm:armv7 \
-    sh -c "cp /usr/local/bin/dream /output/dream-armv7"
-
 ## amd64
 docker buildx build --no-cache --platform linux/amd64 -t dream-drm:amd64 .
 docker run --rm -v "$(pwd)/output:/output" dream-drm:amd64 \
     sh -c "cp /usr/local/bin/dream /output/dream-amd64"
+
+## armv7
+docker buildx build --no-cache --platform linux/arm/v7 -t dream-drm:armv7 .
+docker run --rm -v "$(pwd)/output:/output" dream-drm:armv7 \
+    sh -c "cp /usr/local/bin/dream /output/dream-armv7"
 
 
 ## warning: clear all docker build cache on demand
