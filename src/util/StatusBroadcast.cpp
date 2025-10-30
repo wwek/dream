@@ -438,6 +438,34 @@ std::string CStatusBroadcast::CollectStatusJSON()
 
     json << "},";
 
+    // MSC Statistics - Overall error rate since receiver start
+    json << "\"msc_stats\":{";
+    int iShortID = Parameters.GetCurSelAudioService();
+    if (iShortID >= 0 && iShortID < MAX_NUM_SERVICES) {
+        const CRxStatus& mscStatus = Parameters.AudioComponentStatus[iShortID];
+
+        // Get total statistics using existing CRxStatus interface
+        int totalFrames = mscStatus.GetCount();
+        int okFrames = mscStatus.GetOKCount();
+
+        // Calculate error rate
+        double errorRate = 0.0;
+        if (totalFrames > 0) {
+            errorRate = (1.0 - (double)okFrames / (double)totalFrames) * 100.0;
+        }
+
+        json << "\"total_frames\":" << totalFrames << ",";
+        json << "\"total_ok\":" << okFrames << ",";
+        json << "\"error_rate\":" << std::setprecision(2) << errorRate;
+        json << std::setprecision(1);  // Restore default precision
+    } else {
+        // No valid service
+        json << "\"total_frames\":0,";
+        json << "\"total_ok\":0,";
+        json << "\"error_rate\":0.0";
+    }
+    json << "},";
+
     // Frequency parameters
     json << "\"frequency\":{";
     json << "\"dc_offset_hz\":" << std::setprecision(2) << Parameters.GetDCFrequency();
