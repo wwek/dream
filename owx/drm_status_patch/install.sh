@@ -8,12 +8,35 @@
 
 set -e
 
+# Parse command line arguments / 解析命令行参数
+AUTO_CONFIRM=false
+while getopts "yh" opt; do
+    case $opt in
+        y)
+            AUTO_CONFIRM=true
+            ;;
+        h)
+            echo "Usage: $0 [-y] [-h]"
+            echo "  -y    Auto-confirm installation (skip confirmation prompt)"
+            echo "        自动确认安装（跳过确认提示）"
+            echo "  -h    Show this help message"
+            echo "        显示此帮助信息"
+            exit 0
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            echo "Use -h for help"
+            exit 1
+            ;;
+    esac
+done
+
 # Color output / 颜色输出
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'  # No Color
 
 # Logging functions / 日志函数
 log_info() {
@@ -47,7 +70,7 @@ print_header() {
 detect_openwebrx_path() {
     log_info "Detecting OpenWebRX installation path... / 检测 OpenWebRX 安装路径..."
 
-    # 尝试多个可能的路径
+    # Try multiple possible paths / 尝试多个可能的路径
     local possible_paths=(
         "/usr/lib/python3/dist-packages"
         "/opt/openwebrx"
@@ -74,7 +97,7 @@ validate_path() {
         return 1
     fi
 
-    # Check key files exist / 检查关键文件是否存在
+    # Check if key files exist / 检查关键文件是否存在
     local key_files=(
         "$1/csdr/chain"
         "$1/csdr/module"
@@ -221,12 +244,17 @@ main() {
     log_info "Will install patch to / 即将在以下路径安装补丁:"
     echo "  $OPENWEBRX_PATH"
     echo ""
-    echo -n "Continue? / 是否继续? [y/N] "
-    read -r confirm
 
-    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-        log_info "Installation cancelled / 安装已取消"
-        exit 0
+    if [ "$AUTO_CONFIRM" = false ]; then
+        echo -n "Continue? / 是否继续? [y/N] "
+        read -r confirm
+
+        if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+            log_info "Installation cancelled / 安装已取消"
+            exit 0
+        fi
+    else
+        log_info "Auto-confirming installation (-y flag) / 自动确认安装 (-y 参数)"
     fi
 
     # 3. Create backup / 创建备份

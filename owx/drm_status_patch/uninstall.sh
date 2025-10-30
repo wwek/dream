@@ -8,6 +8,29 @@
 
 set -e
 
+# Parse command line arguments / 解析命令行参数
+AUTO_CONFIRM=false
+while getopts "yh" opt; do
+    case $opt in
+        y)
+            AUTO_CONFIRM=true
+            ;;
+        h)
+            echo "Usage: $0 [-y] [-h]"
+            echo "  -y    Auto-confirm uninstallation (skip confirmation prompts)"
+            echo "        自动确认卸载（跳过确认提示）"
+            echo "  -h    Show this help message"
+            echo "        显示此帮助信息"
+            exit 0
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            echo "Use -h for help"
+            exit 1
+            ;;
+    esac
+done
+
 # Color output / 颜色输出
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -180,16 +203,21 @@ restart_service() {
 # Ask to delete backup / 询问是否删除备份
 ask_delete_backup() {
     echo ""
-    echo -n "Delete backup directory? / 是否删除备份目录? [y/N] "
-    read -r confirm
 
-    if [[ "$confirm" =~ ^[Yy]$ ]]; then
-        if [ -d "$BACKUP_DIR" ]; then
-            rm -rf "$BACKUP_DIR"
-            log_success "Backup deleted / 备份已删除: $BACKUP_DIR"
+    if [ "$AUTO_CONFIRM" = false ]; then
+        echo -n "Delete backup directory? / 是否删除备份目录? [y/N] "
+        read -r confirm
+
+        if [[ "$confirm" =~ ^[Yy]$ ]]; then
+            if [ -d "$BACKUP_DIR" ]; then
+                rm -rf "$BACKUP_DIR"
+                log_success "Backup deleted / 备份已删除: $BACKUP_DIR"
+            fi
+        else
+            log_info "Backup kept / 备份已保留: $BACKUP_DIR"
         fi
     else
-        log_info "Backup kept / 备份已保留: $BACKUP_DIR"
+        log_info "Keeping backup (auto-confirm mode) / 保留备份（自动确认模式）: $BACKUP_DIR"
     fi
 }
 
@@ -223,12 +251,17 @@ main() {
     echo "  Backup / 备份: $BACKUP_DIR"
     echo "  Target / 目标: $OPENWEBRX_PATH"
     echo ""
-    echo -n "Continue? / 是否继续? [y/N] "
-    read -r confirm
 
-    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-        log_info "Rollback cancelled / 回滚已取消"
-        exit 0
+    if [ "$AUTO_CONFIRM" = false ]; then
+        echo -n "Continue? / 是否继续? [y/N] "
+        read -r confirm
+
+        if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+            log_info "Rollback cancelled / 回滚已取消"
+            exit 0
+        fi
+    else
+        log_info "Auto-confirming rollback (-y flag) / 自动确认回滚 (-y 参数)"
     fi
 
     # 4. Restore backup / 恢复备份

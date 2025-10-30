@@ -20,12 +20,18 @@ cd drm_status_patch
 # 2. 运行安装脚本
 ./install.sh
 
+# 或使用 -y 参数自动确认（无交互模式）
+./install.sh -y
+
 # 脚本会自动:
 # - 检测 OpenWebRX 路径
 # - 创建备份
 # - 应用补丁
 # - 验证安装
 # - 重启服务
+
+# 查看帮助信息
+./install.sh -h
 ```
 
 ### 方法 2: 手动安装
@@ -58,11 +64,17 @@ grep -n "buffer = b\"\"" owrx/drm.py               # 应该找到
 cd drm_status_patch
 ./uninstall.sh
 
+# 或使用 -y 参数自动确认（无交互模式，保留备份）
+./uninstall.sh -y
+
 # 脚本会自动:
 # - 查找备份
 # - 恢复原文件
 # - 验证回滚
 # - 重启服务
+
+# 查看帮助信息
+./uninstall.sh -h
 ```
 
 ## 技术细节
