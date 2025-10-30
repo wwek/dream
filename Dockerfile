@@ -1,8 +1,15 @@
-# Multi-architecture support / 多架构支持
+# Multi-architecture support
 FROM --platform=$TARGETPLATFORM debian:bullseye-slim
 
 LABEL maintainer="OpenWebRX Dream DRM Receiver"
 LABEL description="Dream DRM Receiver 2.2.x build environment with xHE-AAC support"
+
+# Architecture detection and verification
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+RUN echo "Building on $BUILDPLATFORM for $TARGETPLATFORM" && \
+    echo "Architecture: $(uname -m)" && \
+    echo "Debian Architecture: $(dpkg --print-architecture)"
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -58,6 +65,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     file \
     && rm -rf /var/lib/apt/lists/*
 
+# Verify architecture after package installation
+RUN echo "========================================" && \
+    echo "Architecture Verification:" && \
+    echo "uname -m: $(uname -m)" && \
+    echo "dpkg arch: $(dpkg --print-architecture)" && \
+    echo "gcc target: $(gcc -dumpmachine)" && \
+    file /bin/bash && \
+    echo "========================================" && \
+    echo ""
+
 # Verify FDK-AAC version (must be >= 2.0.0 for USAC/xHE-AAC support)
 RUN pkg-config --modversion fdk-aac && \
     pkg-config --atleast-version=2.0.0 fdk-aac || \
@@ -86,7 +103,7 @@ RUN echo "Verifying binary..." && \
     ldd dream | grep fdk-aac && \
     echo "✓ FDK-AAC linked successfully"
 
-# Install to system (dream 默认安装到 /usr/bin/dream)
+# Install to system
 RUN make install && \
     echo "Binary installed by make install"
 
