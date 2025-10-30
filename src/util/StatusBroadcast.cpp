@@ -442,7 +442,7 @@ std::string CStatusBroadcast::CollectStatusJSON()
     json << "\"msc_stats\":{";
     int iShortID = Parameters.GetCurSelAudioService();
     if (iShortID >= 0 && iShortID < MAX_NUM_SERVICES) {
-        const CRxStatus& mscStatus = Parameters.AudioComponentStatus[iShortID];
+        CRxStatus& mscStatus = Parameters.AudioComponentStatus[iShortID];
 
         // Get total statistics using existing CRxStatus interface
         int totalFrames = mscStatus.GetCount();
