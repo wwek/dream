@@ -21,7 +21,7 @@ class Drm(BaseDemodulatorChain, FixedIfSampleRateChain, FixedAudioRateChain, Met
         ]
         super().__init__(workers)
 
-        # 启动状态监控，设置回调
+        # Start status monitor
         self.monitor = DrmStatusMonitor(self.drm_module.getSocketPath())
         self.monitor.add_callback(self._on_drm_status)
         self.monitor.start()
@@ -31,7 +31,7 @@ class Drm(BaseDemodulatorChain, FixedIfSampleRateChain, FixedAudioRateChain, Met
         self.metawriter_lock = threading.Lock()
 
     def _on_drm_status(self, status):
-        """DRM 状态更新回调"""
+        """Handle DRM status updates"""
         with self.metawriter_lock:
             if self.metawriter:
                 try:
@@ -45,7 +45,6 @@ class Drm(BaseDemodulatorChain, FixedIfSampleRateChain, FixedAudioRateChain, Met
             self.metawriter = writer
 
     def stop(self):
-        """停止 DRM 链"""
         if self.monitor:
             self.monitor.stop()
         if self.drm_module:

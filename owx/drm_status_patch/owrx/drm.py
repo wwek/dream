@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 class DrmStatusMonitor(threading.Thread):
-    """监控 Dream DRM 状态并通过回调函数发布更新"""
+    """Monitor DRM status via Unix socket"""
 
     def __init__(self, socket_path="/tmp/dream_status.sock"):
         super().__init__(daemon=True)

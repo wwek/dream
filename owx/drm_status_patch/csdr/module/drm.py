@@ -1,16 +1,15 @@
 from pycsdr.modules import ExecModule
 from pycsdr.types import Format
-import uuid
 import os
 
 
 class DrmModule(ExecModule):
     def __init__(self):
-        # 每个实例使用唯一 socket 路径（多用户支持）
-        self.instance_id = str(uuid.uuid4())[:8]
+        # Use id(self) for unique socket path per instance
+        self.instance_id = id(self)
         self.socket_path = f"/tmp/dream_status_{self.instance_id}.sock"
 
-        # 启动前清理可能存在的旧 socket
+        # Clean up old socket if exists
         if os.path.exists(self.socket_path):
             try:
                 os.unlink(self.socket_path)
@@ -28,9 +27,8 @@ class DrmModule(ExecModule):
         return self.socket_path
 
     def stop(self):
-        """停止模块并清理 socket 文件"""
+        """Stop module and clean up socket"""
         super().stop()
-        # 清理 socket 文件
         if os.path.exists(self.socket_path):
             try:
                 os.unlink(self.socket_path)
