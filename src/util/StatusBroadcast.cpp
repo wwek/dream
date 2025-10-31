@@ -601,113 +601,132 @@ std::string CStatusBroadcast::CollectStatusJSON()
 
     if (pDataDecoder != nullptr)
     {
-        // PHASE 1: STATE-DRIVEN detection - Check AppType to detect configured services immediately
-        // This ensures detection even when NewObjectAvailable() returns false during 500ms polling window
-        for (int iPacketID = 0; iPacketID < MAX_NUM_PACK_PER_STREAM; iPacketID++)
+        // UNIFIED SERVICE PROCESSING: Single-pass iteration for both detection and extraction
+        // ✅ Reads directly from Parameters.Service[] (works regardless of DataDecoder state)
+        // ✅ Does not depend on eAppType[] which may not be initialized for all PacketIDs
+        // ✅ Compatible with both Qt GUI (user-selected services) and CLI mode (all services)
+        // ✅ Optimized: Single loop instead of two separate phases
+
+        // 🛡️ SAFETY: Validate Service vector size before iteration
+        int iMaxServices = std::min(static_cast<int>(Parameters.Service.size()), MAX_NUM_SERVICES);
+
+        for (int iServiceId = 0; iServiceId < iMaxServices; iServiceId++)
         {
-            CDataDecoder::EAppType eAppType = pDataDecoder->GetAppType(iPacketID);
+            CService service = Parameters.Service[iServiceId];
 
-            // Mark service as available based on AppType configuration
-            switch (eAppType)
+            // Only process active data services
+            if (service.IsActive() && service.eAudDataFlag == CService::SF_DATA)
             {
-                case CDataDecoder::AT_EPG:
-                    bHasProgramGuide = true;
-                    break;
-                case CDataDecoder::AT_JOURNALINE:
-                    bHasJournaline = true;
-                    break;
-                case CDataDecoder::AT_MOTSLIDESHOW:
-                    bHasSlideshow = true;
-                    break;
-                default:
-                    break;
-            }
-        }
+                int iPacketID = service.DataParam.iPacketID;
+                int iUserAppIdent = service.DataParam.iUserAppIdent;
 
-        // PHASE 2: EVENT-DRIVEN processing - Extract new objects when available
-        // This handles actual content delivery (one-time push to clients)
-        for (int iPacketID = 0; iPacketID < MAX_NUM_PACK_PER_STREAM; iPacketID++)
-        {
-            CMOTDABDec* pMOTApp = pDataDecoder->getApplication(iPacketID);
-            if (pMOTApp != nullptr && pMOTApp->NewObjectAvailable())
-            {
-                // Get application type for this specific packet ID
-                CDataDecoder::EAppType eAppType = pDataDecoder->GetAppType(iPacketID);
-
-                // Extract new object from queue (EVENT-DRIVEN: only when available)
-                CMOTObject NewObj;
-                pMOTApp->GetNextObject(NewObj);
-
-                // Generate unique key for tracking: "type_transportID"
-                std::ostringstream keyStream;
-                keyStream << (int)eAppType << "_" << NewObj.TransportID;
-                std::string strMediaKey = keyStream.str();
-
-                // Check if this is truly new content (compare with last pushed timestamp)
-                time_t currentObjTime = time(nullptr);  // Use current time as timestamp
-                bool bIsNewContent = false;
-
-                auto it = mapLastPushedMedia.find(strMediaKey);
-                if (it == mapLastPushedMedia.end() || NewObj.iUniqueBodyVersion != it->second)
+                // 🛡️ SAFETY: Validate PacketID boundary (0-3)
+                if (iPacketID < 0 || iPacketID >= MAX_NUM_PACK_PER_STREAM)
                 {
-                    bIsNewContent = true;
-                    mapLastPushedMedia[strMediaKey] = NewObj.iUniqueBodyVersion;  // Store version instead of timestamp
+                    continue;  // Skip invalid PacketID to prevent array access violations
                 }
 
-                // Extract content based on type (flags already set in Phase 1)
-                switch (eAppType)
+                // STEP 1: Mark service as available (always runs, even if no new content)
+                switch (iUserAppIdent)
                 {
-                    case CDataDecoder::AT_EPG:
+                    case DAB_AT_EPG:
+                        bHasProgramGuide = true;
+                        break;
+                    case DAB_AT_JOURNALINE:
+                        bHasJournaline = true;
+                        break;
+                    case DAB_AT_MOTSLIDESHOW:
+                        bHasSlideshow = true;
+                        break;
+                    default:
+                        break;
+                }
+
+                // STEP 2: Try to extract new content (only if MOT decoder exists and has data)
+                // ⚠️ pMOTApp may be null if DataDecoder hasn't initialized this PacketID yet
+                CMOTDABDec* pMOTApp = pDataDecoder->getApplication(iPacketID);
+
+                if (pMOTApp != nullptr && pMOTApp->NewObjectAvailable())
+                {
+                    // Extract new object from queue (EVENT-DRIVEN: only when available)
+                    CMOTObject NewObj;
+                    pMOTApp->GetNextObject(NewObj);
+
+                    // Generate unique key for tracking: "appType_transportID"
+                    std::ostringstream keyStream;
+                    keyStream << iUserAppIdent << "_" << NewObj.TransportID;
+                    std::string strMediaKey = keyStream.str();
+
+                    // Check if this is truly new content (compare with last pushed version)
+                    time_t currentObjTime = time(nullptr);  // Use current time as timestamp
+                    bool bIsNewContent = false;
+
+                    auto it = mapLastPushedMedia.find(strMediaKey);
+                    if (it == mapLastPushedMedia.end() || NewObj.iUniqueBodyVersion != it->second)
+                    {
+                        bIsNewContent = true;
+                        mapLastPushedMedia[strMediaKey] = NewObj.iUniqueBodyVersion;  // Store version instead of timestamp
+                    }
+
+                    // Extract content based on application type
+                    switch (iUserAppIdent)
+                    {
+                    case DAB_AT_EPG:
                         // Extract EPG content if new
                         if (bIsNewContent && NewObj.Body.vecData.Size() > 0)
                         {
-                            if (bHasMediaContent) mediaContentJson << ",";
-                            mediaContentJson << "\"program_guide\":{";
-                            mediaContentJson << "\"timestamp\":" << currentObjTime;
-                            mediaContentJson << ",\"name\":\"" << JsonEscape(NewObj.strName) << "\"";
-                            mediaContentJson << ",\"description\":\"" << JsonEscape(NewObj.strContentDescription) << "\"";
-                            mediaContentJson << ",\"size\":" << NewObj.Body.vecData.Size();
-                            // Base64 encode body data
-                            std::string base64Data = Base64Encode(
-                                reinterpret_cast<const unsigned char*>(&NewObj.Body.vecData[0]),
-                                NewObj.Body.vecData.Size()
-                            );
-                            mediaContentJson << ",\"data\":\"" << base64Data << "\"";
-                            mediaContentJson << "}";
-                            bHasMediaContent = true;
+                            // 🛡️ SAFETY: Validate data pointer before accessing vecData[0]
+                            const unsigned char* pData = reinterpret_cast<const unsigned char*>(&NewObj.Body.vecData[0]);
+                            if (pData != nullptr)
+                            {
+                                if (bHasMediaContent) mediaContentJson << ",";
+                                mediaContentJson << "\"program_guide\":{";
+                                mediaContentJson << "\"timestamp\":" << currentObjTime;
+                                mediaContentJson << ",\"name\":\"" << JsonEscape(NewObj.strName) << "\"";
+                                mediaContentJson << ",\"description\":\"" << JsonEscape(NewObj.strContentDescription) << "\"";
+                                mediaContentJson << ",\"size\":" << NewObj.Body.vecData.Size();
+                                // Base64 encode body data
+                                std::string base64Data = Base64Encode(pData, NewObj.Body.vecData.Size());
+                                mediaContentJson << ",\"data\":\"" << base64Data << "\"";
+                                mediaContentJson << "}";
+                                bHasMediaContent = true;
+                            }
                         }
                         break;
 
-                    case CDataDecoder::AT_JOURNALINE:
+                    case DAB_AT_JOURNALINE:
                         // Journaline uses different handling via GetNews()
                         // Note: Journaline doesn't use MOT NewObjectAvailable() mechanism
                         // Extracting full Journaline tree is too complex for real-time broadcast
                         // Flag is set in Phase 1, no content extraction needed here
                         break;
 
-                    case CDataDecoder::AT_MOTSLIDESHOW:
+                    case DAB_AT_MOTSLIDESHOW:
                         // Extract Slideshow image if new (flag already set in Phase 1)
                         if (bIsNewContent && NewObj.Body.vecData.Size() > 0)
                         {
-                            if (bHasMediaContent) mediaContentJson << ",";
-                            mediaContentJson << "\"slideshow\":{";
-                            mediaContentJson << "\"timestamp\":" << currentObjTime;
-                            mediaContentJson << ",\"name\":\"" << JsonEscape(NewObj.strName) << "\"";
-                            mediaContentJson << ",\"mime\":\"" << JsonEscape(NewObj.strMimeType) << "\"";
-                            mediaContentJson << ",\"size\":" << NewObj.Body.vecData.Size();
-                            // Base64 encode image data
-                            std::string base64Data = Base64Encode(
-                                reinterpret_cast<const unsigned char*>(&NewObj.Body.vecData[0]),
-                                NewObj.Body.vecData.Size()
-                            );
-                            mediaContentJson << ",\"data\":\"" << base64Data << "\"";
-                            mediaContentJson << "}";
-                            bHasMediaContent = true;
+                            // 🛡️ SAFETY: Validate data pointer before accessing vecData[0]
+                            const unsigned char* pData = reinterpret_cast<const unsigned char*>(&NewObj.Body.vecData[0]);
+                            if (pData != nullptr)
+                            {
+                                if (bHasMediaContent) mediaContentJson << ",";
+                                mediaContentJson << "\"slideshow\":{";
+                                mediaContentJson << "\"timestamp\":" << currentObjTime;
+                                mediaContentJson << ",\"name\":\"" << JsonEscape(NewObj.strName) << "\"";
+                                mediaContentJson << ",\"mime\":\"" << JsonEscape(NewObj.strMimeType) << "\"";
+                                mediaContentJson << ",\"size\":" << NewObj.Body.vecData.Size();
+                                // Base64 encode image data
+                                std::string base64Data = Base64Encode(pData, NewObj.Body.vecData.Size());
+                                mediaContentJson << ",\"data\":\"" << base64Data << "\"";
+                                mediaContentJson << "}";
+                                bHasMediaContent = true;
+                            }
                         }
                         break;
 
                     default:
                         break;
+                    }
                 }
             }
         }
@@ -731,6 +750,12 @@ std::string CStatusBroadcast::CollectStatusJSON()
 
 std::string CStatusBroadcast::Base64Encode(const unsigned char* data, size_t len)
 {
+    // 🛡️ SAFETY: Validate input pointer to prevent null pointer dereference
+    if (data == nullptr || len == 0)
+    {
+        return "";  // Return empty string for invalid input
+    }
+
     static const char base64_chars[] =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
