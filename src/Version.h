@@ -36,10 +36,7 @@ extern const int dream_version_minor;
 extern const int dream_version_patch;
 extern const char dream_version_build[];
 
-/* Build info query functions */
-const char* GetBuildGitCommit();
-const char* GetBuildTimestamp();
-const char* GetBuildBranch();
+/* Print full version information */
 void PrintFullVersion();
 
 #endif

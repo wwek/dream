@@ -43,37 +43,12 @@ const char dream_implementation[] = "CL";
 const int dream_version_major = 2;
 const int dream_version_minor = 3;
 const int dream_version_patch = 1;
-
-/* Dynamic build info - injected via qmake preprocessor macros */
-const char dream_version_build[] = "-" GIT_COMMIT " (" GIT_BRANCH ") " BUILD_TIMESTAMP;
-
-/* Build info query functions implementation */
-const char* GetBuildGitCommit()
-{
-    return GIT_COMMIT;
-}
-
-const char* GetBuildTimestamp()
-{
-    return BUILD_TIMESTAMP;
-}
-
-const char* GetBuildBranch()
-{
-    return GIT_BRANCH;
-}
+const char dream_version_build[] = "";
 
 void PrintFullVersion()
 {
-    std::cout << "Dream DRM Software" << std::endl;
-    std::cout << "Version " << dream_version_major << "."
-              << dream_version_minor << "." << dream_version_patch
-              << dream_version_build << std::endl;
-    std::cout << "Manufacturer: " << dream_manufacturer << std::endl;
-    std::cout << "Implementation: " << dream_implementation << std::endl;
-    std::cout << "Build Information:" << std::endl;
-    std::cout << "  Git Commit: " << GIT_COMMIT << std::endl;
-    std::cout << "  Git Branch: " << GIT_BRANCH << std::endl;
-    std::cout << "  Build Time: " << BUILD_TIMESTAMP << std::endl;
+    /* Simple version info without dynamic build info */
+    printf("Dream Version %d.%d.%d\n",
+           dream_version_major, dream_version_minor, dream_version_patch);
 }
 

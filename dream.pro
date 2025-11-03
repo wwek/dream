@@ -6,35 +6,6 @@ DEFINES += EXECUTABLE_NAME=$$TARGET
 LIBS += -L$$PWD/lib
 INCLUDEPATH += $$PWD/include
 
-# ========================================
-# Dynamic Build Information Generation
-# ========================================
-
-# Get Git commit hash (7-char short hash)
-GIT_COMMIT = $$system(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
-# Get current Git branch
-GIT_BRANCH = $$system(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
-# Get build timestamp - prefer date, fallback to Git commit date
-BUILD_TIMESTAMP = $$system(date "+%Y-%m-%d %H:%M:%S" 2>/dev/null || git log -1 --format=%ci 2>/dev/null || echo "unknown")
-
-# Provide defaults if not in Git repo
-isEmpty(GIT_COMMIT): GIT_COMMIT = unknown
-isEmpty(GIT_BRANCH): GIT_BRANCH = unknown
-isEmpty(BUILD_TIMESTAMP): BUILD_TIMESTAMP = unknown
-
-# Inject build info via preprocessor macros
-DEFINES += GIT_COMMIT=\"$$GIT_COMMIT\"
-DEFINES += GIT_BRANCH=\"$$GIT_BRANCH\"
-DEFINES += BUILD_TIMESTAMP=\"$$BUILD_TIMESTAMP\"
-
-# Display build information
-message("========================================")
-message("Build Information:")
-message("  Git Commit: $$GIT_COMMIT")
-message("  Git Branch: $$GIT_BRANCH")
-message("  Build Time: $$BUILD_TIMESTAMP")
-message("========================================")
-
 # macOS Homebrew paths
 macx {
     INCLUDEPATH += /opt/homebrew/include
