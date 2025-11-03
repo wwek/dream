@@ -189,10 +189,10 @@ function registerDrmPanel() {
             console.log('[DRM Panel Plugin] Official DRM panel implementation detected, overriding...');
         }
 
-        // 覆盖或注册我们的实现（优先级更高）
-        MetaPanel.types.drm = function(el) {
-            return new DrmPanel(el);
-        };
+        // 覆盖或注册我们的实现（使用构造函数，与官方方式兼容）
+        // 官方使用: new constructor($self)
+        // 因此我们直接赋值 DrmPanel 构造函数
+        MetaPanel.types.drm = DrmPanel;
 
         console.log('[DRM Panel Plugin] Successfully registered/overridden MetaPanel.types.drm');
 

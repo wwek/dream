@@ -233,8 +233,8 @@ DrmPanel.prototype.update = function(data) {
     this.updateValue('doppler', doppler != null ? doppler.toFixed(2) + ' Hz' : '--');
     this.updateValue('delay', delayMin != null ? delayMin.toFixed(2) + ' ms' : '--');
 
-    // 更新模式信息 (支持嵌套 mode.* 格式)
-    var modeData = status.mode || {};
+    // 更新模式信息 (支持两种格式: status.mode 和官方的 status.drm_mode)
+    var modeData = status.mode || status.drm_mode || {};
     var robustness = modeData.robustness != null ? modeData.robustness : status.robustness;
     var bandwidth = modeData.bandwidth_khz != null ? modeData.bandwidth_khz : (modeData.bandwidth || status.bandwidth);
     var interleaver = modeData.interleaver != null ? modeData.interleaver : status.interleaver;
