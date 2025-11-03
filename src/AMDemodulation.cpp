@@ -427,18 +427,30 @@ void CAMDemodulation::SetAGCType(const EAmAgcType eNewType)
     /* Lock resources */
     Lock();
     {
-        /* Save current AGC type */
-        eAGCType = eNewType;
-
-        if (eNewType == AT_AUTOMATIC)
+        /* Validate AGC type */
+        if (eNewType != AT_NO_AGC && eNewType != AT_SLOW &&
+            eNewType != AT_MEDIUM && eNewType != AT_FAST &&
+            eNewType != AT_AUTOMATIC)
         {
-            /* Initialize automatic AGC */
-            AGCAuto.Init(iSigSampleRate, iSymbolBlockSize);
+            /* Invalid AGC type: default to no AGC */
+            eAGCType = AT_NO_AGC;
+            AGC.SetType(AT_NO_AGC);
         }
         else
         {
-            /* Set traditional AGC type */
-            AGC.SetType(eNewType);
+            /* Save current AGC type */
+            eAGCType = eNewType;
+
+            if (eNewType == AT_AUTOMATIC)
+            {
+                /* Initialize automatic AGC */
+                AGCAuto.Init(iSigSampleRate, iSymbolBlockSize);
+            }
+            else
+            {
+                /* Set traditional AGC type */
+                AGC.SetType(eNewType);
+            }
         }
     }
     Unlock();

@@ -333,6 +333,28 @@ CSettings::ParseArguments(int argc, char **argv)
 			continue;
 		}
 
+		/* AM AGC type ------------------------------------------------------ */
+		if (GetNumericArgument(argc, argv, i, "-A", "--agc",
+							   0, 100, rArgument))
+		{
+			/* Validate AGC value: only 0, 1, 2, 3, 100 are valid */
+			int iAgcValue = int(rArgument);
+			if (iAgcValue == 0 || iAgcValue == 1 || iAgcValue == 2 ||
+			    iAgcValue == 3 || iAgcValue == 100)
+			{
+				Put("AM Demodulation", "agc", iAgcValue);
+			}
+			else
+			{
+				/* Invalid value: default to no AGC (AT_NO_AGC = 0) */
+				cerr << "Warning: Invalid AGC value " << iAgcValue
+				     << ". Valid values: 0 (off), 1 (slow), 2 (medium), 3 (fast), 100 (auto). "
+				     << "Defaulting to 0 (no AGC)." << endl;
+				Put("AM Demodulation", "agc", 0);
+			}
+			continue;
+		}
+
 		/* Modified metrics flag -------------------------------------------- */
 		if (GetNumericArgument(argc, argv, i, "-D", "--modmetric",
 							   0, 1, rArgument))

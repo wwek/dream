@@ -23,7 +23,7 @@ class DrmModule(PopenModule):
 
     def getCommand(self):
         return ["dream", "-c", "6", "--sigsrate", "48000", "--audsrate", "48000",
-                "-I", "-", "-O", "-", "--status-socket", self.socket_path]
+                "-I", "-", "-O", "-", "--agc", "100", "--status-socket", self.socket_path]
 
     def getInputFormat(self) -> Format:
         return Format.COMPLEX_SHORT
