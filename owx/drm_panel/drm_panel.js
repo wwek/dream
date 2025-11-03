@@ -3,7 +3,7 @@
  *
  * @description Dream DRM 状态显示面板插件
  * @description 实时显示 DRM 解调状态、信号质量、模式信息和服务列表
- * @version 1.0.0
+ * @version 1.4.0
  * @author OpenWebRX+ Community
  * @license AGPL-3.0
  *
@@ -17,7 +17,7 @@
  */
 
 // 设置插件版本（用于依赖检查）
-Plugins.drm_panel._version = 1.0;
+Plugins.drm_panel._version = 1.4;
 
 // 插件配置（可在页面中覆盖）
 Plugins.drm_panel.config = {
@@ -139,9 +139,24 @@ function registerDrmPanel() {
             return;
         }
 
-        // 1. 动态注入 HTML 容器 (如果不存在)
-        if ($('#openwebrx-panel-metadata-drm').length === 0) {
-            console.log('[DRM Panel Plugin] Injecting HTML container...');
+        // 1. 检查 DRM 容器是否存在
+        var $drmPanel = $('#openwebrx-panel-metadata-drm');
+
+        if ($drmPanel.length > 0) {
+            // 官方 DRM 面板已存在，清空并覆盖为我们的插件
+            console.log('[DRM Panel Plugin] Official DRM panel detected, overriding with plugin...');
+
+            // 清空现有内容
+            $drmPanel.empty();
+
+            // 确保正确的类和属性
+            $drmPanel.addClass('openwebrx-panel openwebrx-meta-panel')
+                     .attr('data-panel-name', 'metadata-drm');
+
+            console.log('[DRM Panel Plugin] Official panel overridden successfully');
+        } else {
+            // 容器不存在，注入新的 HTML 容器
+            console.log('[DRM Panel Plugin] No official panel found, injecting new container...');
 
             // 找到参考元素 (DAB panel)
             var $referencePanel = $('#openwebrx-panel-metadata-dab');
@@ -150,7 +165,7 @@ function registerDrmPanel() {
                 // 在 DAB panel 后面插入 DRM panel
                 $('<div class="openwebrx-panel openwebrx-meta-panel" id="openwebrx-panel-metadata-drm" style="display: none;" data-panel-name="metadata-drm"></div>')
                     .insertAfter($referencePanel);
-                console.log('[DRM Panel Plugin] HTML container injected successfully');
+                console.log('[DRM Panel Plugin] HTML container injected after DAB panel');
             } else {
                 // 如果找不到 DAB panel，尝试插入到 panels 容器末尾
                 var $panelsContainer = $('#openwebrx-panels-container-left');
@@ -164,27 +179,36 @@ function registerDrmPanel() {
                     return;
                 }
             }
-        } else {
-            console.log('[DRM Panel Plugin] HTML container already exists');
         }
 
-        // 2. 注册 DRM Panel 到 MetaPanel 系统
+        // 2. 注册/覆盖 DRM Panel 到 MetaPanel 系统
         MetaPanel.types = MetaPanel.types || {};
 
-        // 检查是否已经注册
+        // 检查官方实现是否已经注册
         if (MetaPanel.types.drm) {
-            console.log('[DRM Panel Plugin] DrmPanel already registered');
-            return;
+            console.log('[DRM Panel Plugin] Official DRM panel implementation detected, overriding...');
         }
 
+        // 覆盖或注册我们的实现（优先级更高）
         MetaPanel.types.drm = function(el) {
             return new DrmPanel(el);
         };
 
-        console.log('[DRM Panel Plugin] Successfully registered to MetaPanel.types.drm');
+        console.log('[DRM Panel Plugin] Successfully registered/overridden MetaPanel.types.drm');
 
-        // 3. 初始化 metaPanel (确保插件正确初始化)
-        $('#openwebrx-panel-metadata-drm').metaPanel();
+        // 3. 重新初始化 metaPanel
+        var $panel = $('#openwebrx-panel-metadata-drm');
+
+        // 如果面板已经初始化过（官方实现），先销毁旧实例
+        if ($panel.data('metaPanel')) {
+            console.log('[DRM Panel Plugin] Destroying old panel instance...');
+            // 移除旧的数据绑定
+            $panel.removeData('metaPanel');
+        }
+
+        // 初始化我们的面板实例
+        $panel.metaPanel();
+        console.log('[DRM Panel Plugin] Panel instance initialized');
 
         // 触发自定义事件，通知其他插件
         $(document).trigger('event:drm_panel_registered');
