@@ -244,7 +244,6 @@ CSettings::ParseArguments(int argc, char **argv)
 	}
 
 	const char* ReceiverTransmitter = bIsReceiver ? "Receiver" : "Transmitter";
-	Put("command", "mode", bIsReceiver ? string("receive") : string("transmit"));
 
 	for (int i = 1; i < argc; i++)
 	{
@@ -644,7 +643,10 @@ CSettings::ParseArguments(int argc, char **argv)
 			(!strcmp(argv[i], "-v")))
 		{
 			Put("command", "mode", "version");
-			continue;
+			/* Set default mode to version and return immediately */
+			string current_mode = Get("command", "mode", string());
+			if (current_mode == "version")
+				return;
 		}
 
 		/* Help (usage) flag ------------------------------------------------ */
@@ -652,7 +654,10 @@ CSettings::ParseArguments(int argc, char **argv)
 			(!strcmp(argv[i], "-h")) || (!strcmp(argv[i], "-?")))
 		{
 			Put("command", "mode", "help");
-			continue;
+			/* Set default mode to help and return immediately */
+			string current_mode = Get("command", "mode", string());
+			if (current_mode == "help")
+				return;
 		}
 
 		/* not an option ---------------------------------------------------- */
@@ -668,6 +673,13 @@ CSettings::ParseArguments(int argc, char **argv)
 			<< endl;
 
 		exit(1);
+	}
+
+	/* Set default mode if not already set to a special value */
+	string current_mode = Get("command", "mode", string());
+	if (current_mode != "version" && current_mode != "help")
+	{
+		Put("command", "mode", bIsReceiver ? string("receive") : string("transmit"));
 	}
 }
 
