@@ -26,7 +26,7 @@
  *
 \******************************************************************************/
 
-#include "AGC.h"
+#include "AM_AGC.h"
 #include "matlib/MatlibSigProToolbox.h"
 
 

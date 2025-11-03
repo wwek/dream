@@ -34,7 +34,7 @@
 #include "util/Vector.h"
 #include "matlib/MatlibSigProToolbox.h"
 #include "resample/caudioresample.h"
-#include "AGC.h"
+#include "AM_AGC.h"
 #ifdef HAVE_SPEEX
 # include <speex/speex_preprocess.h>
 #endif
