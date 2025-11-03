@@ -44,7 +44,7 @@ CAMDemodulation::CAMDemodulation() :
     rvecZAM(), rvecADC(), rvecBDC(), rvecZFM(), rvecAFM(), rvecBFM(),
     iSymbolBlockSize(0),
     bPLLIsEnabled(false), bAutoFreqAcquIsEnabled(false), eDemodType(DT_AM),
-    cOldVal(), eNoiRedType(NR_OFF), iNoiRedLevel(-12),
+    cOldVal(), eNoiRedType(NR_OFF), iNoiRedLevel(-12), eAGCType(AT_MEDIUM),
     PLL(), Mixer(), FreqOffsAcq(), AGC(), NoiseReduction(),
     iFreeSymbolCounter(0), iAudSampleRate(0), iSigSampleRate(0), iBandwidth(0),
     iResOutBlockSize(0)
@@ -144,7 +144,16 @@ void CAMDemodulation::ProcessDataInternal(CParameter& Parameters)
 
 
     /* AGC -------------------------------------------------------------- */
-    AGC.Process(rvecInpTmp);
+    if (eAGCType == AT_AUTOMATIC)
+    {
+        /* Use automatic AGC with adaptive parameters */
+        AGCAuto.Process(rvecInpTmp);
+    }
+    else
+    {
+        /* Use traditional AGC (including AT_NO_AGC, AT_SLOW, AT_MEDIUM, AT_FAST) */
+        AGC.Process(rvecInpTmp);
+    }
 
 
     /* Resampling audio ------------------------------------------------- */
@@ -418,7 +427,19 @@ void CAMDemodulation::SetAGCType(const EAmAgcType eNewType)
     /* Lock resources */
     Lock();
     {
-        AGC.SetType(eNewType);
+        /* Save current AGC type */
+        eAGCType = eNewType;
+
+        if (eNewType == AT_AUTOMATIC)
+        {
+            /* Initialize automatic AGC */
+            AGCAuto.Init(iSigSampleRate, iSymbolBlockSize);
+        }
+        else
+        {
+            /* Set traditional AGC type */
+            AGC.SetType(eNewType);
+        }
     }
     Unlock();
 }
@@ -574,80 +595,6 @@ void CPLL::SetRefNormFreq(const CReal rNewNormFreq)
     /* Reset offset and phase */
     rNormCurFreqOffsetAdd = (CReal) 0.0;
     rCurPhase = (CReal) 0.0;
-}
-
-
-/******************************************************************************\
-* Automatic gain control (AGC)                                                 *
-\******************************************************************************/
-void CAGC::Process(CRealVector& vecrIn)
-{
-    if (eType == AT_NO_AGC)
-    {
-        /* No modification of the signal (except of an amplitude
-           correction factor) */
-        vecrIn *= AM_AMPL_CORR_FACTOR;
-    }
-    else
-    {
-        for (int i = 0; i < iBlockSize; i++)
-        {
-            /* Two sided one-pole recursion for average amplitude
-               estimation */
-            IIR1TwoSided(rAvAmplEst, Abs(vecrIn[i]), rAttack, rDecay);
-
-            /* Lower bound for estimated average amplitude */
-            if (rAvAmplEst < LOWER_BOUND_AMP_LEVEL)
-                rAvAmplEst = LOWER_BOUND_AMP_LEVEL;
-
-            /* Normalize to average amplitude and then amplify to the
-               desired level */
-            vecrIn[i] *= DES_AV_AMPL_AM_SIGNAL / rAvAmplEst;
-        }
-    }
-}
-
-void CAGC::Init(int iNewSampleRate, int iNewBlockSize)
-{
-    /* Set internal parameter */
-    iSampleRate = iNewSampleRate;
-    iBlockSize = iNewBlockSize;
-
-    /* Init filters */
-    SetType(eType);
-
-    /* Init average amplitude estimation with desired amplitude */
-    rAvAmplEst = DES_AV_AMPL_AM_SIGNAL / AM_AMPL_CORR_FACTOR;
-}
-
-void CAGC::SetType(const EAmAgcType eNewType)
-{
-    /* Set internal parameter */
-    eType = eNewType;
-
-    /*          Slow     Medium   Fast    */
-    /* Attack: 0.025 s, 0.015 s, 0.005 s  */
-    /* Decay : 4.000 s, 2.000 s, 0.200 s  */
-    switch (eType)
-    {
-    case AT_SLOW:
-        rAttack = IIR1Lam(0.025, iSampleRate);
-        rDecay = IIR1Lam(4.000, iSampleRate);
-        break;
-
-    case AT_MEDIUM:
-        rAttack = IIR1Lam(0.015, iSampleRate);
-        rDecay = IIR1Lam(2.000, iSampleRate);
-        break;
-
-    case AT_FAST:
-        rAttack = IIR1Lam(0.005, iSampleRate);
-        rDecay = IIR1Lam(0.200, iSampleRate);
-        break;
-
-    case AT_NO_AGC:
-        break;
-    }
 }
 
 

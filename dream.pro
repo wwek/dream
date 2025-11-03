@@ -464,6 +464,7 @@ pulseaudio {
     message("with pulseaudio")
 }
 HEADERS += \
+    src/AGC.h \
     src/AMDemodulation.h \
     src/AMSSDemodulation.h \
     src/chanest/ChanEstTime.h \
@@ -597,6 +598,7 @@ HEADERS += \
     src/sourcedecoders/reverb.h \
     src/sourcedecoders/caudioreverb.h
 SOURCES += \
+    src/AGC.cpp \
     src/AMDemodulation.cpp \
     src/AMSSDemodulation.cpp \
     src/chanest/ChanEstTime.cpp \

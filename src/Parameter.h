@@ -104,7 +104,13 @@ enum EAcqStat {AS_NO_SIGNAL, AS_WITH_SIGNAL};
 /* Receiver state */
 enum ERecState {RS_TRACKING, RS_ACQUISITION};
 
-enum EAmAgcType {AT_NO_AGC, AT_SLOW, AT_MEDIUM, AT_FAST};
+enum EAmAgcType {
+    AT_NO_AGC = 0,
+    AT_SLOW = 1,
+    AT_MEDIUM = 2,
+    AT_FAST = 3,
+    AT_AUTOMATIC = 100
+};
 
 /* AM enumerations */
 enum EDemodType {DT_AM, DT_LSB, DT_USB, DT_CW, DT_FM};

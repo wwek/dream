@@ -317,6 +317,11 @@ void AnalogDemDlg::UpdateControls()
 		if (!RadioButtonAGCFast->isChecked())
 			RadioButtonAGCFast->setChecked(true);
 		break;
+
+    case AT_AUTOMATIC:
+		if (!RadioButtonAGCAuto->isChecked())
+			RadioButtonAGCAuto->setChecked(true);
+		break;
 	}
 
 	/* Set noise reduction type */
@@ -469,23 +474,27 @@ void AnalogDemDlg::OnRadioDemodulation(int iID)
 
 void AnalogDemDlg::OnRadioAGC(int iID)
 {
-	iID = -iID - 2; // TODO understand why
+	/* Direct mapping: Qt ButtonGroup assigns negative IDs starting from -2 */
 	switch (iID)
 	{
-	case 0:
-        rx.SetAMAGCType(AT_NO_AGC);
+	case -2:
+		rx.SetAMAGCType(AT_NO_AGC);
 		break;
 
-	case 1:
-        rx.SetAMAGCType(AT_SLOW);
+	case -3:
+		rx.SetAMAGCType(AT_SLOW);
 		break;
 
-	case 2:
-        rx.SetAMAGCType(AT_MEDIUM);
+	case -4:
+		rx.SetAMAGCType(AT_MEDIUM);
 		break;
 
-	case 3:
-        rx.SetAMAGCType(AT_FAST);
+	case -5:
+		rx.SetAMAGCType(AT_FAST);
+		break;
+
+	case -6:
+		rx.SetAMAGCType(AT_AUTOMATIC);
 		break;
 	}
 }

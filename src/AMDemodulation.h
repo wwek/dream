@@ -34,23 +34,13 @@
 #include "util/Vector.h"
 #include "matlib/MatlibSigProToolbox.h"
 #include "resample/caudioresample.h"
+#include "AGC.h"
 #ifdef HAVE_SPEEX
 # include <speex/speex_preprocess.h>
 #endif
 
 
 /* Definitions ****************************************************************/
-/* Set value for desired amplitude for AM signal, controlled by the AGC. Maximum
-   value is the range for short variables (16 bit) -> 32768 */
-#define DES_AV_AMPL_AM_SIGNAL				((CReal) 8000.0)
-
-/* Lower bound for estimated average amplitude. That is needed, since we
-   devide by this estimate so it must not be zero */
-#define LOWER_BOUND_AMP_LEVEL				((CReal) 10.0)
-
-/* Amplitude correction factor for demodulation */
-#define AM_AMPL_CORR_FACTOR					((CReal) 5.0)
-
 /* Lambda for IIR filter for DC-filter */
 #define DC_IIR_FILTER_LAMBDA				((CReal) 0.999)
 
@@ -176,29 +166,6 @@ protected:
 
     CReal					rNormCenter;
     CReal					rCurNormFreqOffset;
-};
-
-
-/* Automatic gain control --------------------------------------------------- */
-class CAGC
-{
-public:
-
-    CAGC() : eType(AT_MEDIUM) {}
-    void Init(int iSampleRate, int iNewBlockSize);
-    void Process(CRealVector& vecrIn /* in/out */);
-
-    void SetType(const EAmAgcType eNewType);
-    EAmAgcType GetType() {
-        return eType;
-    }
-
-protected:
-    int		iSampleRate;
-    int		iBlockSize;
-    EAmAgcType	eType;
-    CReal	rAttack, rDecay;
-    CReal	rAvAmplEst;
 };
 
 
@@ -367,12 +334,14 @@ protected:
 
     ENoiRedType					eNoiRedType;
     int							iNoiRedLevel;
+    EAmAgcType					eAGCType;
 
     /* Objects */
     CPLL						PLL;
     CMixer						Mixer;
     CFreqOffsAcq				FreqOffsAcq;
     CAGC						AGC;
+    CAGCAutomatic				AGCAuto;
     CNoiseReduction				NoiseReduction;
     CAudioResample				ResampleObj;
 
