@@ -41,6 +41,7 @@
 #include "DrmSimulation.h"
 #include "util/Settings.h"
 #include "util/StatusBroadcast.h"
+#include "Version.h"
 #include <iostream>
 
 int
@@ -149,6 +150,12 @@ main(int argc, char **argv)
                 perror(strError.c_str());
             }
         }
+		else if (mode == "version")
+		{
+			/* Show detailed version information */
+			PrintFullVersion();
+			exit(0);
+		}
 		else
 		{
 			string usage(Settings.UsageArguments());

@@ -639,6 +639,14 @@ CSettings::ParseArguments(int argc, char **argv)
 			continue;
 		}
 
+		/* Version flag ----------------------------------------------------- */
+		if ((!strcmp(argv[i], "--version")) ||
+			(!strcmp(argv[i], "-v")))
+		{
+			Put("command", "mode", "version");
+			continue;
+		}
+
 		/* Help (usage) flag ------------------------------------------------ */
 		if ((!strcmp(argv[i], "--help")) ||
 			(!strcmp(argv[i], "-h")) || (!strcmp(argv[i], "-?")))
@@ -684,6 +692,7 @@ CSettings::UsageArguments()
 		"  -i <n>, --mlciter <n>        number of MLC iterations (allowed range: 0...4 default: 1)\n"
 		"  -s <r>, --sampleoff <r>      sample rate offset initial value [Hz] (allowed range: -200.0...200.0)\n"
 		"  -m <b>, --muteaudio <b>      mute audio output (0: off; 1: on)\n"
+		"  -A <n>, --agc <n>            set AM AGC type (0: off; 1: slow; 2: medium; 3: fast; 100: auto)\n"
 		"  -b <b>, --reverb <b>         audio reverberation on drop-out (0: off; 1: on)\n"
 		"  -f <s>, --fileio <s>         disable sound card, use file <s> instead\n"
 		"  -w <s>, --writewav <s>       write output to wave file\n"
@@ -733,6 +742,7 @@ CSettings::UsageArguments()
 #endif
 		"  --test <n>                   if 1 then some test setup will be done\n"
 		"  --status-socket <s>          Unix domain socket path for status broadcast\n"
+		"  -v, --version                display version information\n"
 		"  -h, -?, --help               this help text\n"
 		"\n"
 		"Example: $EXECNAME -p --sampleoff -0.23 -i 2"
