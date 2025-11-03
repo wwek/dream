@@ -1,11 +1,13 @@
 # Build artifacts
 *.o
-obj/
+/obj
 .qmake.stash
 Makefile
 Makefile.*
 
 # Qt generated files
+/moc
+/ui
 moc_*.cpp
 moc_*.h
 moc_predefs.h
