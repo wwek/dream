@@ -324,21 +324,24 @@ DrmPanel.prototype.update = function(data) {
 };
 
 DrmPanel.prototype.mapStatusValue = function(value) {
-    // Dream DRM 状态值映射: 0=ok, -1=off/未激活, >0=error
+    // Dream DRM 状态值映射: 0=ok, -1=off/未激活, 1=error, 2=warn
     if (value === 0) return 'ok';
     if (value === -1) return 'off';
-    if (value > 0) return 'err';
+    if (value === 1) return 'err';
+    if (value === 2) return 'warn';
     return 'off';
 };
 
 DrmPanel.prototype.updateIndicator = function(name, state) {
     var $ind = this.$container.find('[data-drm-ind="' + name + '"]');
-    $ind.removeClass('drm-indicator-ok drm-indicator-off drm-indicator-err');
+    $ind.removeClass('drm-indicator-ok drm-indicator-off drm-indicator-err drm-indicator-warn');
 
     if (state === 'ok' || state === 'green') {
         $ind.addClass('drm-indicator-ok');
     } else if (state === 'err' || state === 'red') {
         $ind.addClass('drm-indicator-err');
+    } else if (state === 'warn' || state === 'yellow') {
+        $ind.addClass('drm-indicator-warn');
     } else {
         $ind.addClass('drm-indicator-off');
     }
@@ -906,7 +909,7 @@ DrmPanel.prototype.toggleTextContent = function(index, $button) {
 
 DrmPanel.prototype.clear = function() {
     // 重置所有指示灯为 off
-    this.$container.find('[data-drm-ind]').removeClass('drm-indicator-ok drm-indicator-err').addClass('drm-indicator-off');
+    this.$container.find('[data-drm-ind]').removeClass('drm-indicator-ok drm-indicator-err drm-indicator-warn').addClass('drm-indicator-off');
 
     // 重置所有值为 -- (排除 badge 元素,它们有固定的文本内容)
     this.$container.find('[data-drm-val]')

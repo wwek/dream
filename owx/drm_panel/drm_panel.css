@@ -50,6 +50,11 @@
     color: #fff;
 }
 
+.drm-indicator-warn {
+    background: #ff0;
+    color: #000;
+}
+
 /* ========== 第二行：信号质量 ========== */
 .drm-signal-row {
     display: flex;
@@ -783,6 +788,11 @@
         color: black !important;
     }
 
+    .drm-indicator-warn {
+        background: #FFFF99 !important;
+        color: black !important;
+    }
+
     .drm-indicator-off {
         background: #D3D3D3 !important;
         color: black !important;
@@ -825,6 +835,12 @@
         background: #ff0000;
         color: #fff;
         border: 2px solid #fff;
+    }
+
+    .drm-indicator-warn {
+        background: #ffff00;
+        color: #000;
+        border: 2px solid #000;
     }
 
     .drm-indicator-off {
