@@ -33,6 +33,11 @@
 #include <QApplication>
 #include <QMessageBox>
 
+#ifdef QT_MULTIMEDIA_LIB
+# include <QAudioDeviceInfo>
+# include <QAudio>
+#endif
+
 #ifdef _WIN32
 # include <windows.h>
 #else
@@ -95,6 +100,45 @@ main(int argc, char **argv)
 	CSettings Settings;
 	/* Parse arguments and load settings from init-file */
 	Settings.Load(argc, argv);
+
+	/* Check for macOS permissions - show on startup if needed */
+	#ifdef Q_OS_MAC
+	#ifdef QT_MULTIMEDIA_LIB
+	{
+		// Test audio device enumeration to check permissions using Qt
+		bool bAudioAvailable = false;
+		#ifdef QT_VERSION >= 0x050000
+		{
+			QList<QAudioDeviceInfo> devices = QAudioDeviceInfo::availableDevices(QAudio::AudioInput);
+			bAudioAvailable = !devices.isEmpty();
+		}
+		#endif
+
+		if (!bAudioAvailable)
+		{
+			QMessageBox msgBox;
+			msgBox.setIcon(QMessageBox::Warning);
+			msgBox.setWindowTitle("macOS Audio Permissions Required");
+			msgBox.setText("<h3>No Audio Input Devices Found</h3>");
+			msgBox.setInformativeText(
+				"<p>macOS requires microphone permissions to access audio devices.</p>"
+				"<p><b>Please grant permissions:</b></p>"
+				"<ol>"
+				"<li>Click <b>OK</b> to open System Preferences</li>"
+				"<li>Go to <b>Security & Privacy</b> → <b>Privacy</b> → <b>Microphone</b></li>"
+				"<li>Enable permissions for this application</li>"
+				"<li>Restart the application</li>"
+				"</ol>"
+			);
+			msgBox.setStandardButtons(QMessageBox::Ok);
+			msgBox.exec();
+
+			/* Try to open System Preferences */
+			system("open 'x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone'");
+		}
+	}
+	#endif
+	#endif
 
 	try
 	{

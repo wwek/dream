@@ -37,6 +37,8 @@
 # include <QAudioInput>
 # include <QIODevice>
 # include <QMutex>
+# include <QObject>
+# include <QTimer>
 #else
 # ifdef QT_CORE_LIB
   class QIODevice;
@@ -67,8 +69,9 @@ enum EInChanSel {CS_LEFT_CHAN, CS_RIGHT_CHAN, CS_MIX_CHAN, CS_SUB_CHAN, CS_IQ_PO
                    CS_IQ_NEG, CS_IQ_POS_ZERO, CS_IQ_NEG_ZERO, CS_IQ_POS_SPLIT, CS_IQ_NEG_SPLIT
                   };
 
-class CReceiveData : public CReceiverModul<_REAL, _REAL>
+class CReceiveData : public QObject, public CReceiverModul<_REAL, _REAL>
 {
+    Q_OBJECT
 public:
     CReceiveData();
     virtual ~CReceiveData();
@@ -112,6 +115,13 @@ public:
                      const int iNumAvBlocksPSD = NUM_AV_BLOCKS_PSD,
                      const int iPSDOverlap = 0);
 
+#ifdef QT_MULTIMEDIA_LIB
+# ifdef Q_OS_MAC
+public slots:
+    void createAudioInputSafely(std::string device);
+# endif
+#endif
+
 protected:
     CSignalLevelMeter		SignalLevelMeter;
 
@@ -119,6 +129,7 @@ protected:
     QAudioInput*            pAudioInput;
     QIODevice*              pIODevice;
     mutable QMutex          audioDeviceMutex;  // Protect audio device pointers
+    bool                    bDeviceChanged;    // Indicates device was changed and needs re-init in worker thread
 #endif
     CSoundInInterface*		pSound;
     CVector<_SAMPLE>		vecsSoundBuffer;

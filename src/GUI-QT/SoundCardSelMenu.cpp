@@ -32,6 +32,8 @@
 #include "SoundCardSelMenu.h"
 #include "DialogUtil.h"
 #include <QFileDialog>
+#include <QMessageBox>
+#include <QTimer>
 #include "../util-QT/Util.h"
 #include "../util/FileTyper.h"
 #include "../main-Qt/crx.h"
@@ -169,14 +171,33 @@ CSoundCardSelMenu::CSoundCardSelMenu(CTRx& ntrx,
 
 void CSoundCardSelMenu::OnSoundInDevice(QAction* action)
 {
-    emit soundInDeviceChanged(action->data().toString());
+    if (action) {
+        QString device = action->data().toString();
+        /* Add small delay to prevent rapid switching which can cause crashes */
+        #ifdef Q_OS_MAC
+        QTimer::singleShot(50, [this, device]() {
+            emit soundInDeviceChanged(device);
+        });
+        #else
+        emit soundInDeviceChanged(device);
+        #endif
+    }
 }
 
 void CSoundCardSelMenu::OnSoundOutDevice(QAction* action)
 {
-    QString dev = action->data().toString();
-    cerr << "OnSoundOutDevice " << dev.toStdString() << endl;
-    emit soundOutDeviceChanged(dev);
+    if (action) {
+        QString dev = action->data().toString();
+        cerr << "OnSoundOutDevice " << dev.toStdString() << endl;
+        /* Add small delay to prevent rapid switching which can cause crashes */
+        #ifdef Q_OS_MAC
+        QTimer::singleShot(50, [this, dev]() {
+            emit soundOutDeviceChanged(dev);
+        });
+        #else
+        emit soundOutDeviceChanged(dev);
+        #endif
+    }
 }
 
 void CSoundCardSelMenu::OnSoundInChannel(QAction* action)
@@ -225,6 +246,42 @@ void CSoundCardSelMenu::UpdateDeviceMenu(QMenu* menu, const vector<string>& name
     menu->clear();
     QActionGroup* group = nullptr;
     cerr << "UpdateDeviceMenu " << menu->title().toStdString() << " selected (" << selected << ")" << endl;
+
+    /* Check for empty device list on macOS - likely a permissions issue */
+    #ifdef Q_OS_MAC
+    if (names.empty() && menu->title().contains("Device", Qt::CaseInsensitive))
+    {
+        QAction* noDeviceAction = menu->addAction(tr("⚠️ No audio devices found"));
+        noDeviceAction->setEnabled(false);
+
+        QAction* permissionsAction = menu->addAction(tr("🔓 Grant Microphone Permissions"));
+        permissionsAction->setEnabled(true);
+
+        connect(permissionsAction, &QAction::triggered, [menu]() {
+            QMessageBox msgBox(menu);
+            msgBox.setIcon(QMessageBox::Warning);
+            msgBox.setWindowTitle("macOS Microphone Permissions Required");
+            msgBox.setText("<h3>No Audio Devices Found</h3>");
+            msgBox.setInformativeText(
+                "<p>It looks like macOS has blocked access to your microphone.</p>"
+                "<p><b>To fix this:</b></p>"
+                "<ol>"
+                "<li>Open <b>System Preferences</b> → <b>Security & Privacy</b> → <b>Privacy</b></li>"
+                "<li>Select <b>Microphone</b> from the left panel</li>"
+                "<li>Enable permissions for this application (Terminal, Qt Creator, etc.)</li>"
+                "<li>Restart the application after granting permissions</li>"
+                "</ol>"
+                "<p><i>If you don't see your app in the list, try restarting it first.</i></p>"
+            );
+            msgBox.setStandardButtons(QMessageBox::Ok);
+            msgBox.exec();
+
+            /* Try to open System Preferences */
+            system("open 'x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone'");
+        });
+    }
+    #endif
+
     for (int i = 0; i < int(names.size()); i++)
     {
       cerr << "enum " << names[i] << " desc " <<  descriptions[i] << endl;

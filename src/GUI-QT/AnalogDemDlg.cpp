@@ -406,6 +406,43 @@ void AnalogDemDlg::OnTimer()
 	case RM_AM:
 		/* Carrier frequency of AM signal */
         ButtonFreqOffset->setText(QString().setNum(rx.ConvertFrequency(rx.GetAMMixerFrequencyOffset()), 'f', 2) + " Hz");
+
+		/* Check for macOS permissions issue - no spectrum data */
+		#ifdef Q_OS_MAC
+		static bool bPermissionWarningShown = false;
+		if (!bPermissionWarningShown)
+		{
+			/* Check if we have signal level data - if level is 0 or very low,可能没有权限 */
+			CReal rSignalLevel = rx.GetParameters()->GetIFSignalLevel();
+			if (rSignalLevel < 0.001)
+			{
+				/* Check if audio device is selected but no signal - simplified check */
+				QMessageBox msgBox(this);
+				msgBox.setIcon(QMessageBox::Warning);
+				msgBox.setWindowTitle(tr("macOS Audio Permission Required"));
+				msgBox.setText(tr("<h3>No Audio Signal Detected</h3>"));
+				msgBox.setInformativeText(
+					tr("<p>The audio interface is configured but no signal is being received.</p>"
+					   "<p>This is typically caused by macOS blocking microphone access.</p>"
+					   "<p><b>To fix this:</b></p>"
+					   "<ol>"
+					   "<li>Open <b>System Preferences</b> → <b>Security & Privacy</b> → <b>Privacy</b></li>"
+					   "<li>Select <b>Microphone</b> from the left panel</li>"
+					   "<li>Enable permissions for this application</li>"
+					   "<li>Restart the application</li>"
+					   "</ol>")
+				);
+				msgBox.setStandardButtons(QMessageBox::Ok);
+				msgBox.exec();
+
+				/* Try to open System Preferences */
+				system("open 'x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone'");
+
+				bPermissionWarningShown = true;
+			}
+		}
+		#endif
+
 		break;
 	case RM_NONE:
 		break;
