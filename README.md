@@ -60,11 +60,6 @@ socat UNIX-CONNECT:/tmp/dream_status.sock -
 - Can receive SDR data streams via pipe
 - Standalone binary
 
-✅ **AM AGC Control**
-- Automatic Gain Control for AM demodulation
-- Options: `-A` or `--agc <n>`
-- Modes: 0=off, 1=slow, 2=medium, 3=fast, 100=auto
-
 ✅ **Fixed Issues**
 - Frame boundary calculation error (`xheaacsuperframe.cpp`)
 - Buffer overflow (`AudioSourceDecoder.cpp`)

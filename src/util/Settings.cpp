@@ -332,28 +332,6 @@ CSettings::ParseArguments(int argc, char **argv)
 			continue;
 		}
 
-		/* AM AGC type ------------------------------------------------------ */
-		if (GetNumericArgument(argc, argv, i, "-A", "--agc",
-							   0, 100, rArgument))
-		{
-			/* Validate AGC value: only 0, 1, 2, 3, 100 are valid */
-			int iAgcValue = int(rArgument);
-			if (iAgcValue == 0 || iAgcValue == 1 || iAgcValue == 2 ||
-			    iAgcValue == 3 || iAgcValue == 100)
-			{
-				Put("AM Demodulation", "agc", iAgcValue);
-			}
-			else
-			{
-				/* Invalid value: default to no AGC (AT_NO_AGC = 0) */
-				cerr << "Warning: Invalid AGC value " << iAgcValue
-				     << ". Valid values: 0 (off), 1 (slow), 2 (medium), 3 (fast), 100 (auto). "
-				     << "Defaulting to 0 (no AGC)." << endl;
-				Put("AM Demodulation", "agc", 0);
-			}
-			continue;
-		}
-
 		/* Modified metrics flag -------------------------------------------- */
 		if (GetNumericArgument(argc, argv, i, "-D", "--modmetric",
 							   0, 1, rArgument))
@@ -702,7 +680,6 @@ CSettings::UsageArguments()
 		"  -i <n>, --mlciter <n>        number of MLC iterations (allowed range: 0...4 default: 1)\n"
 		"  -s <r>, --sampleoff <r>      sample rate offset initial value [Hz] (allowed range: -200.0...200.0)\n"
 		"  -m <b>, --muteaudio <b>      mute audio output (0: off; 1: on)\n"
-		"  -A <n>, --agc <n>            set AM AGC type (0: off; 1: slow; 2: medium; 3: fast; 100: auto)\n"
 		"  -b <b>, --reverb <b>         audio reverberation on drop-out (0: off; 1: on)\n"
 		"  -f <s>, --fileio <s>         disable sound card, use file <s> instead\n"
 		"  -w <s>, --writewav <s>       write output to wave file\n"
