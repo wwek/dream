@@ -642,18 +642,16 @@ CSettings::ParseArguments(int argc, char **argv)
 		if ((!strcmp(argv[i], "--version")) ||
 			(!strcmp(argv[i], "-v")))
 		{
-			Put("command", "mode", "version");
-			/* Set default mode to version and return immediately */
-			string current_mode = Get("command", "mode", string());
-			if (current_mode == "version")
-				return;
+			/* Set mode directly without checking existing value */
+			Put("command", "mode", std::string("version"));
+			return;
 		}
 
 		/* Help (usage) flag ------------------------------------------------ */
 		if ((!strcmp(argv[i], "--help")) ||
 			(!strcmp(argv[i], "-h")) || (!strcmp(argv[i], "-?")))
 		{
-			Put("command", "mode", "help");
+			Put("command", "mode", std::string("help"));
 			/* Set default mode to help and return immediately */
 			string current_mode = Get("command", "mode", string());
 			if (current_mode == "help")

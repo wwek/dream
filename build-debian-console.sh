@@ -2,7 +2,7 @@
 set -e
 
 echo "========================================"
-echo "Building Dream DRM Receiver 2.2.x"
+echo "Building Dream DRM Receiver 2.3.x"
 echo "with xHE-AAC support"
 echo "========================================"
 
