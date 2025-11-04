@@ -280,8 +280,9 @@ void CReceiveData::ProcessDataInternal(CParameter& Parameters)
                 else if(r == 0) {
                     /* No data available yet - wait and retry in next call */
                     iZeroReadCount++;
-                    // Only mark as error after 10 consecutive zero reads across calls
-                    if (iZeroReadCount > 10) {
+                    // Only mark as error after 5 consecutive zero reads across calls (~25ms)
+                    // This allows temporary buffer gaps in virtual sound cards while detecting real errors
+                    if (iZeroReadCount > 5) {
                         fprintf(stderr, "ProcessDataInternal: Consecutive zero reads detected (%d), marking as error\n", iZeroReadCount);
                         bBad = true;
                     }
