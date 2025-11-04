@@ -1,8 +1,9 @@
-# Multi-architecture support
-FROM --platform=$TARGETPLATFORM ubuntu:24.04
+# Dream DRM Receiver - Multi-architecture Qt6 Build
+# Use Ubuntu 22.04 for reliable Qt6 ARM64 support
+FROM --platform=$TARGETPLATFORM ubuntu:22.04
 
 LABEL maintainer="OpenWebRX Dream DRM Receiver"
-LABEL description="Dream DRM Receiver 2.2.x build environment with xHE-AAC support"
+LABEL description="Dream DRM Receiver 2.2.x build environment with Qt6 and xHE-AAC support"
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -12,35 +13,17 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # Set timezone
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# Architecture detection and verification
+# Enable restricted, universe, and multiverse repositories for Ubuntu 22.04
+RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
+
+# Architecture detection
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 RUN echo "Building on $BUILDPLATFORM for $TARGETPLATFORM" && \
     echo "Architecture: $(uname -m)" && \
     echo "Debian Architecture: $(dpkg --print-architecture)"
 
-# Set environment variables
-
-# Install build dependencies and build FDK-AAC from source
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    wget \
-    make \
-    autoconf \
-    libtool \
-    automake \
-    && mkdir -p /tmp/fdk-aac-build \
-    && cd /tmp/fdk-aac-build \
-    && wget --no-check-certificate https://downloads.sourceforge.net/project/opencore-amr/fdk-aac/fdk-aac-2.0.2.tar.gz \
-    && tar -xzf fdk-aac-2.0.2.tar.gz \
-    && cd fdk-aac-2.0.2 \
-    && ./configure --enable-shared=no --disable-dependency-tracking \
-    && make -j$(nproc) \
-    && make install \
-    && ldconfig \
-    && cd / \
-    && rm -rf /tmp/fdk-aac-build
-
-# Install build dependencies
+# Install build dependencies and runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     # Build tools
     build-essential \
@@ -56,10 +39,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     \
     # Qt6 (minimal for console mode)
     qt6-qmake \
-    qt6-base-dev \
+    qtbase6-dev \
+    qt6-base-dev-tools \
     qt6-multimedia-dev \
     \
-    # Audio libraries (FDK-AAC already built from source above)
+    # Audio libraries (FDK-AAC from non-free)
+    libfdk-aac-dev \
+    libfdk-aac2 \
     libfaad-dev \
     libopus-dev \
     \
@@ -84,16 +70,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     file \
     && rm -rf /var/lib/apt/lists/*
 
-# Verify architecture after package installation
-RUN echo "========================================" && \
-    echo "Architecture Verification:" && \
-    echo "uname -m: $(uname -m)" && \
-    echo "dpkg arch: $(dpkg --print-architecture)" && \
-    echo "gcc target: $(gcc -dumpmachine)" && \
-    file /bin/bash && \
-    echo "========================================" && \
-    echo ""
-
 # Verify FDK-AAC version (must be >= 2.0.0 for USAC/xHE-AAC support)
 RUN pkg-config --modversion fdk-aac && \
     pkg-config --atleast-version=2.0.0 fdk-aac || \
@@ -106,12 +82,9 @@ WORKDIR /build
 COPY . /build/
 
 # Build Dream in console mode
-RUN echo "Building Dream 2.2.x..." && \
-    echo "Available packages:" && \
-    pkg-config --list-all | grep -i "fdk\|fftw" && \
-    qmake CONFIG+=console CONFIG+=fdk-aac dream.pro && \
-    echo "Checking Makefile for FDK-AAC and FFTW..." && \
-    grep -E "fdk-aac|fftw" Makefile | head -5 && \
+RUN echo "Building Dream 2.2.x with Qt6..." && \
+    pkg-config --list-all | grep -E "fdk-aac|fftw|opus|speex" && \
+    qmake CONFIG+=console CONFIG+=fdk-aac CONFIG+=speexdsp dream.pro && \
     make -j$(nproc) && \
     echo "✓ Build successful"
 
@@ -119,21 +92,17 @@ RUN echo "Building Dream 2.2.x..." && \
 RUN echo "Verifying binary..." && \
     test -f dream && \
     file dream && \
-    ldd dream | grep fdk-aac && \
-    echo "✓ FDK-AAC linked successfully"
+    ldd dream | grep -E "fdk-aac|speex|fftw|pulse" && \
+    echo "✓ All required libraries linked successfully"
 
 # Install to system
 RUN make install && \
-    echo "Binary installed by make install"
-
-# Move to /usr/local/bin and create output artifacts
-RUN mkdir -p /output && \
+    mkdir -p /output && \
     cp dream /output/dream && \
     if [ -f /usr/bin/dream ]; then \
-        cp /usr/bin/dream /usr/local/bin/dream && \
-        echo "✓ Moved to /usr/local/bin/dream"; \
+        cp /usr/bin/dream /usr/local/bin/dream; \
     elif [ -f /usr/local/bin/dream ]; then \
-        echo "✓ Already at /usr/local/bin/dream"; \
+        echo "✓ Binary already at /usr/local/bin/dream"; \
     else \
         echo "ERROR: dream binary not found after install" && exit 1; \
     fi && \
@@ -150,9 +119,8 @@ RUN echo "========================================" && \
     ldd /usr/local/bin/dream | grep -E "fdk-aac|speex|fftw|pulse" && \
     echo "" && \
     echo "Version info:" && \
-    /usr/local/bin/dream --version || echo "Version flag not supported" && \
-    echo "========================================" && \
-    echo ""
+    /usr/local/bin/dream --version || echo "(Version flag not supported)" && \
+    echo "========================================"
 
 # Set working directory for runtime
 WORKDIR /data

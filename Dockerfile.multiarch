@@ -1,0 +1,259 @@
+# Dream DRM Receiver - Multi-architecture build
+# Supports both AMD64 and ARM64
+# AMD64: Uses native Ubuntu packages (fast)
+# ARM64: Builds Qt6 from source (slower but works)
+FROM --platform=$TARGETPLATFORM ubuntu:22.04
+
+LABEL maintainer="OpenWebRX Dream DRM Receiver"
+LABEL description="Dream DRM Receiver 2.2.x build environment with Qt6 and xHE-AAC support"
+LABEL platform.architecture=$TARGETPLATFORM
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive \
+    INSTALL_PREFIX=/usr/local \
+    TZ=UTC \
+    MAKEFLAGS="-j$(nproc)"
+
+# Set timezone
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# Enable repositories
+RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list && \
+    apt-get update
+
+# Architecture detection
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+RUN echo "Building on $BUILDPLATFORM for $TARGETPLATFORM" && \
+    echo "Architecture: $(uname -m)" && \
+    echo "Debian Architecture: $(dpkg --print-architecture)"
+
+# Common build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    make \
+    gcc \
+    g++ \
+    pkg-config \
+    git \
+    wget \
+    ca-certificates \
+    libc-bin \
+    libfaad-dev \
+    libopus-dev \
+    libfftw3-dev \
+    libspeex-dev \
+    libspeexdsp-dev \
+    libsamplerate0-dev \
+    libpulse-dev \
+    pulseaudio \
+    libhamlib-dev \
+    libusb-1.0-0-dev \
+    libpcap-dev \
+    file \
+    && rm -rf /var/lib/apt/lists/*
+
+# Platform-specific setup
+RUN if [ "$TARGETPLATFORM" = "linux/amd64" ]; then \
+    echo "=== Setting up AMD64 with native packages ===" && \
+    apt-get update && apt-get install -y --no-install-recommends \
+        qt6-qmake \
+        qtbase6-dev \
+        qt6-base-dev-tools \
+        qt6-multimedia-dev \
+        libfdk-aac-dev \
+        libfdk-aac2 \
+        && rm -rf /var/lib/apt/lists/*; \
+    elif [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
+    echo "=== Setting up ARM64 - building from source (this takes ~30 minutes) ===" && \
+    apt-get update && apt-get install -y --no-install-recommends \
+        autoconf \
+        automake \
+        libtool \
+        flex \
+        bison \
+        gperf \
+        perl \
+        python3 \
+        python3-pip \
+        ruby \
+        gstreamer1.0-plugins-base \
+        libasound2-dev \
+        libavcodec-dev \
+        libavformat-dev \
+        libswscale-dev \
+        libgstreamer-plugins-base1.0-dev \
+        libx11-dev \
+        libxext-dev \
+        libxrender-dev \
+        libxcb1-dev \
+        libxcb-cursor-dev \
+        libxcb-xinerama0-dev \
+        libxcb-xkb-dev \
+        libxkbcommon-x11-dev \
+        libfontconfig1-dev \
+        libfreetype6-dev \
+        libgl1-mesa-dev \
+        libglu1-mesa-dev \
+        libegl1-mesa-dev \
+        libdbus-1-dev \
+        libvulkan-dev \
+        libxcb-xfixes0-dev \
+        libxcb-render0-dev \
+        libxcb-shape0-dev \
+        libxcb-sync-dev \
+        libxcb-image0-dev \
+        libxcb-keysyms1-dev \
+        libxcb-xkb-dev \
+        libxkbcommon-dev \
+        libatspi2.0-dev \
+        libgtk-3-dev \
+        libpango1.0-dev \
+        libharfbuzz-dev \
+        libfribidi-dev \
+        liblcms2-dev \
+        libjpeg-dev \
+        libpng-dev \
+        libtiff-dev \
+        libopenjp2-7-dev \
+        libzstd-dev \
+        libwebp-dev \
+        && rm -rf /var/lib/apt/lists/* && \
+    \
+    # Build FDK-AAC from source \
+    mkdir -p /tmp/fdk-aac-build && \
+    cd /tmp/fdk-aac-build && \
+    wget --no-check-certificate https://downloads.sourceforge.net/project/opencore-amr/fdk-aac/fdk-aac-2.0.2.tar.gz && \
+    tar -xzf fdk-aac-2.0.2.tar.gz && \
+    cd fdk-aac-2.0.2 && \
+    ./configure --enable-shared=no --disable-dependency-tracking && \
+    make -j$(nproc) && \
+    make install && \
+    ldconfig && \
+    cd / && \
+    rm -rf /tmp/fdk-aac-build && \
+    \
+    # Build Qt6 from source \
+    mkdir -p /tmp/qt6-build && \
+    cd /tmp/qt6-build && \
+    git clone --branch 6.2.4 --depth 1 https://code.qt.io/qt/qt5.git qt6 && \
+    cd qt6 && \
+    perl init-repository --module-subset=qtbase,qtmultimedia,qtshadertools && \
+    mkdir build && \
+    cd build && \
+    ../configure -prefix /usr/local/qt6 \
+        -confirm-license \
+        -opensource \
+        -release \
+        -optimize-size \
+        -strip \
+        -static \
+        -no-shared \
+        -no-dbus \
+        -no-gif \
+        -no-libpng \
+        -no-libjpeg \
+        -no-freetype \
+        -no-harfbuzz \
+        -no-openssl \
+        -no-sql-sqlite \
+        -no-qml-debug \
+        -no-egl \
+        -no-glib \
+        -no-gstreamer \
+        -no-sql-odbc \
+        -no-sql-mysql \
+        -no-sql-psql \
+        -no-sql-sqlite2 \
+        -no-compile-examples \
+        -no-xcb \
+        -no-xcb-xlib \
+        -no-xcb-renderutil \
+        -no-directfb \
+        -no-linuxfb \
+        -no-kms \
+        -no-eglfs \
+        -no-mirclient \
+        -no-libinput \
+        -no-xkbcommon \
+        -no-libxkbcommon \
+        -no-pulseaudio \
+        -no-alsa \
+        -nomake tests \
+        -nomake examples \
+        -v && \
+    make -j$(nproc) && \
+    make install && \
+    ln -sf /usr/local/qt6/bin/qmake /usr/bin/qmake && \
+    cd / && \
+    rm -rf /tmp/qt6-build; \
+    fi
+
+# Verify installations
+RUN echo "Verifying installations..." && \
+    if command -v qmake >/dev/null 2>&1; then \
+        echo "✓ qmake found at: $(which qmake)"; \
+        qmake --version; \
+    else \
+        echo "✗ ERROR: qmake not found!"; \
+        exit 1; \
+    fi && \
+    pkg-config --modversion fdk-aac && \
+    pkg-config --atleast-version=2.0.0 fdk-aac && \
+    echo "✓ FDK-AAC >= 2.0.0 found" || \
+    (echo "✗ ERROR: FDK-AAC version must be >= 2.0.0" && exit 1)
+
+# Create working directory
+WORKDIR /build
+
+# Copy Dream source code
+COPY . /build/
+
+# Build Dream
+RUN echo "Building Dream 2.2.x for $TARGETPLATFORM..." && \
+    pkg-config --list-all | grep -E "fdk-aac|fftw|opus|speex" && \
+    qmake CONFIG+=console CONFIG+=fdk-aac CONFIG+=speexdsp dream.pro && \
+    make -j$(nproc) && \
+    echo "✓ Build successful"
+
+# Verify binary
+RUN echo "Verifying binary..." && \
+    test -f dream && \
+    file dream && \
+    ldd dream | grep -E "fdk-aac|speex|fftw|pulse" && \
+    echo "✓ All required libraries linked successfully"
+
+# Install to system
+RUN make install && \
+    mkdir -p /output && \
+    cp dream /output/dream && \
+    if [ -f /usr/bin/dream ]; then \
+        cp /usr/bin/dream /usr/local/bin/dream; \
+    elif [ -f /usr/local/bin/dream ]; then \
+        echo "✓ Binary already at /usr/local/bin/dream"; \
+    else \
+        echo "ERROR: dream binary not found after install" && exit 1; \
+    fi && \
+    cp /usr/local/bin/dream /output/dream-installed
+
+# Display build information
+RUN echo "========================================" && \
+    echo "Dream DRM Receiver 2.2.x Build Complete" && \
+    echo "Platform: $TARGETPLATFORM" && \
+    echo "========================================" && \
+    echo "Binary: /usr/local/bin/dream" && \
+    echo "Size: $(ls -lh /usr/local/bin/dream | awk '{print $5}')" && \
+    echo "" && \
+    echo "Linked libraries:" && \
+    ldd /usr/local/bin/dream | grep -E "fdk-aac|speex|fftw|pulse" && \
+    echo "" && \
+    echo "Version info:" && \
+    /usr/local/bin/dream --version || echo "(Version flag not supported)" && \
+    echo "========================================"
+
+# Set working directory for runtime
+WORKDIR /data
+
+# Default command shows help
+CMD ["/usr/local/bin/dream", "--help"]

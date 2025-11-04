@@ -20,7 +20,8 @@ public:
     QCompatAudioInput(const QAudioDevice &device, QObject *parent = nullptr)
         : QObject(parent) {
         QAudioFormat format;
-        format.setSampleRate(48000);
+        // Use higher sample rates for better compatibility with macOS Sequoia
+        format.setSampleRate(96000);
         format.setChannelCount(2);
         format.setSampleFormat(QAudioFormat::Int16);
         m_source = new QAudioSource(device, format, this);
@@ -31,7 +32,8 @@ public:
         : QObject(parent) {
         QAudioDevice defaultDevice = QMediaDevices::defaultAudioInput();
         QAudioFormat format;
-        format.setSampleRate(48000);
+        // Use higher sample rates for better compatibility with macOS Sequoia
+        format.setSampleRate(96000);
         format.setChannelCount(2);
         format.setSampleFormat(QAudioFormat::Int16);
         m_source = new QAudioSource(defaultDevice, format, this);
