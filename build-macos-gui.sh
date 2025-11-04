@@ -45,9 +45,28 @@ check_dep "libpcap" || MISSING_DEPS+=("libpcap")
 check_dep "opus" || MISSING_DEPS+=("opus")
 check_dep "speex" || MISSING_DEPS+=("speex")
 
-# Check Qwt - use Qt 5 version for Qt 6 compatibility
-if [ -f "/opt/homebrew/Cellar/qwt-qt5/6.3.0/lib/qwt.framework/Versions/6/Headers/qwt.h" ] || [ -f "/opt/homebrew/lib/qwt.framework/Headers/qwt.h" ]; then
-    echo -e "${GREEN}✅ Qwt found${NC}"
+# Check Qwt - check for any 6.x version
+QWT_FOUND=false
+if [ -f "/opt/homebrew/lib/qwt.framework/Headers/qwt.h" ]; then
+    # Check if qwt in main lib directory is version 6.x
+    QWT_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" /opt/homebrew/lib/qwt.framework/Resources/Info.plist 2>/dev/null | cut -d. -f1)
+    if [ "$QWT_VERSION" = "6" ]; then
+        QWT_FOUND=true
+    fi
+fi
+
+# If not found in main lib, check any 6.x version in Cellar
+if [ "$QWT_FOUND" = false ]; then
+    for qwt_dir in /opt/homebrew/Cellar/qwt-qt5/6.*; do
+        if [ -f "$qwt_dir/lib/qwt.framework/Versions/6/Headers/qwt.h" ]; then
+            QWT_FOUND=true
+            break
+        fi
+    done
+fi
+
+if [ "$QWT_FOUND" = true ]; then
+    echo -e "${GREEN}✅ Qwt found (any 6.x version)${NC}"
 else
     echo -e "${YELLOW}⚠️  Qwt not installed${NC}"
     MISSING_DEPS+=("qwt-qt5")
