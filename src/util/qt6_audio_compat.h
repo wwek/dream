@@ -56,6 +56,19 @@ public:
 
     QIODevice* start() {
         m_device = m_source->start();
+
+        // Enhanced macOS compatibility: Check if device is properly initialized
+        if (m_device == nullptr) {
+            fprintf(stderr, "QCompatAudioInput: Warning - QAudioSource returned null device\n");
+            fprintf(stderr, "QCompatAudioInput: This may indicate permission issues or device unavailability on macOS\n");
+            fprintf(stderr, "QCompatAudioInput: Current state: %d, Error: %d\n",
+                   m_source->state(), m_source->error());
+        } else {
+            fprintf(stderr, "QCompatAudioInput: Successfully started audio input\n");
+            fprintf(stderr, "QCompatAudioInput: Device state: %d, Error: %d, Buffer size: %d\n",
+                   m_source->state(), m_source->error(), m_source->bufferSize());
+        }
+
         return m_device;
     }
 

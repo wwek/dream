@@ -263,6 +263,7 @@ void CReceiveData::ProcessDataInternal(CParameter& Parameters)
         /* Check if device is actually open and valid before reading */
         if (pDeviceToRead && !pDeviceToRead->isOpen()) {
             fprintf(stderr, "ProcessDataInternal: QIODevice is not open, attempting to restart audio\n");
+            fprintf(stderr, "ProcessDataInternal: Device may be closed due to permission changes or system sleep\n");
             bDeviceChanged = true;
             bBad = true;
         }
@@ -280,12 +281,23 @@ void CReceiveData::ProcessDataInternal(CParameter& Parameters)
                 else if(r == 0) {
                     /* No data available yet - wait and retry in next call */
                     iZeroReadCount++;
-                    // Only mark as error after 5 consecutive zero reads across calls (~25ms)
-                    // This allows temporary buffer gaps in virtual sound cards while detecting real errors
-                    if (iZeroReadCount > 5) {
+
+                    // More lenient threshold: Allow up to 50 consecutive zero reads (~250ms)
+                    // This handles macOS permission delays, virtual devices, and Qt6 buffering
+                    if (iZeroReadCount > 50) {
                         fprintf(stderr, "ProcessDataInternal: Consecutive zero reads detected (%d), marking as error\n", iZeroReadCount);
+                        fprintf(stderr, "ProcessDataInternal: This may indicate permission issues or device problems on macOS\n");
+                        fprintf(stderr, "ProcessDataInternal: Please check:\n");
+                        fprintf(stderr, "  1. System Preferences > Security & Privacy > Privacy > Microphone\n");
+                        fprintf(stderr, "  2. Ensure the application has microphone access\n");
+                        fprintf(stderr, "  3. Try switching audio devices if the issue persists\n");
                         bBad = true;
                     }
+                    // Add progressive warnings to help diagnose issues
+                    else if (iZeroReadCount > 0 && iZeroReadCount % 10 == 0) {
+                        fprintf(stderr, "ProcessDataInternal: Warning: %d consecutive zero reads, device may need more time to initialize\n", iZeroReadCount);
+                    }
+
                     break;  // Exit loop and retry in next ProcessDataInternal call
                 }
                 else {
@@ -321,8 +333,17 @@ void CReceiveData::ProcessDataInternal(CParameter& Parameters)
     Parameters.ReceiveStatus.InterfaceI.SetStatus(bBad ? CRC_ERROR : RX_OK); /* Red light */
     Parameters.Unlock();
 
-    if(bBad)
+    if(bBad) {
+        /* Enhanced error recovery for macOS */
+        #ifdef QT_MULTIMEDIA_LIB
+        // If we have persistent zero reads, try to reset the device
+        if (iZeroReadCount > 50 && iZeroReadCount % 100 == 0) {
+            fprintf(stderr, "ProcessDataInternal: Persistent zero reads detected, attempting device reset\n");
+            bDeviceChanged = true;
+        }
+        #endif
         return;
+    }
 
     /* Upscale if ratio greater than one */
     if (iUpscaleRatio > 1)
@@ -707,19 +728,50 @@ void CReceiveData::InitInternal(CParameter& Parameters)
                         fprintf(stderr, "InitInternal: QIODevice created, open: %s, readable: %s\n",
                                pIODevice->isOpen() ? "yes" : "no",
                                pIODevice->isReadable() ? "yes" : "no");
+
+                        // Add device state diagnostic for macOS
+                        fprintf(stderr, "InitInternal: Device diagnostic for macOS:\n");
+                        fprintf(stderr, "InitInternal: - Audio device: %s\n", soundDevice.c_str());
+                        fprintf(stderr, "InitInternal: - State: %s\n",
+                               pAudioInput->state() == QAudio::ActiveState ? "Active" :
+                               pAudioInput->state() == QAudio::SuspendedState ? "Suspended" :
+                               pAudioInput->state() == QAudio::StoppedState ? "Stopped" : "Unknown");
+                        fprintf(stderr, "InitInternal: - Error: %s\n",
+                               pAudioInput->error() == QAudio::NoError ? "None" :
+                               pAudioInput->error() == QAudio::OpenError ? "Open Error" :
+                               pAudioInput->error() == QAudio::IOError ? "IO Error" :
+                               pAudioInput->error() == QAudio::UnderrunError ? "Underrun" :
+                               pAudioInput->error() == QAudio::FatalError ? "Fatal" : "Unknown");
+                        fprintf(stderr, "InitInternal: - Buffer size: %d bytes\n", pAudioInput->bufferSize());
                     } else {
                         fprintf(stderr, "InitInternal: QAudioInput failed to start\n");
+                        fprintf(stderr, "InitInternal: Device diagnostic for troubleshooting:\n");
+                        fprintf(stderr, "InitInternal: - Requested device: %s\n", soundDevice.c_str());
+                        fprintf(stderr, "InitInternal: - QAudioInput state: %s\n",
+                               pAudioInput ? (pAudioInput->state() == QAudio::ActiveState ? "Active" :
+                                             pAudioInput->state() == QAudio::SuspendedState ? "Suspended" :
+                                             pAudioInput->state() == QAudio::StoppedState ? "Stopped" : "Unknown") : "null");
+                        fprintf(stderr, "InitInternal: - QAudioInput error: %s\n",
+                               pAudioInput ? (pAudioInput->error() == QAudio::NoError ? "None" :
+                                             pAudioInput->error() == QAudio::OpenError ? "Open Error" :
+                                             pAudioInput->error() == QAudio::IOError ? "IO Error" :
+                                             pAudioInput->error() == QAudio::UnderrunError ? "Underrun" :
+                                             pAudioInput->error() == QAudio::FatalError ? "Fatal" : "Unknown") : "null");
+                        fprintf(stderr, "InitInternal: - QIODevice status: %s\n",
+                               pIODevice ? (pIODevice->isOpen() ? "Open" : "Closed") : "null");
 
                         /* Try to recover by recreating the QAudioInput */
                         fprintf(stderr, "InitInternal: Attempting to recover...\n");
                         delete pAudioInput;
                         foreach(const QAudioDevice& di, QMediaDevices::audioInputs()) {
                             if(soundDevice == di.description().toStdString()) {
+                                fprintf(stderr, "InitInternal: Recreating audio input for device: %s\n", soundDevice.c_str());
                                 pAudioInput = new CAudioInput(di);
                                 break;
                             }
                         }
                         if(pAudioInput == nullptr) {
+                            fprintf(stderr, "InitInternal: Could not find specific device, using default\n");
                             QAudioDevice defaultInfo = QMediaDevices::defaultAudioInput();
                             pAudioInput = new CAudioInput(defaultInfo);
                         }
@@ -728,7 +780,11 @@ void CReceiveData::InitInternal(CParameter& Parameters)
                         if(pIODevice != nullptr && pIODevice->isOpen()) {
                             fprintf(stderr, "InitInternal: Recovery successful, QAudioInput started\n");
                         } else {
-                            fprintf(stderr, "InitInternal: Recovery failed\n");
+                            fprintf(stderr, "InitInternal: Recovery failed - device may have permission issues\n");
+                            fprintf(stderr, "InitInternal: Please check:\n");
+                            fprintf(stderr, "InitInternal:   1. Microphone permissions in macOS System Preferences\n");
+                            fprintf(stderr, "InitInternal:   2. No other application is using the audio device\n");
+                            fprintf(stderr, "InitInternal:   3. Try selecting a different audio device\n");
                             pIODevice = nullptr;
                         }
                     }
