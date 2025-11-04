@@ -81,8 +81,7 @@ contains(QT,gui) {
         RC_INCLUDEPATH = $$PWD/src/GUI-QT/res
     }
     macx:RC_FILE = src/GUI-QT/res/macicons.icns
-    CONFIG += qwt
-    UI_DIR = ui
+        UI_DIR = ui
     MOC_DIR = moc
     contains(QT,webenginewidgets) {
         FORMS += BWSViewer.ui
@@ -415,22 +414,20 @@ hamlib {
      }
      message("with hamlib")
 }
-qwt {
+# Qwt configuration - Qt6 only, no Qt5 compatibility
     message("with Qwt")
     QT += svg
     macx {
-        # Try Homebrew installation first (Qt 6)
-        exists(/opt/homebrew/Cellar/qwt-qt5) {
-            INCLUDEPATH += /opt/homebrew/Cellar/qwt-qt5/6.3.0/lib/qwt.framework/Versions/6/Headers
-            LIBS += -F/opt/homebrew/Cellar/qwt-qt5/6.3.0/lib -framework qwt
-        }
         exists(/opt/homebrew/Cellar/qwt) {
             INCLUDEPATH += /opt/homebrew/Cellar/qwt/6.3.0/lib/qwt.framework/Versions/6/Headers
             LIBS += -F/opt/homebrew/Cellar/qwt/6.3.0/lib -framework qwt
         }
-        else {
+        else:exists(/Library/Frameworks/qwt.framework/Headers) {
             INCLUDEPATH += /Library/Frameworks/qwt.framework/Headers
             LIBS += -framework qwt
+        }
+        else {
+            error("Qwt framework not found. Install with: brew install qwt")
         }
     }
     win32 {
@@ -454,7 +451,6 @@ qwt {
             INCLUDEPATH += /usr/local/include/qwt
         }
     }
-}
 alsa {
     DEFINES += USE_ALSA
     HEADERS += src/linux/alsain.h src/linux/alsaout.h src/linux/alsacommon.h

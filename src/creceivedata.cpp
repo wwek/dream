@@ -732,6 +732,7 @@ void CReceiveData::InitInternal(CParameter& Parameters)
                 cerr << "sound card buffer size requested " << 2*wantedBufferSize << " (Qt 6 manages automatically)" << endl;
             } // End QMutexLocker scope
         } // End pAudioInput check
+#endif
 
         /* Clear input data buffer on change samplerate change */
         if (bChanged)
