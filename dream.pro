@@ -81,7 +81,9 @@ contains(QT,gui) {
         RC_INCLUDEPATH = $$PWD/src/GUI-QT/res
     }
     macx:RC_FILE = src/GUI-QT/res/macicons.icns
-        UI_DIR = ui
+    # 自定义 Info.plist - 添加 macOS 权限声明（修复零读取问题）
+    macx:QMAKE_INFO_PLIST = $$PWD/Info.plist
+    UI_DIR = ui
     MOC_DIR = moc
     contains(QT,webenginewidgets) {
         FORMS += BWSViewer.ui
