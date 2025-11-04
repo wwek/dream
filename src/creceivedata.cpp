@@ -64,6 +64,7 @@ CReceiveData::CReceiveData() :
     pAudioInput(nullptr),
     pIODevice(nullptr),
     bDeviceChanged(false),
+    iZeroReadCount(0),
   #endif
     pSound(nullptr),
     vecrInpData(INPUT_DATA_VECTOR_SIZE, 0.0),
@@ -274,11 +275,17 @@ void CReceiveData::ProcessDataInternal(CParameter& Parameters)
                 if(r>0) {
                     p += r;
                     n -= r;
+                    iZeroReadCount = 0;  // Reset counter on successful read
                 }
                 else if(r == 0) {
-                    /* EOF or no data available */
-                    QThread::msleep(10);
-                    bBad = true;
+                    /* No data available yet - wait and retry in next call */
+                    iZeroReadCount++;
+                    // Only mark as error after 10 consecutive zero reads across calls
+                    if (iZeroReadCount > 10) {
+                        fprintf(stderr, "ProcessDataInternal: Consecutive zero reads detected (%d), marking as error\n", iZeroReadCount);
+                        bBad = true;
+                    }
+                    break;  // Exit loop and retry in next ProcessDataInternal call
                 }
                 else {
                     /* Read error - check if device was switched */

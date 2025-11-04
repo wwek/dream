@@ -129,6 +129,7 @@ protected:
     QIODevice*              pIODevice;
     mutable QMutex          audioDeviceMutex;  // Protect audio device pointers
     bool                    bDeviceChanged;    // Indicates device was changed and needs re-init in worker thread
+    int                     iZeroReadCount;    // Counter for zero-byte reads to distinguish temporary gaps from errors
 #endif
     CSoundInInterface*		pSound;
     CVector<_SAMPLE>		vecsSoundBuffer;
