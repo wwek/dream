@@ -64,7 +64,6 @@ void CTransmitData::Stop()
 void CTransmitData::Enumerate(vector<string>& names, vector<string>& descriptions, string& defaultOutput)
 {
 #ifdef QT_MULTIMEDIA_LIB
-# if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     // Qt 6 implementation
     QSet<QString> s;
     QString def = QMediaDevices::defaultAudioOutput().description();
@@ -74,17 +73,6 @@ void CTransmitData::Enumerate(vector<string>& names, vector<string>& description
     {
         s.insert(di.description());
     }
-# else
-    // Qt 5 implementation
-    QSet<QString> s;
-    QString def = QAudioDeviceInfo_defaultOutputDevice().deviceName();
-    defaultOutput = def.toStdString();
-    cerr << "default output device is " << defaultOutput << endl;
-    foreach(const QAudioDeviceInfo& di, QAudioDeviceInfo_availableDevices(AudioOutput))
-    {
-        s.insert(di.deviceName());
-    }
-# endif
     names.clear(); descriptions.clear();
     foreach(const QString n, s) {
 cerr << "have output device " << n.toStdString() << endl;
@@ -107,7 +95,6 @@ void CTransmitData::SetSoundInterface(string device)
 {
     soundDevice = device;
 #ifdef QT_MULTIMEDIA_LIB
-# if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     // Qt 6 implementation
     QAudioFormat format;
     if(iSampleRate==0) iSampleRate = 48000; // TODO get initialisation order right
@@ -127,30 +114,6 @@ void CTransmitData::SetSoundInterface(string device)
             }
         }
     }
-# else
-    // Qt 5 implementation
-    QAudioFormat format;
-    if(iSampleRate==0) iSampleRate = 48000; // TODO get initialisation order right
-    format.setSampleRate(iSampleRate);
-    format.setSampleSize(16);
-    format.setSampleType(QAudioFormat::SignedInt);
-    format.setChannelCount(2); // TODO
-    format.setByteOrder(QAudioFormat::LittleEndian);
-    format.setCodec("audio/pcm");
-    foreach(const QAudioDeviceInfo& di, QAudioDeviceInfo_availableDevices(AudioOutput))
-    {
-        if(device == di.deviceName().toStdString()) {
-            QAudioFormat nearestFormat = di.nearestFormat(format);
-            CAudioOutput* pAudioOutput = new CAudioOutput(di, nearestFormat);
-            pAudioOutput->setBufferSize(1000000);
-            pIODevice = pAudioOutput->start();
-            if(pAudioOutput->error()!=QAudio::NoError)
-            {
-                qDebug("Can't open audio output");
-            }
-        }
-    }
-# endif
 #else
     if(pSound != nullptr) {
         delete pSound;

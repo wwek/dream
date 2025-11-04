@@ -40,12 +40,8 @@
 #include "../main-Qt/crx.h"
 
 #ifdef QT_MULTIMEDIA_LIB
-# if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #   include <QAudioDevice>
 #   include <QMediaDevices>
-# else
-#   include <QAudioDeviceInfo>
-# endif
 #endif
 
 #ifdef HAVE_LIBPCAP
