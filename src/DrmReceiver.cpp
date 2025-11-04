@@ -34,6 +34,7 @@
 
 #include "DrmReceiver.h"
 #include "util/Settings.h"
+#include "util/qt6_compat.h"
 #include "util/Utilities.h"
 #include "util/FileTyper.h"
 
@@ -41,7 +42,7 @@
 #include "sound/soundnull.h"
 #include "sound/audiofilein.h"
 #ifdef QT_MULTIMEDIA_LIB
-# include <QAudioDeviceInfo>
+# include <QAudioDevice>
 #endif
 #ifdef HAVE_LIBHAMLIB
 # ifdef QT_CORE_LIB // TODO should not have dependency to qt here

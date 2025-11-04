@@ -45,6 +45,7 @@
 #include "util/AudioFile.h"
 #include "util/Utilities.h"
 #include "AMDemodulation.h" // For CMixer
+#include "util/qt6_audio_compat.h"
 
 /* Definitions ****************************************************************/
 
@@ -153,7 +154,7 @@ public:
 
 protected:
 #ifdef QT_MULTIMEDIA_LIB
-    QAudioOutput* pAudioOutput;
+    CAudioOutput* pAudioOutput;
     QIODevice* pIODevice;
 #endif
     CSoundOutInterface* pSound;

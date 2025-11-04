@@ -29,6 +29,7 @@
 #include "DataIO.h"
 #include <iomanip>
 #include <time.h>
+#include "util/qt6_compat.h"
 #ifdef QT_MULTIMEDIA_LIB
 # include <QAudioOutput>
 # include <QAudioInput>
@@ -99,10 +100,10 @@ void CReadData::Stop()
 void CReadData::Enumerate(std::vector<std::string>& names, std::vector<std::string>& descriptions, string& defaultInput)
 {
 #ifdef QT_MULTIMEDIA_LIB
-    QString def = QAudioDeviceInfo::defaultInputDevice().deviceName();
+    QString def = QAudioDeviceInfo_defaultInputDevice().deviceName();
     defaultInput = def.toStdString();
     QSet<QString> s;
-    foreach(const QAudioDeviceInfo& di, QAudioDeviceInfo::availableDevices(QAudio::AudioInput))
+    foreach(const QAudioDeviceInfo& di, QAudioDeviceInfo_availableDevices(AudioInput))
     {
         s.insert(di.deviceName());
     }
@@ -127,16 +128,12 @@ CReadData::SetSoundInterface(string device)
     QAudioFormat format;
     if(iSampleRate==0) iSampleRate = 48000; // TODO get order of initialisation correct
     format.setSampleRate(iSampleRate);
-    format.setSampleSize(16);
-    format.setSampleType(QAudioFormat::SignedInt);
     format.setChannelCount(2); // TODO
-    format.setByteOrder(QAudioFormat::LittleEndian);
-    format.setCodec("audio/pcm");
-    foreach(const QAudioDeviceInfo& di, QAudioDeviceInfo::availableDevices(QAudio::AudioInput))
+    format.setSampleFormat(QAudioFormat::Int16);
+    foreach(const QAudioDeviceInfo& di, QAudioDeviceInfo_availableDevices(AudioInput))
     {
         if(device == di.deviceName().toStdString()) {
-            QAudioFormat nearestFormat = di.nearestFormat(format);
-            QAudioInput* pAudioInput = new QAudioInput(di, nearestFormat);
+            CAudioInput* pAudioInput = new CAudioInput(di.nativeDevice());
             pIODevice = pAudioInput->start();
             if(pAudioInput->error()==QAudio::NoError)
             {
@@ -192,10 +189,10 @@ void CWriteData::Stop()
 void CWriteData::Enumerate(std::vector<std::string>& names, std::vector<std::string>& descriptions, string& defaultOutput)
 {
 #ifdef QT_MULTIMEDIA_LIB
-    QString def = QAudioDeviceInfo::defaultOutputDevice().deviceName();
+    QString def = QAudioDeviceInfo_defaultOutputDevice().deviceName();
     defaultOutput = def.toStdString();
     QSet<QString> s;
-    foreach(const QAudioDeviceInfo& di, QAudioDeviceInfo::availableDevices(QAudio::AudioOutput))
+    foreach(const QAudioDeviceInfo& di, QAudioDeviceInfo_availableDevices(AudioOutput))
     {
         s.insert(di.deviceName());
     }
@@ -219,21 +216,17 @@ CWriteData::SetSoundInterface(string device)
     QAudioFormat format;
     if(iAudSampleRate==0) iAudSampleRate = 48000; // TODO get order of initialisation correct
     format.setSampleRate(iAudSampleRate);
-    format.setSampleSize(16);
-    format.setSampleType(QAudioFormat::SignedInt);
     format.setChannelCount(2); // TODO
-    format.setByteOrder(QAudioFormat::LittleEndian);
-    format.setCodec("audio/pcm");
+    format.setSampleFormat(QAudioFormat::Int16);
     if(pAudioOutput != nullptr && pAudioOutput->state() == QAudio::ActiveState) {
         pAudioOutput->stop();
         delete pAudioOutput;
         pAudioOutput = nullptr;
     }
-    foreach(const QAudioDeviceInfo& di, QAudioDeviceInfo::availableDevices(QAudio::AudioOutput))
+    foreach(const QAudioDeviceInfo& di, QAudioDeviceInfo_availableDevices(AudioOutput))
     {
         if(device == di.deviceName().toStdString()) {
-            QAudioFormat nearestFormat = di.nearestFormat(format);
-            pAudioOutput = new QAudioOutput(di, nearestFormat);
+            pAudioOutput = new CAudioOutput(di.nativeDevice());
             break;
         }
     }

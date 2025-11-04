@@ -39,6 +39,7 @@
 #include <QDateTime>
 #include <QMessageBox>
 #include <QFileInfo>
+#include <QActionGroup>
 #include <cmath>
 
 /* Implementation *************************************************************/
@@ -329,8 +330,9 @@ void StationsDlg::OnTimer()
 	struct tm* gmtCur = gmtime(&ltime);
 
 	/* Generate time in format "UTC 12:00" */
-	QString strUTCTime = QString().sprintf("%02d:%02d UTC",
-		gmtCur->tm_hour, gmtCur->tm_min);
+	QString strUTCTime = QString("%1:%2 UTC")
+		.arg(gmtCur->tm_hour, 2, 10, QLatin1Char('0'))
+		.arg(gmtCur->tm_min, 2, 10, QLatin1Char('0'));
 
 	/* Only apply if time label does not show the correct time */
 	if (TextLabelUTCTime->text().compare(strUTCTime))
@@ -485,7 +487,7 @@ void StationsDlg::LoadScheduleView()
 		else
 			strPower.setNum(rPower);
 
-		QString strTimes = QString().sprintf("%04d-%04d", station.StartTime(), station.StopTime());
+		QString strTimes = QString("%1-%2").arg(station.StartTime(), 4, 10, QLatin1Char('0')).arg(station.StopTime(), 4, 10, QLatin1Char('0'));
 
 		/* Generate new list station with all necessary column entries */
 		QTreeWidgetItem* item = new CaseInsensitiveTreeWidgetItem(ListViewStations);

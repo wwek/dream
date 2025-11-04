@@ -6,26 +6,6 @@ DEFINES += EXECUTABLE_NAME=$$TARGET
 LIBS += -L$$PWD/lib
 INCLUDEPATH += $$PWD/include
 
-# Qt 6 configuration
-contains(QT_MAJOR_VERSION, 6) {
-    message("Building with Qt 6")
-    # Qt 6 paths
-    macx {
-        QT_CONFIG -= no-pkg-config
-        PKG_CONFIG = /opt/homebrew/bin/pkg-config
-        INCLUDEPATH += /opt/homebrew/include
-        LIBS += -L/opt/homebrew/lib
-        QMAKE_LFLAGS += -F/opt/homebrew/lib
-    }
-
-    # Qt 6 compatibility
-    greaterThan(QT_MAJOR_VERSION, 5) {
-        # Qt 6 specific fixes
-        CONFIG += c++17
-        DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000
-    }
-}
-
 # macOS Homebrew paths
 macx {
     INCLUDEPATH += /opt/homebrew/include
@@ -36,9 +16,6 @@ contains(QT_VERSION, ^4\\..*) {
 }
 contains(QT_VERSION, ^5\\..*) {
     VERSION_MESSAGE = Qt 5
-}
-contains(QT_VERSION, ^6\\..*) {
-    VERSION_MESSAGE = Qt 6
 }
 CONFIG(debug, debug|release) {
     DEBUG_MESSAGE = debug
@@ -167,9 +144,9 @@ unix {
 }
 macx {
     contains(QT, core) {
-          QT += webenginewidgets
+        QT += webenginewidgets
         !sound {
-            QT += multimediawidgets
+            QT += multimedia
             CONFIG += sound
         }
     }
@@ -419,14 +396,10 @@ qwt {
     message("with Qwt")
     QT += svg
     macx {
-        # Try Homebrew installation first (Qt 6)
-        exists(/opt/homebrew/Cellar/qwt-qt5) {
-            INCLUDEPATH += /opt/homebrew/Cellar/qwt-qt5/6.3.0/lib/qwt.framework/Versions/6/Headers
-            LIBS += -F/opt/homebrew/Cellar/qwt-qt5/6.3.0/lib -framework qwt
-        }
-        exists(/opt/homebrew/Cellar/qwt) {
-            INCLUDEPATH += /opt/homebrew/Cellar/qwt/6.3.0/lib/qwt.framework/Versions/6/Headers
-            LIBS += -F/opt/homebrew/Cellar/qwt/6.3.0/lib -framework qwt
+        # Try Homebrew installation first
+        exists(/opt/homebrew/opt/qwt-qt5/lib/qwt.framework) {
+            INCLUDEPATH += /opt/homebrew/opt/qwt-qt5/lib/qwt.framework/Headers
+            LIBS += -F/opt/homebrew/opt/qwt-qt5/lib -framework qwt
         }
         else {
             INCLUDEPATH += /Library/Frameworks/qwt.framework/Headers
@@ -443,8 +416,8 @@ qwt {
         }
     }
     unix!macx {
-        # unix | win release (Qt 6)
-        LIBS += -lqwt
+        # unix | win release
+        LIBS += -lqwt-qt5
     }
     !crosscompile {
         exists(/usr/include/qwt/qwt.h) {
@@ -500,6 +473,7 @@ HEADERS += \
     src/chanest/TimeLinear.h \
     src/chanest/TimeWiener.h \
     src/creceivedata.h \
+    src/coreaudio_macos.h \
     src/ctransmitdata.h \
     src/datadecoding/DABMOT.h \
     src/datadecoding/DataDecoder.h \
@@ -634,6 +608,7 @@ SOURCES += \
     src/chanest/TimeLinear.cpp \
     src/chanest/TimeWiener.cpp \
     src/creceivedata.cpp \
+    src/coreaudio_macos.cpp \
     src/ctransmitdata.cpp \
     src/datadecoding/DABMOT.cpp \
     src/datadecoding/DataDecoder.cpp \

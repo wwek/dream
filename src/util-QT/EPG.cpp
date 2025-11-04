@@ -33,7 +33,7 @@
 #include <QFile>
 #include <QDir>
 #include <QTextStream>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <iostream>
 #include <cstdlib>
 #include <sys/stat.h>
@@ -1471,7 +1471,7 @@ time_t EPG::parseTime(const QString & time)
 {
     if (time=="")
         return 0; // invalid
-    QRegExp q("[-T:+Z]");
+    QRegularExpression q("[-T:+Z]");
     QStringList sl = time.split(q);
 #ifdef _WIN32
     SYSTEMTIME st;

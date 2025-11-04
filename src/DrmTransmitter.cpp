@@ -28,8 +28,9 @@
 
 #include "DrmTransmitter.h"
 #include <sstream>
+#include "util/qt6_compat.h"
 #ifdef QT_MULTIMEDIA_LIB
-# include <QAudioDeviceInfo>
+# include <QAudioDevice>
 #endif
 
 /* Implementation *************************************************************/

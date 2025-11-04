@@ -33,6 +33,7 @@
 #include <QDateTime>
 #include <QHideEvent>
 #include <QShowEvent>
+#include <QActionGroup>
 #include "../util-QT/Util.h"
 
 /* Implementation *************************************************************/
@@ -70,7 +71,7 @@ LiveScheduleDlg::ExtractTime(const CAltFreqSched& schedule)
         {
             /* Add information about days duration */
             if (iDays > 1)
-                sDays.sprintf(" (%d days)", iDays);
+                sDays = QString(" (%1 days)").arg(iDays);
             iStopHours = iStopHours % 24;
         }
     }
@@ -79,7 +80,7 @@ LiveScheduleDlg::ExtractTime(const CAltFreqSched& schedule)
         sResult = "24 hours, 7 days a week";
     else
     {
-        sResult.sprintf("%02d:%02d-%02d:%02d", iStartHours, iStartMinutes, iStopHours, iStopMinutes);
+        sResult = QString("%1:%2-%3:%4").arg(iStartHours, 2, 10, QLatin1Char('0')).arg(iStartMinutes, 2, 10, QLatin1Char('0')).arg(iStopHours, 2, 10, QLatin1Char('0')).arg(iStopMinutes, 2, 10, QLatin1Char('0'));
         sResult += sDays;
     }
 
@@ -482,8 +483,9 @@ LiveScheduleDlg::OnTimerUTCLabel()
     struct tm *gmtCur = gmtime(&ltime);
 
     /* Generate time in format "UTC 12:00" */
-    QString strUTCTime = QString().sprintf("%02d:%02d UTC",
-                                           gmtCur->tm_hour, gmtCur->tm_min);
+    QString strUTCTime = QString("%1:%2 UTC")
+                            .arg(gmtCur->tm_hour, 2, 10, QLatin1Char('0'))
+                            .arg(gmtCur->tm_min, 2, 10, QLatin1Char('0'));
 
     /* Only apply if time label does not show the correct time */
     if (TextLabelUTCTime->text().compare(strUTCTime))

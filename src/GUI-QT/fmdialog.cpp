@@ -620,13 +620,13 @@ void FMDialog::SetDisplayColor(const QColor newColor)
 		QPalette CurPal(vecpWidgets[i]->palette());
 
 		/* Change colors */
-		CurPal.setColor(QPalette::Active, QPalette::Foreground, newColor);
+		CurPal.setColor(QPalette::Active, QPalette::Text, newColor);
 		CurPal.setColor(QPalette::Active, QPalette::Button, newColor);
 		CurPal.setColor(QPalette::Active, QPalette::Text, newColor);
 		CurPal.setColor(QPalette::Active, QPalette::Light, newColor);
 		CurPal.setColor(QPalette::Active, QPalette::Dark, newColor);
 
-		CurPal.setColor(QPalette::Inactive, QPalette::Foreground, newColor);
+		CurPal.setColor(QPalette::Inactive, QPalette::Text, newColor);
 		CurPal.setColor(QPalette::Inactive, QPalette::Button, newColor);
 		CurPal.setColor(QPalette::Inactive, QPalette::Text, newColor);
 		CurPal.setColor(QPalette::Inactive, QPalette::Light, newColor);

@@ -31,6 +31,7 @@
 #include "../DrmTransmitter.h"
 #include "SoundCardSelMenu.h"
 #include "DialogUtil.h"
+#include "../util/qt6_compat.h"
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QTimer>
@@ -39,7 +40,12 @@
 #include "../main-Qt/crx.h"
 
 #ifdef QT_MULTIMEDIA_LIB
-# include <QAudioDeviceInfo>
+# if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#   include <QAudioDevice>
+#   include <QMediaDevices>
+# else
+#   include <QAudioDeviceInfo>
+# endif
 #endif
 
 #ifdef HAVE_LIBPCAP

@@ -34,6 +34,7 @@
 #include "epgdec.h"
 #include "../datadecoding/DABMOT.h"
 #include "../util/Utilities.h"
+#include <QRegularExpression>
 
 static QDomElement element(QDomDocument& doc, const tag_length_value& tlv);
 

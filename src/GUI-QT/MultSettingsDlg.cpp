@@ -31,6 +31,7 @@
 #include <QHideEvent>
 #include <QLabel>
 #include <QToolTip>
+#include <QRegularExpression>
 
 /* Implementation *************************************************************/
 
@@ -124,7 +125,7 @@ void MultSettingsDlg::OnbuttonChooseDir()
 	if (!strFilename.isEmpty())
 	{
 #ifdef _WIN32
-		strFilename.replace(QRegExp("/"), "\\");
+		strFilename.replace(QRegularExpression("/"), "\\");
 #endif
 		Parameters.SetDataDirectory(string(strFilename.toUtf8().constData()));
 		SetDataDirectoryControls();
@@ -148,7 +149,7 @@ void MultSettingsDlg::SetDataDirectoryControls()
 	QString strFilename(QString::fromUtf8(Parameters.GetDataDirectory().c_str()));
 #undef PATH_SEP
 #ifdef _WIN32
-	strFilename.replace(QRegExp("/"), "\\");
+	strFilename.replace(QRegularExpression("/"), "\\");
 # define PATH_SEP '\\'
 #else
 # define PATH_SEP '/'

@@ -65,8 +65,8 @@ public:
     virtual bool GetReverbEffect();
     virtual EAcqStat GetAcquisitionState();
     virtual int GetFrequency() override;
-    virtual void EnumerateInputs(std::vector<string>& names, std::vector<string>& descriptions, std::string& defaultInput);
-    virtual void EnumerateOutputs(std::vector<string>& names, std::vector<string>& descriptions, std::string& defaultOutput);
+    virtual void EnumerateInputs(std::vector<string>& names, std::vector<string>& descriptions, std::string& defaultInput) override;
+    virtual void EnumerateOutputs(std::vector<string>& names, std::vector<string>& descriptions, std::string& defaultOutput) override;
     virtual CSettings* GetSettings() override;
     virtual CParameter*	GetParameters() override;
 

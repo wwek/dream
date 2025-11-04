@@ -30,7 +30,7 @@
 #include "EPGDlg.h"
 #include "../datadecoding/epgutil.h"
 #include <set>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QFile>
 #include <QShowEvent>
 #include <QHideEvent>
@@ -255,7 +255,7 @@ void EPGDlg::select()
             name = p.name;
         description = p.description;
         // collapse white space in description
-        description.replace(QRegExp("[\t\r\n ]+"), " ");
+        description.replace(QRegularExpression("[\t\r\n ]+"), " ");
         if (p.mainGenre.size()==0)
             genre = "";
         else
@@ -278,7 +278,7 @@ void EPGDlg::select()
         l << s_start << name << genre << description << s_duration;
         QTreeWidgetItem* CurrItem = new QTreeWidgetItem(Data, l);
         QDateTime dt;
-        dt.setTime_t(start);
+        dt.setSecsSinceEpoch(start);
         CurrItem->setData(COL_START, Qt::UserRole, dt);
         CurrItem->setData(COL_DURATION, Qt::UserRole, duration);
         if (isActive(CurrItem))

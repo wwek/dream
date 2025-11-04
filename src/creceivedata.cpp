@@ -28,6 +28,8 @@
 
 #include "creceivedata.h"
 #include "Parameter.h"
+#include "util/qt6_compat.h"
+#include "util/qt6_audio_compat.h"
 #ifdef QT_MULTIMEDIA_LIB
 # include <QSet>
 # include <QThread>
@@ -35,6 +37,16 @@
 # include <QEventLoop>
 # include <QCoreApplication>
 # include <QMetaObject>
+# include <QMediaDevices>
+# include <QAudioDevice>
+# include <QAudioInput>
+# if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    // Qt 6 specific includes
+# else
+    // Qt 5 specific includes
+#   include <QAudioDeviceInfo>
+#   include <QAudioFormat>
+# endif
 #else
 # include "sound/sound.h"
 #endif
@@ -59,48 +71,32 @@ CReceiveData::CReceiveData() :
     pAudioInput(nullptr),
     pIODevice(nullptr),
     bDeviceChanged(false),
-#endif
+  #endif
     pSound(nullptr),
     vecrInpData(INPUT_DATA_VECTOR_SIZE, 0.0),
     bFippedSpectrum(false), eInChanSelection(CS_MIX_CHAN), iPhase(0),spectrumAnalyser()
-{}
+{
+}
 
 void CReceiveData::Stop()
 {
 #ifdef QT_MULTIMEDIA_LIB
     QMutexLocker locker(&audioDeviceMutex);  // Lock during device cleanup
+
     if(pIODevice!=nullptr) {
         pIODevice->close();
         pIODevice = nullptr;
     }
     if(pAudioInput != nullptr) {
+# if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        // Qt 6: QAudioInput doesn't have stop() method
+        // Just delete the object - cleanup happens automatically
+# else
+        // Qt 5: Use stop() method
         pAudioInput->stop();
-        /* On macOS, QAudioInput must be deleted in the same thread it was created
-         * to avoid QObject thread affinity issues. Use safe deletion pattern.
-         */
-        #ifdef Q_OS_MAC
-        #ifdef QT_MULTIMEDIA_LIB
-        /* Check if we're in the correct thread for deletion */
-        if (QThread::currentThread() == pAudioInput->thread()) {
-            fprintf(stderr, "Stop: Deleting QAudioInput in correct thread\n");
-            delete pAudioInput;
-        } else {
-            fprintf(stderr, "Stop: Scheduling QAudioInput deletion in correct thread\n");
-            pAudioInput->deleteLater();
-            /* Wait for deletion to complete with timeout */
-            QEventLoop loop;
-            QTimer::singleShot(100, &loop, &QEventLoop::quit);
-            loop.exec();
-        }
-        pAudioInput = nullptr;
-        #else
+# endif
         delete pAudioInput;
         pAudioInput = nullptr;
-        #endif
-        #else
-        delete pAudioInput;
-        pAudioInput = nullptr;
-        #endif
     }
 #endif
     if(pSound!=nullptr) {
@@ -136,27 +132,27 @@ void CReceiveData::Enumerate(vector<string>& names, vector<string>& descriptions
 {
 #ifdef QT_MULTIMEDIA_LIB
     QSet<QString> s;
-    QString def = QAudioDeviceInfo::defaultInputDevice().deviceName();
+    QString def;
+
+# if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    // Qt 6 implementation
+    def = QMediaDevices::defaultAudioInput().description();
     defaultInput = def.toStdString();
 
-    #ifdef Q_OS_MAC
-    fprintf(stderr, "CReceiveData::Enumerate - macOS: Enumerating audio devices...\n");
-    fprintf(stderr, "Default device: %s\n", def.toStdString().c_str());
-    #endif
+    foreach(const QAudioDevice& di, QMediaDevices::audioInputs())
+    {
+        s.insert(di.description());
+    }
+# else
+    // Qt 5 implementation
+    def = QAudioDeviceInfo_defaultInputDevice().deviceName();
+    defaultInput = def.toStdString();
 
-    foreach(const QAudioDeviceInfo& di, QAudioDeviceInfo::availableDevices(QAudio::AudioInput))
+    foreach(const QAudioDeviceInfo& di, QAudioDeviceInfo_availableDevices(AudioInput))
     {
         s.insert(di.deviceName());
-        #ifdef Q_OS_MAC
-        fprintf(stderr, "Found device: %s\n", di.deviceName().toStdString().c_str());
-        #endif
     }
-
-    #ifdef Q_OS_MAC
-    if (s.isEmpty()) {
-        fprintf(stderr, "WARNING: No audio input devices found! This indicates macOS permissions issue.\n");
-    }
-    #endif
+# endif
 
     names.clear(); descriptions.clear();
     foreach(const QString n, s) {
@@ -183,25 +179,16 @@ CReceiveData::SetSoundInterface(string device)
 #ifdef QT_MULTIMEDIA_LIB
     QMutexLocker locker(&audioDeviceMutex);  // Lock for thread-safe device switch
 
-    /* Safely clean up existing audio input with thread affinity check */
+    /* Safely clean up existing audio input */
     if(pAudioInput != nullptr) {
+# if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        // Qt 6: QAudioInput doesn't have stop() method
+        // Just delete the object - cleanup happens automatically
+# else
+        // Qt 5: Use stop() method
         pAudioInput->stop();
-        #ifdef Q_OS_MAC
-        /* On macOS, ensure thread-safe deletion */
-        if (QThread::currentThread() == pAudioInput->thread()) {
-            fprintf(stderr, "SetSoundInterface: Deleting QAudioInput in correct thread\n");
-            delete pAudioInput;
-        } else {
-            fprintf(stderr, "SetSoundInterface: Scheduling QAudioInput deletion\n");
-            pAudioInput->deleteLater();
-            /* Use event loop to ensure deletion completes */
-            QEventLoop loop;
-            QTimer::singleShot(50, &loop, &QEventLoop::quit);
-            loop.exec();
-        }
-        #else
+# endif
         delete pAudioInput;
-        #endif
         pAudioInput = nullptr;
     }
 
@@ -232,58 +219,9 @@ CReceiveData::SetSoundInterface(string device)
         /* For audio input devices: device will be initialized in InitInternal
          * to ensure proper thread context and avoid race conditions
          */
-        #ifdef Q_OS_MAC
-        #ifdef QT_MULTIMEDIA_LIB
-        fprintf(stderr, "SetSoundInterface: Device '%s' selected, will initialize in worker thread\n", device.c_str());
-        #endif
-        #endif
     }
 }
 
-#ifdef QT_MULTIMEDIA_LIB
-# ifdef Q_OS_MAC
-void CReceiveData::createAudioInputSafely(std::string device)
-{
-    QMutexLocker locker(&audioDeviceMutex);
-
-    /* Clean up old audio input */
-    if (pAudioInput != nullptr) {
-        pAudioInput->stop();
-        delete pAudioInput;
-        pAudioInput = nullptr;
-    }
-    if (pIODevice != nullptr) {
-        pIODevice->close();
-        pIODevice = nullptr;
-    }
-
-    /* Create audio input in main thread */
-    QAudioFormat format;
-    if(iSampleRate==0) iSampleRate = 48000;
-    format.setSampleRate(iSampleRate);
-    format.setSampleSize(16);
-    format.setSampleType(QAudioFormat::SignedInt);
-    format.setChannelCount(2);
-    format.setByteOrder(QAudioFormat::LittleEndian);
-    format.setCodec("audio/pcm");
-
-    bool bFound = false;
-    foreach(const QAudioDeviceInfo& di, QAudioDeviceInfo::availableDevices(QAudio::AudioInput))
-    {
-        if(device == di.deviceName().toStdString()) {
-            QAudioFormat nearestFormat = di.nearestFormat(format);
-            pAudioInput = new QAudioInput(di, nearestFormat);
-            bFound = true;
-            break;
-        }
-    }
-
-    if (!bFound) {
-        fprintf(stderr, "createAudioInputSafely: couldn't find device '%s'\n", device.c_str());
-    }
-}
-# endif
-#endif
 
 void CReceiveData::ProcessDataInternal(CParameter& Parameters)
 {
@@ -343,15 +281,13 @@ void CReceiveData::ProcessDataInternal(CParameter& Parameters)
 
 #else
         /* Check if device is actually open before reading */
-        #ifdef Q_OS_MAC
-        if (!pDeviceToRead->isOpen()) {
+        if (pDeviceToRead && !pDeviceToRead->isOpen()) {
             fprintf(stderr, "ProcessDataInternal: QIODevice is not open, attempting to restart audio\n");
-            /* Trigger device restart by marking as changed */
             bDeviceChanged = true;
             bBad = true;
-        } else
-        #endif
+        }
         {
+            /* Qt Multimedia data reading */
             qint64 n = 2*vecsSoundBuffer.Size();
             char *p = reinterpret_cast<char*>(&vecsSoundBuffer[0]);
             do {
@@ -362,23 +298,13 @@ void CReceiveData::ProcessDataInternal(CParameter& Parameters)
                 }
                 else if(r == 0) {
                     /* EOF or no data available */
-                    #ifdef Q_OS_MAC
-                    fprintf(stderr, "ProcessDataInternal: No data available, device may be disconnected\n");
-                    bBad = true;
-                    break;
-                    #else
                     QThread::msleep(10);
-                    #endif
+                    bBad = true;
                 }
                 else {
                     /* Read error */
-                    fprintf(stderr, "ProcessDataInternal: Read error occurred\n");
-                    #ifdef Q_OS_MAC
-                    bBad = true;
-                    break;
-                    #else
+                    fprintf(stderr, "ProcessDataInternal: Qt Read error occurred\n");
                     QThread::msleep(100);
-                    #endif
                 }
             } while (n>0);
         }
@@ -388,10 +314,6 @@ void CReceiveData::ProcessDataInternal(CParameter& Parameters)
         bBad = pSound->Read(vecsSoundBuffer);
     }
     else {
-        #ifdef Q_OS_MAC
-        fprintf(stderr, "ProcessDataInternal: No audio device available, marking for reinitialization\n");
-        bDeviceChanged = true;  // Trigger reinitialization on next cycle
-        #endif
         bBad = true;
     }
 #else
@@ -669,11 +591,6 @@ void CReceiveData::InitInternal(CParameter& Parameters)
 #ifdef QT_MULTIMEDIA_LIB
     if (pSound == nullptr && pAudioInput == nullptr)
     {
-        /* Log permission issue - but continue with initialization */
-        #ifdef Q_OS_MAC
-        fprintf(stderr, "WARNING: Audio input not available on macOS - likely missing microphone permissions\n");
-        fprintf(stderr, "Continuing with initialization to allow spectrum display from file input...\n");
-        #endif
         /* Don't return - allow initialization to continue for non-audio modes */
     }
 #else
@@ -706,36 +623,25 @@ void CReceiveData::InitInternal(CParameter& Parameters)
         bool bChanged = false;
         int wantedBufferSize = iOutputBlockSize * 2 / iUpscaleRatio; // samples
 
-#ifdef QT_MULTIMEDIA_LIB
         if(pSound) { // must be sound file
             bChanged = (pSound==nullptr)?true:pSound->Init(iSampleRate / iUpscaleRatio, wantedBufferSize, true);
         }
         else if (bDeviceChanged || pAudioInput == nullptr) {
-            /* Create QAudioInput for macOS - use safe creation method with mutex protection */
-            #ifdef Q_OS_MAC
-            #ifdef QT_MULTIMEDIA_LIB
+            /* Create QAudioInput */
             fprintf(stderr, "InitInternal: Creating QAudioInput for device '%s'\n", soundDevice.c_str());
-            /* On macOS, create QAudioInput safely with thread-safe cleanup */
 
             /* Clean up old audio input first - use mutex to avoid race condition */
             {
                 QMutexLocker locker(&audioDeviceMutex);
                 if (pAudioInput != nullptr) {
+# if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+                    // Qt 6: QAudioInput doesn't have stop() method
+                    // Just delete the object - cleanup happens automatically
+# else
+                    // Qt 5: Use stop() method
                     pAudioInput->stop();
-                    #ifdef Q_OS_MAC
-                    /* Check thread affinity before deletion */
-                    if (QThread::currentThread() == pAudioInput->thread()) {
-                        delete pAudioInput;
-                    } else {
-                        pAudioInput->deleteLater();
-                        /* Brief wait for async deletion */
-                        QEventLoop loop;
-                        QTimer::singleShot(10, &loop, &QEventLoop::quit);
-                        loop.exec();
-                    }
-                    #else
+# endif
                     delete pAudioInput;
-                    #endif
                     pAudioInput = nullptr;
                 }
                 if (pIODevice != nullptr) {
@@ -745,28 +651,20 @@ void CReceiveData::InitInternal(CParameter& Parameters)
             }
 
             /* Create audio input in current thread (worker thread) */
-            QAudioFormat format;
-            if(iSampleRate==0) iSampleRate = 48000;
-            format.setSampleRate(iSampleRate);
-            format.setSampleSize(16);
-            format.setSampleType(QAudioFormat::SignedInt);
-            format.setChannelCount(2);
-            format.setByteOrder(QAudioFormat::LittleEndian);
-            format.setCodec("audio/pcm");
-
             bool bFound = false;
-            foreach(const QAudioDeviceInfo& di, QAudioDeviceInfo::availableDevices(QAudio::AudioInput)) {
-                if(soundDevice == di.deviceName().toStdString()) {
+
+# if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+            // Qt 6 implementation
+            // In Qt 6, QAudioInput no longer takes a QAudioFormat parameter
+            // Devices use their preferred format automatically
+            foreach(const QAudioDevice& di, QMediaDevices::audioInputs()) {
+                if(soundDevice == di.description().toStdString()) {
                     fprintf(stderr, "InitInternal: Found device match, creating QAudioInput...\n");
-                    QAudioFormat nearestFormat = di.nearestFormat(format);
-                    /* Create new audio input with mutex protection and proper thread handling */
+                    fprintf(stderr, "InitInternal: Using device preferred format\n");
+                    /* Create new audio input with mutex protection - Qt 6 doesn't take format parameter */
                     {
                         QMutexLocker locker(&audioDeviceMutex);
-                        pAudioInput = new QAudioInput(di, nearestFormat);
-                        #ifdef Q_OS_MAC
-                        /* Move to current thread to ensure proper affinity */
-                        pAudioInput->moveToThread(QThread::currentThread());
-                        #endif
+                        pAudioInput = new CAudioInput(di);
                     }
                     fprintf(stderr, "InitInternal: QAudioInput created successfully\n");
                     bFound = true;
@@ -776,24 +674,55 @@ void CReceiveData::InitInternal(CParameter& Parameters)
             if (!bFound) {
                 fprintf(stderr, "InitInternal: couldn't find device '%s', using default device\n", soundDevice.c_str());
                 /* Try to use default device if specified device not found */
-                QAudioDeviceInfo defaultInfo = QAudioDeviceInfo::defaultInputDevice();
-                QAudioFormat nearestFormat = defaultInfo.nearestFormat(format);
+                QAudioDevice defaultInfo = QMediaDevices::defaultAudioInput();
+                fprintf(stderr, "InitInternal: Using default device with preferred format\n");
                 {
                     QMutexLocker locker(&audioDeviceMutex);
-                    pAudioInput = new QAudioInput(defaultInfo, nearestFormat);
-                    #ifdef Q_OS_MAC
-                    pAudioInput->moveToThread(QThread::currentThread());
-                    #endif
+                    pAudioInput = new CAudioInput(defaultInfo);
                 }
                 fprintf(stderr, "InitInternal: Created QAudioInput with default device\n");
                 bFound = true;
             }
-            #else
-            /* Non-Qt Multimedia: just mark as changed, no QAudioInput */
-            #endif
-            #else
-            /* Non-macOS: no special handling needed */
-            #endif
+# else
+            // Qt 5 implementation
+            QAudioFormat format;
+            if(iSampleRate==0) iSampleRate = 48000;
+            format.setSampleRate(iSampleRate);
+            format.setSampleSize(16);
+            format.setSampleType(QAudioFormat::SignedInt);
+            format.setChannelCount(2);
+            format.setByteOrder(QAudioFormat::LittleEndian);
+            format.setCodec("audio/pcm");
+
+            QAudioFormat selectedFormat;
+
+            foreach(const QAudioDeviceInfo& di, QAudioDeviceInfo_availableDevices(AudioInput)) {
+                if(soundDevice == di.deviceName().toStdString()) {
+                    fprintf(stderr, "InitInternal: Found device match, creating QAudioInput...\n");
+                    selectedFormat = di.nearestFormat(format);
+                    /* Create new audio input with mutex protection */
+                    {
+                        QMutexLocker locker(&audioDeviceMutex);
+                        pAudioInput = new CAudioInput(di, selectedFormat);
+                    }
+                    fprintf(stderr, "InitInternal: QAudioInput created successfully\n");
+                    bFound = true;
+                    break;
+                }
+            }
+            if (!bFound) {
+                fprintf(stderr, "InitInternal: couldn't find device '%s', using default device\n", soundDevice.c_str());
+                /* Try to use default device if specified device not found */
+                QAudioDeviceInfo defaultInfo = QAudioDeviceInfo_defaultInputDevice();
+                selectedFormat = defaultInfo.nearestFormat(format);
+                {
+                    QMutexLocker locker(&audioDeviceMutex);
+                    pAudioInput = new CAudioInput(defaultInfo, selectedFormat);
+                }
+                fprintf(stderr, "InitInternal: Created QAudioInput with default device\n");
+                bFound = true;
+            }
+# endif
             bDeviceChanged = false;
             bChanged = true;
         }
@@ -801,21 +730,93 @@ void CReceiveData::InitInternal(CParameter& Parameters)
         if(pAudioInput) {
             /* Use mutex to protect all pAudioInput access - avoid race condition */
             {
-                QMutexLocker locker(&audioDeviceMutex);  // 🔒 保护所有pAudioInput访问
-                pAudioInput->setBufferSize(2*wantedBufferSize);
+                QMutexLocker locker(&audioDeviceMutex);
 
-                /* Check if we need to start the audio input */
-                if(pIODevice == nullptr) {
+# if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+                // Qt 6: setBufferSize() method doesn't exist
+                // Buffer size is managed automatically by Qt 6
+                fprintf(stderr, "InitInternal: Qt 6 buffer size is managed automatically\n");
+# else
+                // Qt 5: Use setBufferSize() method
+                pAudioInput->setBufferSize(2*wantedBufferSize);
+# endif
+
+  # if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+                // Qt 6: QAudioInput API is simplified
+                // In Qt 6, just check if we need to start the audio input
+                bool needRestart = (pIODevice == nullptr);
+
+                if(needRestart) {
                     fprintf(stderr, "InitInternal: Starting QAudioInput for device '%s'...\n", soundDevice.c_str());
+
+                    /* In Qt 6, audio input needs to be recreated if there's an issue */
+                    if(pIODevice != nullptr) {
+                        fprintf(stderr, "InitInternal: Cleaning up existing QIODevice before restart\n");
+                        pIODevice->close();
+                        pIODevice = nullptr;
+                    }
+
+                    /* In Qt 6, QAudioInput API is different - use start() method to get QIODevice */
+                    pIODevice = pAudioInput->start();
+
+                    /* In Qt 6, we check if the QIODevice is valid instead of checking QAudioInput state */
+                    if(pIODevice != nullptr && pIODevice->isOpen()) {
+                        fprintf(stderr, "InitInternal: QAudioInput started successfully\n");
+                        fprintf(stderr, "InitInternal: QIODevice created, open: %s, readable: %s\n",
+                               pIODevice->isOpen() ? "yes" : "no",
+                               pIODevice->isReadable() ? "yes" : "no");
+                    } else {
+                        fprintf(stderr, "InitInternal: QAudioInput failed to start\n");
+
+                        /* Try to recover by recreating the QAudioInput */
+                        fprintf(stderr, "InitInternal: Attempting to recover...\n");
+                        delete pAudioInput;
+                        foreach(const QAudioDevice& di, QMediaDevices::audioInputs()) {
+                            if(soundDevice == di.description().toStdString()) {
+                                pAudioInput = new CAudioInput(di);
+                                break;
+                            }
+                        }
+                        if(pAudioInput == nullptr) {
+                            QAudioDevice defaultInfo = QMediaDevices::defaultAudioInput();
+                            pAudioInput = new CAudioInput(defaultInfo);
+                        }
+                        pIODevice = pAudioInput->start();
+
+                        if(pIODevice != nullptr && pIODevice->isOpen()) {
+                            fprintf(stderr, "InitInternal: Recovery successful, QAudioInput started\n");
+                        } else {
+                            fprintf(stderr, "InitInternal: Recovery failed\n");
+                            pIODevice = nullptr;
+                        }
+                    }
+                } else {
+                    fprintf(stderr, "InitInternal: QAudioInput already started\n");
+                }
+# else
+                // Qt 5: Use full QAudioInput API
+                /* Always check and restart if device is not in Active or Idle state */
+                bool needRestart = (pIODevice == nullptr || pAudioInput->state() == QAudio::StoppedState);
+
+                if(needRestart) {
+                    fprintf(stderr, "InitInternal: Starting QAudioInput for device '%s'...\n", soundDevice.c_str());
+
+                    /* Stop and reset existing device if needed */
+                    if(pIODevice != nullptr) {
+                        fprintf(stderr, "InitInternal: Stopping existing QIODevice before restart\n");
+                        pAudioInput->stop();
+                        pIODevice = nullptr;
+                    }
 
                     /* Reset any previous error state */
                     pAudioInput->reset();
+
+                    /* Start audio input and check result */
                     pIODevice = pAudioInput->start();
 
                     if(pAudioInput->error()!=QAudio::NoError)
                     {
-                        fprintf(stderr, "InitInternal: QAudioInput error %d\n",
-                               pAudioInput->error());
+                        fprintf(stderr, "InitInternal: QAudioInput error %d\n", pAudioInput->error());
 
                         /* Try to recover by resetting and restarting */
                         fprintf(stderr, "InitInternal: Attempting to recover...\n");
@@ -831,19 +832,32 @@ void CReceiveData::InitInternal(CParameter& Parameters)
                         }
                     } else {
                         fprintf(stderr, "InitInternal: QAudioInput started successfully\n");
-                        fprintf(stderr, "InitInternal: Device state: %d\n", pAudioInput->state());
+                        fprintf(stderr, "InitInternal: Device state: %d (Active=3, Idle=2, Stopped=1)\n", pAudioInput->state());
+
+                        /* Check if the device is actually providing data */
+                        if(pIODevice != nullptr) {
+                            fprintf(stderr, "InitInternal: QIODevice created, open: %s, readable: %s\n",
+                                   pIODevice->isOpen() ? "yes" : "no",
+                                   pIODevice->isReadable() ? "yes" : "no");
+                        } else {
+                            fprintf(stderr, "InitInternal: WARNING - pIODevice is null after start()\n");
+                        }
                     }
                 } else {
-                    fprintf(stderr, "InitInternal: QAudioInput already started, state: %d\n", pAudioInput->state());
+                    fprintf(stderr, "InitInternal: QAudioInput already started, state: %d (good state)\n", pAudioInput->state());
                 }
+# endif
 
+# if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+                // Qt 6: bufferSize() method doesn't exist
+                cerr << "sound card buffer size requested " << 2*wantedBufferSize << " (Qt 6 manages automatically)" << endl;
+# else
+                // Qt 5: Use bufferSize() method
                 cerr << "sound card buffer size requested " << 2*wantedBufferSize << " actual " << pAudioInput->bufferSize() << endl;
-            }  // 互斥锁在这里释放
-        }
+# endif
+            } // End QMutexLocker scope
+        } // End pAudioInput check
 
-#else
-        bChanged = (pSound==nullptr)?true:pSound->Init(iSampleRate / iUpscaleRatio, wantedBufferSize, true);
-#endif
         /* Clear input data buffer on change samplerate change */
         if (bChanged)
             ClearInputData();

@@ -28,9 +28,13 @@
 
 #include "ctransmitdata.h"
 #include "Parameter.h"
+#include "util/qt6_compat.h"
+#include "util/qt6_audio_compat.h"
 #include "IQInputFilter.h"
 #ifdef QT_MULTIMEDIA_LIB
 # include <QSet>
+# include <QAudioDevice>
+# include <QMediaDevices>
 # include <QAudioOutput>
 #else
 # include "sound/sound.h"
@@ -60,14 +64,27 @@ void CTransmitData::Stop()
 void CTransmitData::Enumerate(vector<string>& names, vector<string>& descriptions, string& defaultOutput)
 {
 #ifdef QT_MULTIMEDIA_LIB
+# if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    // Qt 6 implementation
     QSet<QString> s;
-    QString def = QAudioDeviceInfo::defaultOutputDevice().deviceName();
+    QString def = QMediaDevices::defaultAudioOutput().description();
     defaultOutput = def.toStdString();
-cerr << "default output device is " << defaultOutput << endl;
-    foreach(const QAudioDeviceInfo& di, QAudioDeviceInfo::availableDevices(QAudio::AudioOutput))
+    cerr << "default output device is " << defaultOutput << endl;
+    foreach(const QAudioDevice& di, QMediaDevices::audioOutputs())
+    {
+        s.insert(di.description());
+    }
+# else
+    // Qt 5 implementation
+    QSet<QString> s;
+    QString def = QAudioDeviceInfo_defaultOutputDevice().deviceName();
+    defaultOutput = def.toStdString();
+    cerr << "default output device is " << defaultOutput << endl;
+    foreach(const QAudioDeviceInfo& di, QAudioDeviceInfo_availableDevices(AudioOutput))
     {
         s.insert(di.deviceName());
     }
+# endif
     names.clear(); descriptions.clear();
     foreach(const QString n, s) {
 cerr << "have output device " << n.toStdString() << endl;
@@ -90,6 +107,28 @@ void CTransmitData::SetSoundInterface(string device)
 {
     soundDevice = device;
 #ifdef QT_MULTIMEDIA_LIB
+# if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    // Qt 6 implementation
+    QAudioFormat format;
+    if(iSampleRate==0) iSampleRate = 48000; // TODO get initialisation order right
+    format.setSampleRate(iSampleRate);
+    format.setChannelCount(2); // TODO
+    // Qt 6: sample format is set differently and codec is usually default
+
+    foreach(const QAudioDevice& di, QMediaDevices::audioOutputs())
+    {
+        if(device == di.description().toStdString()) {
+            // Qt 6: QAudioDevice uses the format directly
+            CAudioOutput* pAudioOutput = new CAudioOutput();
+            pAudioOutput->setDevice(di);
+            pIODevice = pAudioOutput->start();
+            if(!pIODevice) {
+                qDebug("Can't open audio output");
+            }
+        }
+    }
+# else
+    // Qt 5 implementation
     QAudioFormat format;
     if(iSampleRate==0) iSampleRate = 48000; // TODO get initialisation order right
     format.setSampleRate(iSampleRate);
@@ -98,11 +137,11 @@ void CTransmitData::SetSoundInterface(string device)
     format.setChannelCount(2); // TODO
     format.setByteOrder(QAudioFormat::LittleEndian);
     format.setCodec("audio/pcm");
-    foreach(const QAudioDeviceInfo& di, QAudioDeviceInfo::availableDevices(QAudio::AudioOutput))
+    foreach(const QAudioDeviceInfo& di, QAudioDeviceInfo_availableDevices(AudioOutput))
     {
         if(device == di.deviceName().toStdString()) {
             QAudioFormat nearestFormat = di.nearestFormat(format);
-            QAudioOutput* pAudioOutput = new QAudioOutput(di, nearestFormat);
+            CAudioOutput* pAudioOutput = new CAudioOutput(di, nearestFormat);
             pAudioOutput->setBufferSize(1000000);
             pIODevice = pAudioOutput->start();
             if(pAudioOutput->error()!=QAudio::NoError)
@@ -111,6 +150,7 @@ void CTransmitData::SetSoundInterface(string device)
             }
         }
     }
+# endif
 #else
     if(pSound != nullptr) {
         delete pSound;

@@ -34,7 +34,8 @@
 #include <QMessageBox>
 
 #ifdef QT_MULTIMEDIA_LIB
-# include <QAudioDeviceInfo>
+# include <QMediaDevices>
+# include <QAudioDevice>
 # include <QAudio>
 #endif
 
@@ -101,90 +102,99 @@ main(int argc, char **argv)
 	/* Parse arguments and load settings from init-file */
 	Settings.Load(argc, argv);
 
-	/* Check for macOS permissions - show on startup if needed */
-	#ifdef Q_OS_MAC
-	#ifdef QT_MULTIMEDIA_LIB
-	{
-		// Test audio device enumeration to check permissions using Qt
-		bool bAudioAvailable = false;
-		#ifdef QT_VERSION >= 0x050000
-		{
-			QList<QAudioDeviceInfo> devices = QAudioDeviceInfo::availableDevices(QAudio::AudioInput);
-			bAudioAvailable = !devices.isEmpty();
-		}
-		#endif
-
-		if (!bAudioAvailable)
-		{
-			QMessageBox msgBox;
-			msgBox.setIcon(QMessageBox::Warning);
-			msgBox.setWindowTitle("macOS Audio Permissions Required");
-			msgBox.setText("<h3>No Audio Input Devices Found</h3>");
-			msgBox.setInformativeText(
-				"<p>macOS requires microphone permissions to access audio devices.</p>"
-				"<p><b>Please grant permissions:</b></p>"
-				"<ol>"
-				"<li>Click <b>OK</b> to open System Preferences</li>"
-				"<li>Go to <b>Security & Privacy</b> → <b>Privacy</b> → <b>Microphone</b></li>"
-				"<li>Enable permissions for this application</li>"
-				"<li>Restart the application</li>"
-				"</ol>"
-			);
-			msgBox.setStandardButtons(QMessageBox::Ok);
-			msgBox.exec();
-
-			/* Try to open System Preferences */
-			system("open 'x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone'");
-		}
-	}
-	#endif
-	#endif
-
+	
 	try
 	{
 		string mode = Settings.Get("command", "mode", string());
 		if (mode == "receive")
 		{
-			CDRMReceiver DRMReceiver(&Settings);
+			// Create DRMReceiver after GUI is initialized to avoid QWidget construction before QApplication
+			CDRMReceiver* pDRMReceiver = new CDRMReceiver(&Settings);
 
 			/* First, initialize the working thread. This should be done in an extra
 			   routine since we cannot 100% assume that the working thread is
 			   ready before the GUI thread */
 
 #ifdef HAVE_LIBHAMLIB
-			CRig rig(DRMReceiver.GetParameters());
-			rig.LoadSettings(Settings); // must be before DRMReceiver for G313
+			CRig* pRig = new CRig(pDRMReceiver->GetParameters());
+			pRig->LoadSettings(Settings); // must be before DRMReceiver for G313
 #endif
-            CRx rx(DRMReceiver);
+            CRx* pRx = new CRx(*pDRMReceiver);
 
 #ifdef HAVE_LIBHAMLIB
-			DRMReceiver.SetRig(&rig);
+			pDRMReceiver->SetRig(pRig);
 
-			if(DRMReceiver.GetDownstreamRSCIOutEnabled())
+			if(pDRMReceiver->GetDownstreamRSCIOutEnabled())
 			{
-				rig.subscribe();
+				pRig->subscribe();
 			}
-            FDRMDialog *pMainDlg = new FDRMDialog(&rx, Settings, rig);
+            FDRMDialog *pMainDlg = new FDRMDialog(pRx, Settings, *pRig);
 #else
-			FDRMDialog *pMainDlg = new FDRMDialog(&rx, Settings);
+			FDRMDialog *pMainDlg = new FDRMDialog(pRx, Settings);
 #endif
 			(void)pMainDlg;
-            rx.LoadSettings();  // load settings after GUI initialised so LoadSettings signals get captured
+            pRx->LoadSettings();  // load settings after GUI initialised so LoadSettings signals get captured
+
+			/* Check for macOS permissions - show on startup if needed */
+			#ifdef Q_OS_MAC
+			#ifdef QT_MULTIMEDIA_LIB
+			{
+				// Test audio device enumeration to check permissions using Qt
+				bool bAudioAvailable = false;
+				{
+					// Qt 6 uses QMediaDevices for enumeration
+					QList<QAudioDevice> devices = QMediaDevices::audioInputs();
+					bAudioAvailable = !devices.isEmpty();
+				}
+
+				if (!bAudioAvailable)
+				{
+					QMessageBox msgBox;
+					msgBox.setIcon(QMessageBox::Warning);
+					msgBox.setWindowTitle("macOS Audio Permissions Required");
+					msgBox.setText("<h3>No Audio Input Devices Found</h3>");
+					msgBox.setInformativeText(
+						"<p>macOS requires microphone permissions to access audio devices.</p>"
+						"<p><b>Please grant permissions:</b></p>"
+						"<ol>"
+						"<li>Click <b>OK</b> to open System Preferences</li>"
+						"<li>Go to <b>Security & Privacy</b> → <b>Privacy</b> → <b>Microphone</b></li>"
+						"<li>Enable permissions for this application</li>"
+						"<li>Restart the application</li>"
+						"</ol>"
+					);
+					msgBox.setStandardButtons(QMessageBox::Ok);
+					msgBox.exec();
+
+					/* Try to open System Preferences */
+					system("open 'x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone'");
+				}
+			}
+			#endif
+			#endif
 
 			/* Start working thread */
-            rx.start();
+            pRx->start();
 
 			/* Set main window */
 			app.exec();
 
 #ifdef HAVE_LIBHAMLIB
-			if(DRMReceiver.GetDownstreamRSCIOutEnabled())
+			if(pDRMReceiver->GetDownstreamRSCIOutEnabled())
 			{
-				rig.unsubscribe();
+				pRig->unsubscribe();
 			}
-			rig.SaveSettings(Settings);
+			pRig->SaveSettings(Settings);
 #endif
-            rx.SaveSettings();
+            pRx->SaveSettings();
+
+			// Clean up
+			delete pMainDlg;
+			delete pRx;
+#ifdef HAVE_LIBHAMLIB
+			delete pRig;
+#endif
+			delete pDRMReceiver;
 		}
 		else if(mode == "transmit")
 		{

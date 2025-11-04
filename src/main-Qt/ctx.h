@@ -16,8 +16,8 @@ public:
 
     virtual void GetInputDevice(std::string&);
     virtual void GetOutputDevice(std::string&);
-    virtual void EnumerateInputs(std::vector<std::string>& names, std::vector<std::string>& descriptions, std::string& defaultInput);
-    virtual void EnumerateOutputs(std::vector<std::string>& names, std::vector<std::string>& descriptions, std::string& defaultOutput);
+    virtual void EnumerateInputs(std::vector<std::string>& names, std::vector<std::string>& descriptions, std::string& defaultInput) override;
+    virtual void EnumerateOutputs(std::vector<std::string>& names, std::vector<std::string>& descriptions, std::string& defaultOutput) override;
     virtual CSettings*				GetSettings() override;
     virtual CParameter*				GetParameters() override;
     virtual bool				IsReceiver() const override { return false;}

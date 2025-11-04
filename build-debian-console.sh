@@ -14,7 +14,7 @@ echo "Installing dependencies..."
 apt-get update
 apt-get install -y \
     build-essential \
-    qt5-qmake qtbase5-dev \
+    qt6-qmake qtbase6-dev \
     libfftw3-dev \
     libspeexdsp-dev \
     libspeex-dev \

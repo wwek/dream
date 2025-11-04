@@ -1,8 +1,8 @@
-# Multi-architecture support
-FROM --platform=$TARGETPLATFORM ubuntu:24.04
+# Multi-architecture support with Debian Trixie (testing) for Qt6
+FROM --platform=$TARGETPLATFORM debian:trixie-slim
 
 LABEL maintainer="OpenWebRX Dream DRM Receiver"
-LABEL description="Dream DRM Receiver 2.2.x build environment with xHE-AAC support"
+LABEL description="Dream DRM Receiver 2.2.x build environment with Qt6 and xHE-AAC support"
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -18,27 +18,6 @@ ARG BUILDPLATFORM
 RUN echo "Building on $BUILDPLATFORM for $TARGETPLATFORM" && \
     echo "Architecture: $(uname -m)" && \
     echo "Debian Architecture: $(dpkg --print-architecture)"
-
-# Set environment variables
-
-# Install build dependencies and build FDK-AAC from source
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    wget \
-    make \
-    autoconf \
-    libtool \
-    automake \
-    && mkdir -p /tmp/fdk-aac-build \
-    && cd /tmp/fdk-aac-build \
-    && wget --no-check-certificate https://downloads.sourceforge.net/project/opencore-amr/fdk-aac/fdk-aac-2.0.2.tar.gz \
-    && tar -xzf fdk-aac-2.0.2.tar.gz \
-    && cd fdk-aac-2.0.2 \
-    && ./configure --enable-shared=no --disable-dependency-tracking \
-    && make -j$(nproc) \
-    && make install \
-    && ldconfig \
-    && cd / \
-    && rm -rf /tmp/fdk-aac-build
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -56,10 +35,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     \
     # Qt6 (minimal for console mode)
     qt6-qmake \
-    qt6-base-dev \
+    qtbase6-dev \
+    qt6-base-dev-tools \
     qt6-multimedia-dev \
     \
-    # Audio libraries (FDK-AAC already built from source above)
+    # Audio libraries (FDK-AAC from non-free)
+    libfdk-aac-dev \
+    libfdk-aac2 \
     libfaad-dev \
     libopus-dev \
     \

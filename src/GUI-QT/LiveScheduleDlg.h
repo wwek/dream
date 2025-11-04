@@ -126,10 +126,10 @@ protected:
 class MyListLiveViewItem : public QTreeWidgetItem
 {
 public:
-	MyListLiveViewItem(QTreeWidget* parent, QString s1, QString s2 = QString::null,
-		QString s3 = QString::null, QString s4 = QString::null,
-		QString s5 = QString::null, QString s6 = QString::null,
-		QString s7 = QString::null, QString s8 = QString::null) :	
+	MyListLiveViewItem(QTreeWidget* parent, QString s1, QString s2 = QString(),
+		QString s3 = QString(), QString s4 = QString(),
+		QString s5 = QString(), QString s6 = QString(),
+		QString s7 = QString(), QString s8 = QString()) :	
 	QTreeWidgetItem(parent, QStringList() << s1 << s2 << s3 << s4 << s5 << s6 << s7 << s8)
 	{}
 

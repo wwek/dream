@@ -30,6 +30,7 @@
 #include "../datadecoding/DataDecoder.h"
 #include "../datadecoding/Journaline.h"
 #include <iostream>
+#include <QRegularExpression>
 
 JLBrowser::JLBrowser(QWidget * parent)
     : QTextBrowser(parent),decoder(nullptr),strFhGIISText(),strJournalineHeadText(),
@@ -115,7 +116,7 @@ QVariant JLBrowser::loadResource( int, const QUrl & name )
             QString strCurItem = QString().fromUtf8(News.vecItem[i].sText.c_str());
 
             /* Replace \n by html command <br> */
-            strCurItem = strCurItem.replace(QRegExp("\n"), "<br>");
+            strCurItem = strCurItem.replace(QRegularExpression("\n"), "<br>");
 
             switch(News.vecItem[i].iLink)
             {

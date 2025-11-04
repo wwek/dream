@@ -1,0 +1,31 @@
+# Simple Debian Trixie (testing) with Qt6
+FROM --platform=$TARGETPLATFORM debian:trixie
+
+ENV DEBIAN_FRONTEND=noninteractive TZ=UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# Install all dependencies at once
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    qt6-qmake \
+    qt6-base-dev \
+    qt6-multimedia-dev \
+    libfdk-aac-dev \
+    libfftw3-dev \
+    libspeex-dev \
+    libspeexdsp-dev \
+    libpulse-dev \
+    libpcap-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+COPY . /build/
+
+# Build
+RUN qmake CONFIG+=console CONFIG+=fdk-aac dream.pro && \
+    make -j$(nproc) && \
+    make install && \
+    mkdir -p /output && \
+    cp dream /output/dream
+
+CMD ["/usr/local/bin/dream", "--help"]

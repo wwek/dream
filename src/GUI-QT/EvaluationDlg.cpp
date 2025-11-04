@@ -766,7 +766,7 @@ void systemevalDlg::UpdateGPS(CParameter& Parameters)
     if (gps.set&LATLON_SET)
 //      Wrong char on Qt 5
 //      qStrPosition = QString(tr("Lat: %1\260  Long: %2\260")).arg(gps.fix.latitude, 0, 'f', 4).arg(gps.fix.longitude,0, 'f',4);
-        qStrPosition = QString(trUtf8("Lat: %1°  Long: %2°")).arg(gps.fix.latitude, 0, 'f', 4).arg(gps.fix.longitude,0, 'f',4);
+        qStrPosition = QString(tr("Lat: %1°  Long: %2°")).arg(gps.fix.latitude, 0, 'f', 4).arg(gps.fix.longitude,0, 'f',4);
     else
         qStrPosition = tr("Lat: ?  Long: ?");
 

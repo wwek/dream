@@ -31,7 +31,10 @@
 
 #include "util/Modul.h"
 #include "sound/soundinterface.h"
+#include "util/qt6_compat.h"
+#include "util/qt6_audio_compat.h"
 #include "util/Utilities.h"
+
 #include "spectrumanalyser.h"
 #ifdef QT_MULTIMEDIA_LIB
 # include <QAudioInput>
@@ -39,6 +42,8 @@
 # include <QMutex>
 # include <QObject>
 # include <QTimer>
+# include <QMediaDevices>
+# include <QAudioDevice>
 #else
 # ifdef QT_CORE_LIB
   class QIODevice;
@@ -115,18 +120,12 @@ public:
                      const int iNumAvBlocksPSD = NUM_AV_BLOCKS_PSD,
                      const int iPSDOverlap = 0);
 
-#ifdef QT_MULTIMEDIA_LIB
-# ifdef Q_OS_MAC
-public slots:
-    void createAudioInputSafely(std::string device);
-# endif
-#endif
 
 protected:
     CSignalLevelMeter		SignalLevelMeter;
 
 #ifdef QT_MULTIMEDIA_LIB
-    QAudioInput*            pAudioInput;
+    CAudioInput*            pAudioInput;
     QIODevice*              pIODevice;
     mutable QMutex          audioDeviceMutex;  // Protect audio device pointers
     bool                    bDeviceChanged;    // Indicates device was changed and needs re-init in worker thread
