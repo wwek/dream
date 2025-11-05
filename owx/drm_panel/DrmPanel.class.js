@@ -6,6 +6,8 @@
  */
 
 function DrmPanel(el) {
+    console.log('[DrmPanel] Constructor called with element:', el);
+    console.log('[DrmPanel] Element ID:', $(el).attr('id'), 'Classes:', $(el).attr('class'));
     MetaPanel.call(this, el);
     this.modes = ['DRM'];
 
@@ -164,6 +166,9 @@ function DrmPanel(el) {
     $(this.el).append($container);
     this.$container = $container;
 
+    console.log('[DrmPanel] HTML injected, container size:', $container.length, 'parent element:', this.el);
+    console.log('[DrmPanel] Parent HTML length after injection:', $(this.el).html().length);
+
     // 添加文本按钮点击事件委托
     var me = this;
     this.$container.on('click', '.drm-service-text-btn', function() {
@@ -182,6 +187,9 @@ function DrmPanel(el) {
     this.textExpandedState = {};
 
     this.clear();
+
+    // 确保面板初始显示（即使没有数据）
+    this.$container.show();
 }
 
 DrmPanel.prototype = new MetaPanel();
@@ -200,12 +208,18 @@ DrmPanel.prototype.update = function(data) {
         // 老格式有嵌套：{type: "drm_status", value: {...}}
         value = value.value;
     }
-    if (!value) return;
 
     // Debug log
     //console.log('[DRM Panel] Received status update:', value);
 
     this.$container.show();
+
+    // 如果没有有效数据，清空并显示默认状态
+    if (!value) {
+        this.clear();
+        this.$container.show();  // 确保面板显示，即使没有数据
+        return;
+    }
 
     // 现在value就是统一的数据格式，后续直接使用
     // 更新状态指示灯（状态字段永远在status对象中）
@@ -219,20 +233,20 @@ DrmPanel.prototype.update = function(data) {
         this.updateIndicator('msc', this.mapStatusValue(statusObj.msc));
     }
 
-    // 更新信号质量
-    var signalObj = value.signal || value;
-    var snr = signalObj.snr_db != null ? signalObj.snr_db : (signalObj.snr != null ? signalObj.snr : value.snr);
-    var ifLevel = signalObj.if_level_db != null ? signalObj.if_level_db : (signalObj.if_level != null ? signalObj.if_level : value.if_level);
+    // 更新信号质量（信号字段可能不存在，做安全检查）
+    var signalObj = value.signal || {};
+    var snr = signalObj.snr_db;
+    var ifLevel = signalObj.if_level_db;
 
     // 更新 SNR（保持绿色点亮，不分级）
     this.updateValue('snr', snr != null ? snr.toFixed(1) : '--');
     this.updateValue('if_level', ifLevel != null ? ifLevel.toFixed(1) : '--');
 
-    // 更新扩展信号参数
-    var wmer = signalObj.wmer_db != null ? signalObj.wmer_db : value.wmer_db;
-    var mer = signalObj.mer_db != null ? signalObj.mer_db : value.mer_db;
-    var doppler = signalObj.doppler_hz != null ? signalObj.doppler_hz : value.doppler_hz;
-    var delayMin = signalObj.delay_min_ms != null ? signalObj.delay_min_ms : value.delay_min_ms;
+    // 更新扩展信号参数（只存在于signal对象中）
+    var wmer = signalObj.wmer_db;
+    var mer = signalObj.mer_db;
+    var doppler = signalObj.doppler_hz;
+    var delayMin = signalObj.delay_min_ms;
 
     // 更新 WMER/MER（与界面一致的格式）
     this.updateValue('wmer', wmer != null ? wmer.toFixed(1) : '--');
@@ -927,6 +941,6 @@ DrmPanel.prototype.clear = function() {
     // 清空服务列表
     this.$container.find('[data-drm-services]').empty();
 
-    // 隐藏容器（没有信号时）
-    this.$container.hide();
+    // 保持面板显示，即使没有数据（用户要求）
+    // this.$container.hide();
 };

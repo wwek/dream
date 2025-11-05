@@ -98,9 +98,23 @@ owx官方元数据
   - 统一处理嵌套结构，自动适配新老数据格式
   - 优先使用新的 `drm_mode` 字段，兼容老的 `mode` 字段
   - 新增 `frequency` 对象支持（DC 偏移、采样偏移等参数）
+  - 信号参数字段统一从 `value.signal` 访问，移除不必要的兜底逻辑
   - 状态字段统一从 `value.status` 访问
   - 服务列表字段统一使用 `value.service_list`
+  - 统计字段使用 `value.services.audio` 和 `value.services.data`
   - 保护级别字段：统一使用 `coding.protection_a` 和 `coding.protection_b`
+- 📱 **面板显示优化**
+  - 检测并覆盖官方 `id="openwebrx-panel-metadata-drm"` 面板
+  - 即使没有数据也显示插件面板（显示默认状态）
+  - 移除过早返回逻辑，确保面板始终可见
+  - **修复面板隐藏问题**：移除 `clear()` 中的 `hide()` 调用
+  - 在构造函数中确保面板初始显示状态
+  - **修复外层容器隐藏问题**：移除注入HTML时的 `style="display: none;"`
+  - 覆盖官方面板时强制显示：移除隐藏类，强制设置 `display: block !important`
+  - 强制添加CSS类：`openwebrx-panel openwebrx-meta-panel`
+  - **修复145-190行注入逻辑**：有官方面板时清空后不创建，没官方面板时创建，现在统一为：有官方面板时清空+设置样式属性，没官方面板时创建+设置
+  - **关键修复 - metaPanel() 不调用构造函数**：添加双重保障机制：如果 metaPanel() 成功但HTML为空，自动手动调用构造函数；确保HTML注入成功
+  - **增强调试日志**：构造函数ID验证、HTML注入验证、HTML长度验证
 
 **v1.4** (2025-11-03)
 - 🔄 **官方面板覆盖功能**

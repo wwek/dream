@@ -149,9 +149,17 @@ function registerDrmPanel() {
             // 清空现有内容
             $drmPanel.empty();
 
-            // 确保正确的类和属性
-            $drmPanel.addClass('openwebrx-panel openwebrx-meta-panel')
-                     .attr('data-panel-name', 'metadata-drm');
+            // 强制显示并移除任何隐藏样式
+            $drmPanel
+                .removeClass('hidden')  // 移除可能的隐藏类
+                .css({
+                    'display': 'block !important',
+                    'visibility': 'visible !important',
+                    'opacity': '1 !important'
+                })
+                .show()  // jQuery show()
+                .attr('data-panel-name', 'metadata-drm')  // 确保正确的属性
+                .addClass('openwebrx-panel openwebrx-meta-panel');  // 确保正确的CSS类
 
             console.log('[DRM Panel Plugin] Official panel overridden successfully');
         } else {
@@ -163,7 +171,7 @@ function registerDrmPanel() {
 
             if ($referencePanel.length > 0) {
                 // 在 DAB panel 后面插入 DRM panel
-                $('<div class="openwebrx-panel openwebrx-meta-panel" id="openwebrx-panel-metadata-drm" style="display: none;" data-panel-name="metadata-drm"></div>')
+                $('<div class="openwebrx-panel openwebrx-meta-panel" id="openwebrx-panel-metadata-drm" data-panel-name="metadata-drm"></div>')
                     .insertAfter($referencePanel);
                 console.log('[DRM Panel Plugin] HTML container injected after DAB panel');
             } else {
@@ -171,7 +179,7 @@ function registerDrmPanel() {
                 var $panelsContainer = $('#openwebrx-panels-container-left');
                 if ($panelsContainer.length > 0) {
                     $panelsContainer.append(
-                        '<div class="openwebrx-panel openwebrx-meta-panel" id="openwebrx-panel-metadata-drm" style="display: none;" data-panel-name="metadata-drm"></div>'
+                        '<div class="openwebrx-panel openwebrx-meta-panel" id="openwebrx-panel-metadata-drm" data-panel-name="metadata-drm"></div>'
                     );
                     console.log('[DRM Panel Plugin] HTML container appended to panels container');
                 } else {
@@ -180,6 +188,9 @@ function registerDrmPanel() {
                 }
             }
         }
+
+        // 重新获取容器（现在一定存在）
+        $drmPanel = $('#openwebrx-panel-metadata-drm');
 
         // 2. 注册/覆盖 DRM Panel 到 MetaPanel 系统
         MetaPanel.types = MetaPanel.types || {};
@@ -206,9 +217,37 @@ function registerDrmPanel() {
             $panel.removeData('metaPanel');
         }
 
-        // 初始化我们的面板实例
-        $panel.metaPanel();
-        console.log('[DRM Panel Plugin] Panel instance initialized');
+        // 检查面板容器是否存在
+        if ($panel.length === 0) {
+            console.error('[DRM Panel Plugin] Panel container not found!');
+            return;
+        }
+
+        console.log('[DRM Panel Plugin] Initializing panel, container HTML length BEFORE init:', $panel.html().length);
+
+        // 初始化我们的面板实例 - 强制手动初始化以确保调用构造函数
+        try {
+            // 方式1：先尝试 metaPanel()
+            $panel.metaPanel();
+            console.log('[DRM Panel Plugin] Panel initialized via metaPanel(), HTML length AFTER init:', $panel.html().length);
+
+            // 如果 metaPanel() 成功但HTML长度还是0，手动调用构造函数
+            if ($panel.html().length === 0) {
+                console.warn('[DRM Panel Plugin] metaPanel() succeeded but HTML empty, calling constructor manually...');
+                new DrmPanel($panel[0]);
+                console.log('[DRM Panel Plugin] Manual constructor call successful, HTML length:', $panel.html().length);
+            }
+        } catch (error) {
+            // 如果 metaPanel() 失败，直接手动初始化
+            console.warn('[DRM Panel Plugin] metaPanel() failed, trying manual initialization:', error);
+            try {
+                // 直接创建 DrmPanel 实例
+                new DrmPanel($panel[0]);
+                console.log('[DRM Panel Plugin] Manual initialization successful, HTML length:', $panel.html().length);
+            } catch (error2) {
+                console.error('[DRM Panel Plugin] Manual initialization also failed:', error2);
+            }
+        }
 
         // 触发自定义事件，通知其他插件
         $(document).trigger('event:drm_panel_registered');
