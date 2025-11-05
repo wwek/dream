@@ -62,6 +62,12 @@ Services:
 
 
 {"type": "metadata", "value": {"type": "drm_status", "value": {"timestamp": 1761640323, "status": {"io": 0, "time": 0, "frame": 0, "fac": 0, "sdc": 0, "msc": 0}, "signal": {"if_level_db": -22.9, "snr_db": 14.0, "wmer_db": 13.8, "doppler_hz": 0.6, "delay_min_ms": 3.9, "delay_max_ms": 6.56}, "mode": {"robustness": 1, "bandwidth": 3, "bandwidth_khz": 10.0, "interleaver": 0}, "coding": {"sdc_qam": 0, "msc_qam": 1, "protection_a": 0, "protection_b": 0}, "services": {"audio": 1, "data": 0}, "service_list": [{"id": "1", "label": "CNR-1", "is_audio": true, "audio_coding": 3, "bitrate_kbps": 11.64, "language": {"fac_id": 3, "name": "Chinese (Mandarin)"}, "program_type": {"id": 1, "name": "News"}}]}}}
+
+
+
+---
+owx官方元数据
+{"type": "metadata", "value": {"timestamp": 1762315276, "drm_time": {"valid": true, "year": 2025, "month": 11, "day": 5, "hour": 12, "min": 4, "timestamp": 1762344240, "has_local_offset": true, "offset_min": 0}, "status": {"io": 0, "time": 0, "frame": 0, "fac": 0, "sdc": 0, "msc": 1}, "signal": {"if_level_db": -29.1, "snr_db": 10.1, "wmer_db": 10.3, "mer_db": 5.2, "doppler_hz": 0.74, "delay_min_ms": 1.44, "delay_max_ms": 1.95}, "frequency": {"dc_offset_hz": 5000.1, "sample_offset_hz": -0.69, "sample_offset_ppm": -14}, "mode": "DRM", "coding": {"sdc_qam": 0, "msc_qam": 1, "protection_a": 0, "protection_b": 0}, "services": {"audio": 1, "data": 0}, "service_list": [{"id": "1", "label": "CNR-1", "is_audio": true, "audio_coding": 3, "bitrate_kbps": 11.64, "audio_mode": "Mono", "protection_mode": "EEP", "language": {"fac_id": 3, "name": "Chinese (Mandarin)"}, "program_type": {"id": 1, "name": "News"}}], "media": {"program_guide": false, "journaline": false, "slideshow": false}, "drm_mode": {"robustness": 1, "bandwidth": 3, "bandwidth_khz": 10.0, "interleaver": 0}}}
 ```
 
 ### 状态值
@@ -85,6 +91,16 @@ Services:
 ---
 
 ## Changelog
+
+**v1.4.1** (2025-11-05)
+- 🔄 **增强数据格式兼容性**
+  - 支持 owx 官方新元数据结构（无 `type: "drm_status"` 嵌套层级）
+  - 统一处理嵌套结构，自动适配新老数据格式
+  - 优先使用新的 `drm_mode` 字段，兼容老的 `mode` 字段
+  - 新增 `frequency` 对象支持（DC 偏移、采样偏移等参数）
+  - 状态字段统一从 `value.status` 访问
+  - 服务列表字段统一使用 `value.service_list`
+  - 保护级别字段：统一使用 `coding.protection_a` 和 `coding.protection_b`
 
 **v1.4** (2025-11-03)
 - 🔄 **官方面板覆盖功能**

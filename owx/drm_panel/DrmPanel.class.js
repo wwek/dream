@@ -187,43 +187,52 @@ function DrmPanel(el) {
 DrmPanel.prototype = new MetaPanel();
 
 DrmPanel.prototype.isSupported = function(data) {
-    return data.type === 'drm_status';
+    // 支持新格式（无 type 字段）和老格式（有 type: "drm_status" 字段）
+    return data.type === 'drm_status' || data.type === 'metadata';
 };
 
 DrmPanel.prototype.update = function(data) {
     if (!this.isSupported(data)) return;
 
-    var status = data.value;
-    if (!status) return;
+    // 处理嵌套结构：统一获取实际的value对象
+    var value = data.value;
+    if (value && value.type === 'drm_status') {
+        // 老格式有嵌套：{type: "drm_status", value: {...}}
+        value = value.value;
+    }
+    if (!value) return;
 
     // Debug log
-    //console.log('[DRM Panel] Received status update:', status);
+    //console.log('[DRM Panel] Received status update:', value);
 
     this.$container.show();
 
-    // 更新状态指示灯 (处理数值: 0=ok, -1=off, >0=err)
-    if (status.status) {
-        this.updateIndicator('io', this.mapStatusValue(status.status.io));
-        this.updateIndicator('time', this.mapStatusValue(status.status.time));
-        this.updateIndicator('frame', this.mapStatusValue(status.status.frame));
-        this.updateIndicator('fac', this.mapStatusValue(status.status.fac));
-        this.updateIndicator('sdc', this.mapStatusValue(status.status.sdc));
-        this.updateIndicator('msc', this.mapStatusValue(status.status.msc));
+    // 现在value就是统一的数据格式，后续直接使用
+    // 更新状态指示灯（状态字段永远在status对象中）
+    var statusObj = value.status;
+    if (statusObj) {
+        this.updateIndicator('io', this.mapStatusValue(statusObj.io));
+        this.updateIndicator('time', this.mapStatusValue(statusObj.time));
+        this.updateIndicator('frame', this.mapStatusValue(statusObj.frame));
+        this.updateIndicator('fac', this.mapStatusValue(statusObj.fac));
+        this.updateIndicator('sdc', this.mapStatusValue(statusObj.sdc));
+        this.updateIndicator('msc', this.mapStatusValue(statusObj.msc));
     }
 
-    // 更新信号质量 (支持两种数据格式: signal.snr_db 或直接 snr)
-    var snr = (status.signal && status.signal.snr_db != null) ? status.signal.snr_db : status.snr;
-    var ifLevel = (status.signal && status.signal.if_level_db != null) ? status.signal.if_level_db : status.if_level;
+    // 更新信号质量
+    var signalObj = value.signal || value;
+    var snr = signalObj.snr_db != null ? signalObj.snr_db : (signalObj.snr != null ? signalObj.snr : value.snr);
+    var ifLevel = signalObj.if_level_db != null ? signalObj.if_level_db : (signalObj.if_level != null ? signalObj.if_level : value.if_level);
 
     // 更新 SNR（保持绿色点亮，不分级）
     this.updateValue('snr', snr != null ? snr.toFixed(1) : '--');
     this.updateValue('if_level', ifLevel != null ? ifLevel.toFixed(1) : '--');
 
     // 更新扩展信号参数
-    var wmer = status.signal && status.signal.wmer_db != null ? status.signal.wmer_db : null;
-    var mer = status.signal && status.signal.mer_db != null ? status.signal.mer_db : null;
-    var doppler = status.signal && status.signal.doppler_hz != null ? status.signal.doppler_hz : null;
-    var delayMin = status.signal && status.signal.delay_min_ms != null ? status.signal.delay_min_ms : null;
+    var wmer = signalObj.wmer_db != null ? signalObj.wmer_db : value.wmer_db;
+    var mer = signalObj.mer_db != null ? signalObj.mer_db : value.mer_db;
+    var doppler = signalObj.doppler_hz != null ? signalObj.doppler_hz : value.doppler_hz;
+    var delayMin = signalObj.delay_min_ms != null ? signalObj.delay_min_ms : value.delay_min_ms;
 
     // 更新 WMER/MER（与界面一致的格式）
     this.updateValue('wmer', wmer != null ? wmer.toFixed(1) : '--');
@@ -233,11 +242,11 @@ DrmPanel.prototype.update = function(data) {
     this.updateValue('doppler', doppler != null ? doppler.toFixed(2) + ' Hz' : '--');
     this.updateValue('delay', delayMin != null ? delayMin.toFixed(2) + ' ms' : '--');
 
-    // 更新模式信息 (支持两种格式: status.mode 和官方的 status.drm_mode)
-    var modeData = status.mode || status.drm_mode || {};
-    var robustness = modeData.robustness != null ? modeData.robustness : status.robustness;
-    var bandwidth = modeData.bandwidth_khz != null ? modeData.bandwidth_khz : (modeData.bandwidth || status.bandwidth);
-    var interleaver = modeData.interleaver != null ? modeData.interleaver : status.interleaver;
+    // 更新模式信息 - 优先使用新的 drm_mode，兼容老的 mode
+    var modeData = value.drm_mode || value.mode || {};
+    var robustness = modeData.robustness != null ? modeData.robustness : value.robustness;
+    var bandwidth = modeData.bandwidth_khz != null ? modeData.bandwidth_khz : (modeData.bandwidth != null ? modeData.bandwidth : value.bandwidth);
+    var interleaver = modeData.interleaver != null ? modeData.interleaver : value.interleaver;
 
     // DRM Mode (A/B/C/D) - 基于 robustness
     // 仅在有效数据时更新 (避免无数据时错误点亮默认值)
@@ -266,7 +275,7 @@ DrmPanel.prototype.update = function(data) {
     }
 
     // 更新编码模式 (SDC/MSC QAM: 0=4-QAM, 1=16-QAM, 2=64-QAM) - 仅在有效数据时更新
-    var codingData = status.coding || {};
+    var codingData = value.coding || {};
     if (codingData.sdc_qam != null) {
         this.updateQamBadges('sdc', codingData.sdc_qam);
     }
@@ -275,26 +284,19 @@ DrmPanel.prototype.update = function(data) {
     }
 
     // 更新保护级别 (Protection Level: 0-3)
-    var protA = codingData.protection_a != null ? codingData.protection_a : status.protection_level_a;
-    var protB = codingData.protection_b != null ? codingData.protection_b : status.protection_level_b;
+    var protA = codingData.protection_a;
+    var protB = codingData.protection_b;
 
     // 更新保护级别并高亮非零值
     this.updateValueWithHighlight('prot_level_a', protA != null ? protA : '--');
     this.updateValueWithHighlight('prot_level_b', protB != null ? protB : '--');
 
-    // 更新服务列表 (优先使用 service_list，其次 services)
-    var serviceList = status.service_list || status.services || [];
+    // 更新服务列表
+    var serviceList = value.service_list || [];
 
-    // 统计音频和数据服务数量
-    var audioCount = 0;
-    var dataCount = 0;
-    serviceList.forEach(function(service) {
-        if (service.is_audio) {
-            audioCount++;
-        } else {
-            dataCount++;
-        }
-    });
+    // 直接使用 services 统计字段
+    var audioCount = value.services ? value.services.audio : 0;
+    var dataCount = value.services ? value.services.data : 0;
 
     // 更新服务计数并高亮非零值
     this.updateValueWithHighlight('audio_count', audioCount);
@@ -308,18 +310,18 @@ DrmPanel.prototype.update = function(data) {
 
     // 更新时间显示
     // 传递完整的 drm_time 对象（包含时区偏移信息）
-    this.updateTimeDisplay(status.drm_time, status.timestamp);
+    this.updateTimeDisplay(value.drm_time, value.timestamp);
 
     // 更新 Media 状态 (Program Guide, Journaline, Slideshow)
-    if (status.media) {
-        this.updateMediaIndicator('program_guide', status.media.program_guide);
-        this.updateMediaIndicator('journaline', status.media.journaline);
-        this.updateMediaIndicator('slideshow', status.media.slideshow);
+    if (value.media) {
+        this.updateMediaIndicator('program_guide', value.media.program_guide);
+        this.updateMediaIndicator('journaline', value.media.journaline);
+        this.updateMediaIndicator('slideshow', value.media.slideshow);
     }
 
     // 处理 Media 内容 (一次性推送,客户端缓存)
-    if (status.media_content) {
-        this.handleMediaContent(status.media_content);
+    if (value.media_content) {
+        this.handleMediaContent(value.media_content);
     }
 };
 

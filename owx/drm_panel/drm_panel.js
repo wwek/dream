@@ -3,7 +3,7 @@
  *
  * @description Dream DRM 状态显示面板插件
  * @description 实时显示 DRM 解调状态、信号质量、模式信息和服务列表
- * @version 1.4.0
+ * @version 1.4.1
  * @author OpenWebRX+ Community
  * @license AGPL-3.0
  *
