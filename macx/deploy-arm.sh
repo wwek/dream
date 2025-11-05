@@ -10,11 +10,11 @@ set -e  # Exit on error
 
 echo "🚀 Starting Dream DRM deployment for macOS ARM..."
 
-# Detect Qt5 installation
-QT5_PREFIX="/opt/homebrew/opt/qt@5"
-if [ ! -d "$QT5_PREFIX" ]; then
-    echo "❌ Qt5 not found at $QT5_PREFIX"
-    echo "   Install with: brew install qt@5"
+# Detect Qt6 installation
+QT6_PREFIX="/opt/homebrew/opt/qt@6"
+if [ ! -d "$QT6_PREFIX" ]; then
+    echo "❌ Qt6 not found at $QT6_PREFIX"
+    echo "   Install with: brew install qt@6"
     exit 1
 fi
 

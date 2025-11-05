@@ -279,26 +279,54 @@ void CReceiveData::ProcessDataInternal(CParameter& Parameters)
                     iZeroReadCount = 0;  // Reset counter on successful read
                 }
                 else if(r == 0) {
-                    /* No data available yet - wait and retry in next call */
+                    /* No data available yet - handle virtual device I/O interruption */
                     iZeroReadCount++;
 
-                    // More lenient threshold: Allow up to 50 consecutive zero reads (~250ms)
-                    // This handles macOS permission delays, virtual devices, and Qt6 buffering
-                    if (iZeroReadCount > 50) {
-                        fprintf(stderr, "ProcessDataInternal: Consecutive zero reads detected (%d), marking as error\n", iZeroReadCount);
-                        fprintf(stderr, "ProcessDataInternal: This may indicate permission issues or device problems on macOS\n");
-                        fprintf(stderr, "ProcessDataInternal: Please check:\n");
-                        fprintf(stderr, "  1. System Preferences > Security & Privacy > Privacy > Microphone\n");
-                        fprintf(stderr, "  2. Ensure the application has microphone access\n");
-                        fprintf(stderr, "  3. Try switching audio devices if the issue persists\n");
-                        bBad = true;
-                    }
-                    // Add progressive warnings to help diagnose issues
-                    else if (iZeroReadCount > 0 && iZeroReadCount % 10 == 0) {
-                        fprintf(stderr, "ProcessDataInternal: Warning: %d consecutive zero reads, device may need more time to initialize\n", iZeroReadCount);
+                    // Virtual device detection with I/O interruption handling
+                    bool isVirtual = false;
+                    {
+                        QMutexLocker locker(&audioDeviceMutex);
+                        if (pAudioInput) {
+                            isVirtual = pAudioInput->isVirtualDevice();
+                        }
                     }
 
-                    break;  // Exit loop and retry in next ProcessDataInternal call
+                    // For virtual devices: Handle I/O interruption quickly
+                    if (isVirtual) {
+                        // First 3 consecutive zero reads: immediate retry (I/O interruption recovery)
+                        if (iZeroReadCount <= 3) {
+                            QThread::msleep(1);  // Brief wait for I/O recovery
+                            continue;  // Retry read() immediately
+                        }
+                        // 4-20 consecutive zero reads: silent retry with brief pause
+                        else if (iZeroReadCount <= 20) {
+                            QThread::msleep(5);  // Slightly longer wait
+                            continue;  // Retry read()
+                        }
+                        // 21+ consecutive zero reads: fill with silence and continue
+                        else {
+                            // Fill remaining buffer with silence to prevent signal loss
+                            memset(p, 0, n);
+                            break;  // Exit read loop and process the silence
+                        }
+                    }
+                    // For physical devices: use standard error handling
+                    else {
+                        if (iZeroReadCount > 50) {
+                            fprintf(stderr, "ProcessDataInternal: Physical device with %d consecutive zero reads, marking as error\n", iZeroReadCount);
+                            fprintf(stderr, "ProcessDataInternal: This may indicate permission issues or device problems on macOS\n");
+                            fprintf(stderr, "ProcessDataInternal: Please check:\n");
+                            fprintf(stderr, "  1. System Preferences > Security & Privacy > Privacy > Microphone\n");
+                            fprintf(stderr, "  2. Ensure the application has microphone access\n");
+                            fprintf(stderr, "  3. Try switching audio devices if the issue persists\n");
+                            bBad = true;
+                        }
+                        // Progressive warnings for physical devices
+                        else if (iZeroReadCount > 0 && iZeroReadCount % 10 == 0) {
+                            fprintf(stderr, "ProcessDataInternal: Warning: %d consecutive zero reads, device may need more time to initialize\n", iZeroReadCount);
+                        }
+                        break;  // Exit loop and retry in next ProcessDataInternal call
+                    }
                 }
                 else {
                     /* Read error - check if device was switched */
@@ -336,10 +364,29 @@ void CReceiveData::ProcessDataInternal(CParameter& Parameters)
     if(bBad) {
         /* Enhanced error recovery for macOS */
         #ifdef QT_MULTIMEDIA_LIB
-        // If we have persistent zero reads, try to reset the device
-        if (iZeroReadCount > 50 && iZeroReadCount % 100 == 0) {
-            fprintf(stderr, "ProcessDataInternal: Persistent zero reads detected, attempting device reset\n");
+        // Check if this is a virtual device
+        bool isVirtual = false;
+        {
+            QMutexLocker locker(&audioDeviceMutex);
+            if (pAudioInput) {
+                isVirtual = pAudioInput->isVirtualDevice();
+            }
+        }
+
+        // Only attempt device reset for physical devices
+        // Virtual devices may simply have no audio input temporarily
+        if (!isVirtual && iZeroReadCount > 50 && iZeroReadCount % 100 == 0) {
+            fprintf(stderr, "ProcessDataInternal: Persistent zero reads on physical device, attempting device reset\n");
             bDeviceChanged = true;
+        } else if (isVirtual && iZeroReadCount > 500) {
+            // Virtual devices: Only reset after very long zero reads (~2.5 seconds)
+            // And only attempt once to avoid repeated resets
+            static bool virtualDeviceResetAttempted = false;
+            if (!virtualDeviceResetAttempted) {
+                fprintf(stderr, "ProcessDataInternal: Very long zero reads on virtual device, attempting one-time reset\n");
+                bDeviceChanged = true;
+                virtualDeviceResetAttempted = true;
+            }
         }
         #endif
         return;
@@ -672,7 +719,14 @@ void CReceiveData::InitInternal(CParameter& Parameters)
                     /* Create new audio input with mutex protection - Qt 6 doesn't take format parameter */
                     {
                         QMutexLocker locker(&audioDeviceMutex);
-                        pAudioInput = new CAudioInput(di);
+
+                        // BlackHole compatibility fix: Wrap with try-catch
+                        try {
+                            pAudioInput = new CAudioInput(di);
+                        } catch (const std::exception& e) {
+                            fprintf(stderr, "InitInternal: Exception during QAudioInput creation: %s\n", e.what());
+                            throw; // Re-throw for upper-layer handling
+                        }
                     }
                     fprintf(stderr, "InitInternal: QAudioInput created successfully\n");
                     bFound = true;

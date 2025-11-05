@@ -18,14 +18,40 @@ public:
 
     // Single parameter constructor - use default format
     QCompatAudioInput(const QAudioDevice &device, QObject *parent = nullptr)
-        : QObject(parent) {
+        : QObject(parent), m_isVirtualDevice(false) {
         QAudioFormat format;
-        // Use higher sample rates for better compatibility with macOS Sequoia
-        format.setSampleRate(96000);
+        // Use higher sample rates for better compatibility with macOS Sequoia and BlackHole
+        format.setSampleRate(48000);  // BlackHole prefers 48kHz
         format.setChannelCount(2);
         format.setSampleFormat(QAudioFormat::Int16);
-        m_source = new QAudioSource(device, format, this);
+
+        // Detect virtual audio devices (BlackHole, Loopback, etc.)
+        QString deviceName = device.description().toLower();
+        m_isVirtualDevice = deviceName.contains("blackhole") ||
+                           deviceName.contains("loopback") ||
+                           deviceName.contains("virtual");
+
+        // BlackHole compatibility fix: Enhanced error handling
+        fprintf(stderr, "QCompatAudioInput: Initializing with sample rate %d\n", format.sampleRate());
+        fprintf(stderr, "QCompatAudioInput: Channel count: %d\n", format.channelCount());
+        fprintf(stderr, "QCompatAudioInput: Sample format: %d\n", format.sampleFormat());
+        fprintf(stderr, "QCompatAudioInput: Virtual device: %s\n", m_isVirtualDevice ? "YES" : "NO");
+
+        try {
+            m_source = new QAudioSource(device, format, this);
+            if (!m_source) {
+                fprintf(stderr, "QCompatAudioInput: ERROR - QAudioSource creation failed\n");
+                throw std::runtime_error("Failed to create QAudioSource");
+            }
+        } catch (const std::exception& e) {
+            fprintf(stderr, "QCompatAudioInput: Exception during initialization: %s\n", e.what());
+            // Re-throw exception for upper-layer handling
+            throw;
+        }
     }
+
+    // Get device type (virtual or physical)
+    bool isVirtualDevice() const { return m_isVirtualDevice; }
 
     // Default constructor for Qt6 - use default device
     QCompatAudioInput(QObject *parent = nullptr)
@@ -108,6 +134,7 @@ public:
 private:
     QAudioSource* m_source = nullptr;
     QIODevice* m_device = nullptr;
+    bool m_isVirtualDevice = false;
 };
 
 class QCompatAudioOutput : public QObject {
