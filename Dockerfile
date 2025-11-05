@@ -1,6 +1,6 @@
 # Dream DRM Receiver - Multi-architecture Qt6 Build
-# Use Ubuntu 22.04 for reliable Qt6 ARM64 support
-FROM --platform=$TARGETPLATFORM ubuntu:22.04
+# Use Debian 12 Bookworm for Qt6 support
+FROM --platform=$TARGETPLATFORM debian:12-slim
 
 LABEL maintainer="OpenWebRX Dream DRM Receiver"
 LABEL description="Dream DRM Receiver 2.2.x build environment with Qt6 and xHE-AAC support"
@@ -13,8 +13,10 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # Set timezone
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# Enable restricted, universe, and multiverse repositories for Ubuntu 22.04
-RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
+# Enable non-free and contrib repositories for FDK-AAC
+RUN echo "deb http://deb.debian.org/debian bookworm main non-free contrib" > /etc/apt/sources.list && \
+    echo "deb http://deb.debian.org/debian-security bookworm-security main" >> /etc/apt/sources.list && \
+    apt-get update
 
 # Architecture detection
 ARG TARGETPLATFORM
@@ -38,10 +40,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libc-bin \
     \
     # Qt6 (minimal for console mode)
-    qt6-qmake \
-    qtbase6-dev \
-    qt6-base-dev-tools \
+    qt6-base-dev \
+    qt6-tools-dev \
     qt6-multimedia-dev \
+    qt6-svg-dev \
+
     \
     # Audio libraries (FDK-AAC from non-free)
     libfdk-aac-dev \
@@ -84,7 +87,7 @@ COPY . /build/
 # Build Dream in console mode
 RUN echo "Building Dream 2.2.x with Qt6..." && \
     pkg-config --list-all | grep -E "fdk-aac|fftw|opus|speex" && \
-    qmake CONFIG+=console CONFIG+=fdk-aac CONFIG+=speexdsp dream.pro && \
+    qmake6 CONFIG+=console CONFIG+=fdk-aac CONFIG+=speexdsp dream.pro && \
     make -j$(nproc) && \
     echo "✓ Build successful"
 
