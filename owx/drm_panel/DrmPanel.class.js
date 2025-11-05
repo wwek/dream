@@ -6,8 +6,6 @@
  */
 
 function DrmPanel(el) {
-    console.log('[DrmPanel] Constructor called with element:', el);
-    console.log('[DrmPanel] Element ID:', $(el).attr('id'), 'Classes:', $(el).attr('class'));
     MetaPanel.call(this, el);
     this.modes = ['DRM'];
 
@@ -163,11 +161,9 @@ function DrmPanel(el) {
         '</div>'
     );
 
-    $(this.el).append($container);
+    $(el).append($container);
     this.$container = $container;
-
-    console.log('[DrmPanel] HTML injected, container size:', $container.length, 'parent element:', this.el);
-    console.log('[DrmPanel] Parent HTML length after injection:', $(this.el).html().length);
+    this.el = el;
 
     // 添加文本按钮点击事件委托
     var me = this;
@@ -195,24 +191,36 @@ function DrmPanel(el) {
 DrmPanel.prototype = new MetaPanel();
 
 DrmPanel.prototype.isSupported = function(data) {
-    // 支持新格式（无 type 字段）和老格式（有 type: "drm_status" 字段）
-    return data.type === 'drm_status' || data.type === 'metadata';
+    // owx 官方格式直接传入 value 对象（有 drm_time 和 status 字段）
+    // 也支持老格式（有 type 字段）
+    var supported = data.type === 'drm_status' || data.type === 'metadata' || (data.drm_time && data.status);
+
+    return supported;
 };
 
 DrmPanel.prototype.update = function(data) {
-    if (!this.isSupported(data)) return;
-
-    // 处理嵌套结构：统一获取实际的value对象
-    var value = data.value;
-    if (value && value.type === 'drm_status') {
-        // 老格式有嵌套：{type: "drm_status", value: {...}}
-        value = value.value;
+    if (!this.isSupported(data)) {
+        return;
     }
 
-    // Debug log
-    //console.log('[DRM Panel] Received status update:', value);
+    // 处理不同格式的数据结构
+    // owx 官方格式：data 直接是 value 对象（有 drm_time 和 status 字段）
+    // 老格式嵌套：data = {type: "drm_status", value: {...}}
+    // 新格式：data = {type: "metadata", value: {...}}
+    var value;
 
-    this.$container.show();
+    if (data.drm_time) {
+        // owx 官方格式：data 本身就是 value 对象
+        value = data;
+    } else {
+        // 老格式或新格式：从 data.value 中提取
+        value = data.value;
+
+        if (value && value.type === 'drm_status') {
+            // 老格式有嵌套：{type: "drm_status", value: {...}}
+            value = value.value;
+        }
+    }
 
     // 如果没有有效数据，清空并显示默认状态
     if (!value) {
@@ -364,7 +372,8 @@ DrmPanel.prototype.updateIndicator = function(name, state) {
 };
 
 DrmPanel.prototype.updateValue = function(name, value) {
-    this.$container.find('[data-drm-val="' + name + '"]').text(value);
+    var $elem = this.$container.find('[data-drm-val="' + name + '"]');
+    $elem.text(value);
 };
 
 DrmPanel.prototype.updateMediaIndicator = function(mediaType, isAvailable) {
@@ -386,14 +395,13 @@ DrmPanel.prototype.cacheMediaItem = function(type, content) {
         this.mediaCache.set(key, content);
 
         // 构建日志信息
-        var logInfo = '[DrmPanel] Cached ' + type;
+        var logInfo = 'Cached ' + type;
         if (content.name) {
             logInfo += ': ' + content.name;
         }
         if (content.size) {
             logInfo += ' (size: ' + content.size + ' bytes)';
         }
-        console.log(logInfo);
     }
 };
 
@@ -569,8 +577,6 @@ DrmPanel.prototype.downloadMediaFile = function(filename, mime, base64) {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-
-        console.log('[DrmPanel] Downloaded:', filename);
     } catch (e) {
         console.error('[DrmPanel] Failed to download file:', e);
         alert('Failed to download file: ' + e.message);

@@ -43,11 +43,8 @@ Plugins.drm_panel.init = async function() {
 
     // 防止重复初始化
     if (Plugins.drm_panel._initialized) {
-        console.warn('[DRM Panel Plugin] Already initialized, skipping duplicate init call');
         return true;
     }
-
-    console.log('[DRM Panel Plugin] Initializing...');
 
     try {
         // 1. 加载外部依赖（可选，用于增强 Media 内容查看功能）
@@ -60,21 +57,17 @@ Plugins.drm_panel.init = async function() {
 
         if (drmPanelExists) {
             // 如果已存在，直接注册
-            console.log('[DRM Panel Plugin] DrmPanel class already loaded from lib/');
             registerDrmPanel();
             Plugins.drm_panel._initialized = true;
             return true;
         }
 
         // 3. 动态加载 DrmPanel 类
-        console.log('[DRM Panel Plugin] Loading DrmPanel class...');
-
         // 动态加载 DrmPanel.class.js（使用配置中的路径）
         await Plugins._load_script(Plugins.drm_panel.config.pluginPath + 'DrmPanel.class.js').catch(function() {
             throw new Error('Cannot load DrmPanel.class.js');
         });
 
-        console.log('[DRM Panel Plugin] DrmPanel class loaded successfully');
         registerDrmPanel();
         Plugins.drm_panel._initialized = true;
         return true;
@@ -96,8 +89,6 @@ async function loadExternalDependencies() {
     var config = Plugins.drm_panel.config.externalDeps;
 
     try {
-        console.log('[DRM Panel Plugin] Loading external dependencies...');
-
         // 加载图片查看器（用于 Slideshow 增强）
         if (config.imageViewer && config.imageViewer.enabled) {
             await Plugins._load_style(config.imageViewer.cssUrl).catch(function() {
@@ -106,16 +97,11 @@ async function loadExternalDependencies() {
 
             await Plugins._load_script(config.imageViewer.jsUrl).catch(function() {
                 console.warn('[DRM Panel Plugin] Cannot load viewer.js, using fallback image viewer');
-            }).then(function() {
-                console.log('[DRM Panel Plugin] Loaded external dependency: viewer.js');
             });
-        } else {
-            console.log('[DRM Panel Plugin] No external dependencies enabled');
         }
 
         return true;
     } catch (error) {
-        console.warn('[DRM Panel Plugin] Failed to load external dependencies:', error);
         // 不影响核心功能，继续初始化
         return true;
     }
@@ -144,27 +130,33 @@ function registerDrmPanel() {
 
         if ($drmPanel.length > 0) {
             // 官方 DRM 面板已存在，清空并覆盖为我们的插件
-            console.log('[DRM Panel Plugin] Official DRM panel detected, overriding with plugin...');
 
-            // 清空现有内容
+            // 第一步：完全清理官方面板实例和事件
+            // 移除所有 jQuery 数据绑定（包括 metaPanel 实例）
+            $drmPanel.removeData();
+
+            // 移除所有事件监听器
+            $drmPanel.off();
+
+            // 解绑所有命名空间事件
+            $(document).off('.metaPanel');
+
+            // 第二步：清空现有内容
             $drmPanel.empty();
 
-            // 强制显示并移除任何隐藏样式
+            // 第三步：重置面板属性
             $drmPanel
-                .removeClass('hidden')  // 移除可能的隐藏类
+                .removeClass('hidden')
                 .css({
                     'display': 'block !important',
                     'visibility': 'visible !important',
                     'opacity': '1 !important'
                 })
-                .show()  // jQuery show()
-                .attr('data-panel-name', 'metadata-drm')  // 确保正确的属性
-                .addClass('openwebrx-panel openwebrx-meta-panel');  // 确保正确的CSS类
-
-            console.log('[DRM Panel Plugin] Official panel overridden successfully');
+                .show()
+                .attr('data-panel-name', 'metadata-drm')
+                .addClass('openwebrx-panel openwebrx-meta-panel');
         } else {
             // 容器不存在，注入新的 HTML 容器
-            console.log('[DRM Panel Plugin] No official panel found, injecting new container...');
 
             // 找到参考元素 (DAB panel)
             var $referencePanel = $('#openwebrx-panel-metadata-dab');
@@ -173,7 +165,6 @@ function registerDrmPanel() {
                 // 在 DAB panel 后面插入 DRM panel
                 $('<div class="openwebrx-panel openwebrx-meta-panel" id="openwebrx-panel-metadata-drm" data-panel-name="metadata-drm"></div>')
                     .insertAfter($referencePanel);
-                console.log('[DRM Panel Plugin] HTML container injected after DAB panel');
             } else {
                 // 如果找不到 DAB panel，尝试插入到 panels 容器末尾
                 var $panelsContainer = $('#openwebrx-panels-container-left');
@@ -181,7 +172,6 @@ function registerDrmPanel() {
                     $panelsContainer.append(
                         '<div class="openwebrx-panel openwebrx-meta-panel" id="openwebrx-panel-metadata-drm" data-panel-name="metadata-drm"></div>'
                     );
-                    console.log('[DRM Panel Plugin] HTML container appended to panels container');
                 } else {
                     console.error('[DRM Panel Plugin] Cannot find suitable location to inject HTML container');
                     return;
@@ -197,22 +187,17 @@ function registerDrmPanel() {
 
         // 检查官方实现是否已经注册
         if (MetaPanel.types.drm) {
-            console.log('[DRM Panel Plugin] Official DRM panel implementation detected, overriding...');
+            // 覆盖官方实现
         }
 
         // 覆盖或注册我们的实现（使用构造函数，与官方方式兼容）
-        // 官方使用: new constructor($self)
-        // 因此我们直接赋值 DrmPanel 构造函数
         MetaPanel.types.drm = DrmPanel;
-
-        console.log('[DRM Panel Plugin] Successfully registered/overridden MetaPanel.types.drm');
 
         // 3. 重新初始化 metaPanel
         var $panel = $('#openwebrx-panel-metadata-drm');
 
         // 如果面板已经初始化过（官方实现），先销毁旧实例
         if ($panel.data('metaPanel')) {
-            console.log('[DRM Panel Plugin] Destroying old panel instance...');
             // 移除旧的数据绑定
             $panel.removeData('metaPanel');
         }
@@ -223,31 +208,31 @@ function registerDrmPanel() {
             return;
         }
 
-        console.log('[DRM Panel Plugin] Initializing panel, container HTML length BEFORE init:', $panel.html().length);
-
         // 初始化我们的面板实例 - 强制手动初始化以确保调用构造函数
         try {
             // 方式1：先尝试 metaPanel()
             $panel.metaPanel();
-            console.log('[DRM Panel Plugin] Panel initialized via metaPanel(), HTML length AFTER init:', $panel.html().length);
 
             // 如果 metaPanel() 成功但HTML长度还是0，手动调用构造函数
             if ($panel.html().length === 0) {
-                console.warn('[DRM Panel Plugin] metaPanel() succeeded but HTML empty, calling constructor manually...');
                 new DrmPanel($panel[0]);
-                console.log('[DRM Panel Plugin] Manual constructor call successful, HTML length:', $panel.html().length);
             }
         } catch (error) {
             // 如果 metaPanel() 失败，直接手动初始化
-            console.warn('[DRM Panel Plugin] metaPanel() failed, trying manual initialization:', error);
             try {
                 // 直接创建 DrmPanel 实例
                 new DrmPanel($panel[0]);
-                console.log('[DRM Panel Plugin] Manual initialization successful, HTML length:', $panel.html().length);
             } catch (error2) {
                 console.error('[DRM Panel Plugin] Manual initialization also failed:', error2);
             }
         }
+
+        // 强制显示面板（最终保障）
+        $panel.show().css({
+            'display': 'block !important',
+            'visibility': 'visible !important',
+            'opacity': '1 !important'
+        });
 
         // 触发自定义事件，通知其他插件
         $(document).trigger('event:drm_panel_registered');
@@ -277,7 +262,6 @@ Plugins.drm_panel.unload = function() {
     if (typeof MetaPanel !== 'undefined' && MetaPanel.types && MetaPanel.types.drm) {
         delete MetaPanel.types.drm;
         Plugins.drm_panel._initialized = false;
-        console.log('[DRM Panel Plugin] Unregistered from MetaPanel');
         $(document).trigger('event:drm_panel_unregistered');
     }
 };

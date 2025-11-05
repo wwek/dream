@@ -68,6 +68,8 @@ Services:
 ---
 owx官方元数据
 {"type": "metadata", "value": {"timestamp": 1762315276, "drm_time": {"valid": true, "year": 2025, "month": 11, "day": 5, "hour": 12, "min": 4, "timestamp": 1762344240, "has_local_offset": true, "offset_min": 0}, "status": {"io": 0, "time": 0, "frame": 0, "fac": 0, "sdc": 0, "msc": 1}, "signal": {"if_level_db": -29.1, "snr_db": 10.1, "wmer_db": 10.3, "mer_db": 5.2, "doppler_hz": 0.74, "delay_min_ms": 1.44, "delay_max_ms": 1.95}, "frequency": {"dc_offset_hz": 5000.1, "sample_offset_hz": -0.69, "sample_offset_ppm": -14}, "mode": "DRM", "coding": {"sdc_qam": 0, "msc_qam": 1, "protection_a": 0, "protection_b": 0}, "services": {"audio": 1, "data": 0}, "service_list": [{"id": "1", "label": "CNR-1", "is_audio": true, "audio_coding": 3, "bitrate_kbps": 11.64, "audio_mode": "Mono", "protection_mode": "EEP", "language": {"fac_id": 3, "name": "Chinese (Mandarin)"}, "program_type": {"id": 1, "name": "News"}}], "media": {"program_guide": false, "journaline": false, "slideshow": false}, "drm_mode": {"robustness": 1, "bandwidth": 3, "bandwidth_khz": 10.0, "interleaver": 0}}}
+
+{"type":"metadata","value":{"timestamp":1762318307,"drm_time":{"valid":true,"year":2025,"month":11,"day":5,"hour":12,"min":54,"timestamp":1762347240,"has_local_offset":true,"offset_min":0},"status":{"io":0,"time":0,"frame":0,"fac":0,"sdc":0,"msc":0},"signal":{"if_level_db":-31,"snr_db":10.8,"wmer_db":11.6,"mer_db":10.8,"doppler_hz":1.55,"delay_min_ms":1.23,"delay_max_ms":2.67},"frequency":{"dc_offset_hz":5001.93,"sample_offset_hz":-1.34,"sample_offset_ppm":-28},"mode":"DRM","coding":{"sdc_qam":0,"msc_qam":1,"protection_a":0,"protection_b":0},"services":{"audio":1,"data":0},"service_list":[{"id":"1","label":"CNR-1","is_audio":true,"audio_coding":3,"bitrate_kbps":11.64,"audio_mode":"Mono","protection_mode":"EEP","language":{"fac_id":3,"name":"Chinese (Mandarin)"},"program_type":{"id":1,"name":"News"}}],"media":{"program_guide":false,"journaline":false,"slideshow":false},"drm_mode":{"robustness":1,"bandwidth":3,"bandwidth_khz":10,"interleaver":0}}}
 ```
 
 ### 状态值
@@ -114,7 +116,8 @@ owx官方元数据
   - 强制添加CSS类：`openwebrx-panel openwebrx-meta-panel`
   - **修复145-190行注入逻辑**：有官方面板时清空后不创建，没官方面板时创建，现在统一为：有官方面板时清空+设置样式属性，没官方面板时创建+设置
   - **关键修复 - metaPanel() 不调用构造函数**：添加双重保障机制：如果 metaPanel() 成功但HTML为空，自动手动调用构造函数；确保HTML注入成功
-  - **增强调试日志**：构造函数ID验证、HTML注入验证、HTML长度验证
+  - **关键修复 - HTML注入到错误容器**：修复构造函数中使用 `this.el` 而未定义的错误，改用传入的 `el` 参数；确保HTML正确注入到面板容器
+  - **增强调试日志**：构造函数ID验证、HTML注入验证、HTML长度验证、update()参数验证、字段解析验证、DOM选择器验证（find元素数量）
 
 **v1.4** (2025-11-03)
 - 🔄 **官方面板覆盖功能**

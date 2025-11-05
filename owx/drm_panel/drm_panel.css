@@ -6,11 +6,14 @@
 /* ========== 容器样式 ========== */
 .drm-container {
     padding: 8px;
-    font-family: 'Segoe UI', Arial, sans-serif;
     font-size: 13px;
     line-height: 1.4;
-    background: #575757;
     color: #fff;
+}
+
+/* 父容器最小宽度 */
+#openwebrx-panel-metadata-drm {
+    min-width: 380px;
 }
 
 /* ========== 第一行：状态指示灯 ========== */
