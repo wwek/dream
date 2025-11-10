@@ -17,6 +17,9 @@
 %:
 	dh $@
 
+override_dh_auto_configure:
+	dh_auto_configure -- qmake PREFIX=/usr CONFIG+=console CONFIG+=fdk-aac dream.pro || true
+
 
 # dh_make generated override targets
 # This is example for Cmake (See https://bugs.debian.org/641051 )
