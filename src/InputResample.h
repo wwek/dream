@@ -52,7 +52,7 @@ public:
 
 protected:
     CResample	ResampleObj;
-    bool	bSyncInput;
+    bool		bSyncInput;
 
     virtual void InitInternal(CParameter& Parameters);
     virtual void ProcessDataInternal(CParameter& Parameters);

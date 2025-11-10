@@ -32,18 +32,6 @@
 #include "src/SDC/SDC.h"
 #include <cstring>
 
-FdkAacCodec::FdkAacCodec() :
-    hDecoder(nullptr), hEncoder(nullptr),bUsac(false),decode_buf()
-{
-}
-
-
-FdkAacCodec::~FdkAacCodec()
-{
-	DecClose();
-	EncClose();
-}
-
 static void aacinfo(LIB_INFO& inf) {
     LIB_INFO info[12];
     memset(info, 0, sizeof(info));
@@ -54,6 +42,26 @@ static void aacinfo(LIB_INFO& inf) {
             inf = info[i];
         }
     }
+}
+
+FdkAacCodec::FdkAacCodec() :
+    hDecoder(nullptr), hEncoder(nullptr),bUsac(false),decode_buf()
+{
+    // Report FDK-AAC library information at startup
+    LIB_INFO info;
+    aacinfo(info);
+    if (info.module_id == FDK_AACDEC) {
+        cerr << "FDK-AAC library found: " << info.title
+             << " version " << info.versionStr
+             << " (" << info.build_date << ")" << endl;
+    }
+}
+
+
+FdkAacCodec::~FdkAacCodec()
+{
+	DecClose();
+	EncClose();
 }
 
 string
@@ -345,25 +353,37 @@ CAudioCodec::EDecError FdkAacCodec::Decode(const vector<uint8_t>& audio_frame, u
         //cerr << "energy in good frame " << (d/output_size) << endl;
     }
     else if(err == AAC_DEC_PARSE_ERROR) {
+        // Parse errors - return error (KiwiSDR behavior line 396-400)
         cerr << "error parsing bitstream." << endl;
+        return CAudioCodec::DECODER_ERROR_UNKNOWN;
+    }
+    else if(err == AAC_DEC_CRC_ERROR) {
+        // CRC errors happen often with marginal signals (KiwiSDR comment line 411)
+        // cerr << "CRC error." << endl;
         return CAudioCodec::DECODER_ERROR_UNKNOWN;
     }
 #ifdef HAVE_USAC
     else if(err == AAC_DEC_OUTPUT_BUFFER_TOO_SMALL) {
+        // Non-fatal - continue processing (KiwiSDR line 402-404, no return)
         cerr << "The provided output buffer is too small." << endl;
-        return CAudioCodec::DECODER_ERROR_UNKNOWN;
     }
 #endif
     else if(err == AAC_DEC_OUT_OF_MEMORY) {
+        // Non-fatal - continue (KiwiSDR line 406-408, no return)
         cerr << "Heap returned NULL pointer. Output buffer is invalid." << endl;
-        return CAudioCodec::DECODER_ERROR_UNKNOWN;
     }
     else if(err == AAC_DEC_UNKNOWN) {
+        // Non-fatal - continue (KiwiSDR line 416-417, no return)
         cerr << "Error condition is of unknown reason, or from a another module. Output buffer is invalid." << endl;
-        return CAudioCodec::DECODER_ERROR_UNKNOWN;
     }
-    else {
+    else if(err != AAC_DEC_OK) {
         cerr << "other error " << hex << int(err) << dec << endl;
+    }
+
+    // Unified error check - KiwiSDR line 423-427
+    // PARSE_ERROR and CRC_ERROR already returned above
+    // Other errors checked here
+    if(err != AAC_DEC_OK) {
         return CAudioCodec::DECODER_ERROR_UNKNOWN;
     }
 

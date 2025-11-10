@@ -55,7 +55,7 @@ output/
 # build-macos-gui.sh
 # macx/
 
-# Docker files (don't copy into container)
-Dockerfile
-.dockerignore
-docker-compose.yml
+# Docker files (commented out to allow Docker builds)
+# Dockerfile
+# .dockerignore
+# docker-compose.yml

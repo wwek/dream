@@ -37,7 +37,8 @@
 class CResample
 {
 public:
-	CResample() {}
+	CResample() : rTStep(0.0), rtOut(0.0), rBlockDuration(0.0),
+	              iHistorySize(0), iInputBlockSize(0) {}
     virtual ~CResample();
 
 	void Init(const int iNewInputBlockSize);

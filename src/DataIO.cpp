@@ -116,7 +116,7 @@ void CReadData::Enumerate(std::vector<std::string>& names, std::vector<std::stri
     if(pSound==nullptr) pSound = new CSoundIn;
     pSound->Enumerate(names, descriptions, defaultInput);
 #endif
-    cout << "default input is " << defaultInput << endl;
+    cerr << "default input is " << defaultInput << endl;
 }
 
 void
