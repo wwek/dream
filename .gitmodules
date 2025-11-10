@@ -1,0 +1,3 @@
+[submodule "KiwiSDR"]
+	path = KiwiSDR
+	url = https://github.com/jks-prv/KiwiSDR.git
