@@ -149,6 +149,14 @@ ETypeRxStatus Reverb::apply(bool bCurBlockOK, bool bCurBlockFaulty, CVector<_REA
     {
         CurLeft[i] = OldLeft[i];
         CurRight[i] = OldRight[i];
+
+        /* Clamp to prevent overflow in strong signals */
+        const _REAL rMax = 32760.0;
+        if (CurLeft[i] < -rMax) CurLeft[i] = -rMax;
+        else if (CurLeft[i] > rMax) CurLeft[i] = rMax;
+
+        if (CurRight[i] < -rMax) CurRight[i] = -rMax;
+        else if (CurRight[i] > rMax) CurRight[i] = rMax;
     }
 
     /* Store current audio block for next time */
