@@ -42,7 +42,7 @@
 class CInputResample : public CReceiverModul<_REAL, _REAL>
 {
 public:
-    CInputResample() : bSyncInput(false) {}
+    CInputResample() : bSyncInput(false), rPrevOffset(0.0), iBlocksSinceStart(0) {}
     virtual ~CInputResample() {}
 
     /* To set the module up for synchronized DRM input data stream */
@@ -52,7 +52,11 @@ public:
 
 protected:
     CResample	ResampleObj;
-    bool	bSyncInput;
+    bool		bSyncInput;
+
+    /* Conservative reset decision state */
+    _REAL		rPrevOffset;
+    int			iBlocksSinceStart;
 
     virtual void InitInternal(CParameter& Parameters);
     virtual void ProcessDataInternal(CParameter& Parameters);

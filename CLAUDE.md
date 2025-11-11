@@ -128,10 +128,19 @@ MLC Decoding → DRM Protocol Layers → Audio/Data Decoding → Output
 ## Known Issues and Technical Debt
 
 ### Signal Processing Stability
-- IIR filter numerical stability issues under strong signal conditions
-- **Critical Issue**: DC filter state accumulation causing "沙沙声" (static noise) after strong signals - see `AM_AGC.cpp` and `AMDemodulation.cpp`
-- Time constants in IIR filters (e.g., `DC_IIR_FILTER_LAMBDA = 0.999`) may need adjustment for different signal conditions
-- Consider filter state reset mechanisms for strong signal recovery
+
+#### Audio Input Mode Issue (DRM Digital Mode)
+- **Critical Issue**: Input resampler filter state accumulation causing "沙沙声" (static noise) when signal conditions change
+- **Root Cause**: `CResample::vecrIntBuff` history buffer (13 samples) never resets during runtime
+- **Affected Path**: Audio input → `InputResample.cpp` → OFDM demodulation → Audio output
+- **Not Affected**: IQ input mode (no resampling needed, e.g., KiwiSDR extension)
+- **Location**: `src/resample/Resample.cpp:118` - buffer initialized once, never reset
+- **Fix**: Add `CResample::Reset()` method and call when sample rate offset changes >50Hz
+- **Details**: See `docs/音频输入vs IQ输入-沙沙声问题对比分析.md`
+
+#### AM Analog Mode (Not Related to DRM Digital)
+- DC filter and AGC in `AMDemodulation.cpp` and `AM_AGC.cpp` are only for analog AM broadcasting
+- These do not affect DRM digital mode audio processing
 
 ### Code Modernization Opportunities
 - Mixed Qt4/Qt5/Qt6 compatibility layers
