@@ -56,7 +56,7 @@ const static _REAL PSDWindowGain = 0.39638; /* power gain of the Hamming window 
 
 //inline _REAL sample2real(_SAMPLE s) { return _REAL(s)/32768.0; }
 inline _REAL sample2real(_SAMPLE s) {
-    return _REAL(s);
+    return _REAL(s)/32768.0;
 }
 
 CReceiveData::CReceiveData() :
