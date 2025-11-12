@@ -42,7 +42,7 @@ const char dream_implementation[] = "CL";
 #endif
 const int dream_version_major = 2;
 const int dream_version_minor = 2;
-const int dream_version_patch = 3;
+const int dream_version_patch = 4;
 const char dream_version_build[] = "";
 
 void PrintFullVersion()

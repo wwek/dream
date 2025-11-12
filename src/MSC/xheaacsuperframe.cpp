@@ -8,6 +8,7 @@ XHEAACSuperFrame::XHEAACSuperFrame():AudioSuperFrame (),numChannels(0),superFram
 void
 XHEAACSuperFrame::init(const CAudioParam& audioParam, unsigned frameSize)
 {
+    printf("DRM xHE-AAC init\n");
     numChannels = audioParam.AM_MONO?1:2;
     superFrameSize = frameSize;
     payload.resize(0);
@@ -222,4 +223,5 @@ void
 XHEAACSuperFrame::getFrame(std::vector<uint8_t>& frame, uint8_t& crc, unsigned i)
 {
     frame = audioFrame[i];
+    (void) crc;
 }
