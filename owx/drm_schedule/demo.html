@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DRM Schedule Plugin - Demo</title>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Plugin CSS -->
+    <link rel="stylesheet" href="drm_schedule.css">
+
+    <style>
+        /* Demo页面样式 */
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1a1a1a;
+            color: #ecf0f1;
+        }
+
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .demo-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .demo-header h1 {
+            margin: 0 0 10px 0;
+            color: #ecf0f1;
+            font-size: 32px;
+        }
+
+        .demo-header p {
+            margin: 0;
+            color: #bdc3c7;
+            font-size: 16px;
+        }
+
+        .demo-controls {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .demo-controls h2 {
+            margin: 0 0 15px 0;
+            font-size: 18px;
+            color: #3498db;
+        }
+
+        .demo-button {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: all 0.2s ease;
+        }
+
+        .demo-button:hover {
+            background: #2980b9;
+            transform: translateY(-1px);
+        }
+
+        .demo-button.secondary {
+            background: #95a5a6;
+        }
+
+        .demo-button.secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .demo-info {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .demo-info h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #3498db;
+        }
+
+        .demo-info ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .demo-info li {
+            margin: 5px 0;
+            color: #bdc3c7;
+        }
+
+        .demo-console {
+            background: #000;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            color: #00ff00;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .demo-console .log-entry {
+            margin: 2px 0;
+            padding: 2px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .demo-console .log-info { color: #3498db; }
+        .demo-console .log-success { color: #2ecc71; }
+        .demo-console .log-warning { color: #f39c12; }
+        .demo-console .log-error { color: #e74c3c; }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .feature-card {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+
+        .feature-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            color: #3498db;
+        }
+
+        .feature-card p {
+            margin: 0;
+            color: #bdc3c7;
+            line-height: 1.6;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-indicator.active {
+            background: #2ecc71;
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+        }
+
+        .status-indicator.inactive {
+            background: #95a5a6;
+        }
+
+        /* 模拟OpenWebRX背景 */
+        .owrx-simulation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="owrx-simulation"></div>
+
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1>📻 DRM Broadcast Schedule Plugin</h1>
+            <p>纯前端短波广播计划表插件演示 / Pure Frontend DRM Schedule Demo</p>
+        </div>
+
+        <div class="demo-controls">
+            <h2>🎮 控制面板 / Control Panel</h2>
+            <button class="demo-button" onclick="openSchedule()">
+                📺 打开计划表 / Open Schedule
+            </button>
+            <button class="demo-button secondary" onclick="closeSchedule()">
+                ✕ 关闭计划表 / Close Schedule
+            </button>
+            <button class="demo-button" onclick="reloadData()">
+                🔄 重新加载数据 / Reload Data
+            </button>
+            <button class="demo-button" onclick="switchToByService()">
+                📋 按服务分组 / By Service
+            </button>
+            <button class="demo-button" onclick="switchToByTime()">
+                🕐 按时间排序 / By Time
+            </button>
+            <button class="demo-button" onclick="switchToByFreq()">
+                📡 按频率排序 / By Frequency
+            </button>
+        </div>
+
+        <div class="demo-info">
+            <h3>ℹ️ 插件信息 / Plugin Info</h3>
+            <ul>
+                <li><span class="status-indicator active"></span>插件状态: <span id="plugin-status">未加载</span></li>
+                <li><span class="status-indicator inactive"></span>电台数量: <span id="station-count">0</span></li>
+                <li><span class="status-indicator inactive"></span>数据来源: <span id="data-source">未知</span></li>
+                <li><span class="status-indicator inactive"></span>当前UTC时间: <span id="current-utc">--:--</span></li>
+            </ul>
+        </div>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h3>🎯 三种显示模式</h3>
+                <p>
+                    • 按服务分组 - 相同电台合并显示<br>
+                    • 按时间排序 - 最早播出的在前<br>
+                    • 按频率排序 - 低频到高频排列
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <h3>🔴 实时状态</h3>
+                <p>
+                    • 绿色高亮显示正在播出的节目<br>
+                    • 每分钟自动刷新状态<br>
+                    • UTC时间轴准确显示
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <h3>🌐 双重数据源</h3>
+                <p>
+                    • 优先加载远程数据 (KiwiSDR)<br>
+                    • 失败时自动降级到本地缓存<br>
+                    • 支持CJSON格式 (带注释)
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <h3>🎛️ 点击调谐</h3>
+                <p>
+                    • 点击任意时间块即可调谐<br>
+                    • 自动转换频率单位 (kHz → Hz)<br>
+                    • 多种调谐API兼容
+                </p>
+            </div>
+        </div>
+
+        <div class="demo-info">
+            <h3>📊 控制台日志 / Console Log</h3>
+            <div class="demo-console" id="console-log">
+                <div class="log-entry log-info">[Demo] 等待用户操作...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ========== 模拟 OpenWebRX 环境 ==========
+
+    // 1. 模拟 Plugins 对象
+    window.Plugins = {
+        drm_schedule: {
+            _version: 1.0
+        },
+        load: function(type, name) {
+            console.log('[Demo] Plugins.load called:', type, name);
+            addLog('info', '[Demo] 加载插件: ' + type + '/' + name);
+        }
+    };
+
+    // 2. 模拟 demodulatorPanel (用于调谐功能)
+    window.demodulatorPanel = {
+        getDemodulator: function() {
+            return {
+                set_offset_frequency: function(freqHz) {
+                    console.log('[Demo] Tuning to:', freqHz, 'Hz');
+                    addLog('success', '[Demo] 调谐到: ' + (freqHz / 1000) + ' kHz');
+                }
+            };
+        }
+    };
+
+    // 3. 模拟 set_offset_frequency 全局函数
+    window.set_offset_frequency = function(freqHz) {
+        console.log('[Demo] Global tune function called:', freqHz, 'Hz');
+        addLog('success', '[Demo] 全局调谐: ' + (freqHz / 1000) + ' kHz');
+    };
+
+    // ========== 初始化插件 ==========
+    $(document).ready(function() {
+        addLog('info', '[Demo] 页面加载完成');
+        addLog('info', '[Demo] 模拟OpenWebRX环境...');
+        addLog('success', '[Demo] Plugins对象已创建');
+        addLog('success', '[Demo] demodulatorPanel已模拟');
+
+        addLog('info', '[Demo] 加载DRM Schedule插件...');
+
+        // 动态加载插件脚本
+        $.getScript('drm_schedule.js').done(function() {
+            addLog('success', '[Demo] 插件脚本加载成功');
+
+            // 检查插件对象
+            if (typeof DRM_Schedule !== 'undefined') {
+                addLog('info', '[Demo] 初始化DRM Schedule...');
+
+                // 直接初始化插件
+                DRM_Schedule.initialize();
+
+                addLog('success', '[Demo] 插件初始化完成');
+                updatePluginStatus('已加载');
+            } else {
+                addLog('error', '[Demo] 插件对象未找到');
+                updatePluginStatus('加载失败');
+            }
+        }).fail(function(jqxhr, settings, exception) {
+            addLog('error', '[Demo] 插件脚本加载失败: ' + exception);
+            updatePluginStatus('加载失败');
+        });
+
+        // 监听插件事件
+        $(document).on('drm:loaded', function(event, data) {
+            addLog('success', '[Event] 数据加载完成');
+            updateStationCount(data.stations ? data.stations.length : 0);
+        });
+
+        $(document).on('drm:tune', function(event, data) {
+            addLog('info', '[Event] 调谐请求: ' + (data.frequency / 1000) + ' kHz');
+        });
+
+        // 更新UTC时间
+        updateUTCTime();
+        setInterval(updateUTCTime, 1000);
+
+        // 监听插件状态
+        setInterval(checkPluginStatus, 2000);
+    });
+
+    // 控制函数
+    function openSchedule() {
+        if (typeof DRM_Schedule !== 'undefined') {
+            DRM_Schedule.showPanel();
+            addLog('info', '[Demo] 打开计划表面板');
+        } else {
+            addLog('error', '[Demo] 插件未初始化');
+        }
+    }
+
+    function closeSchedule() {
+        if (typeof DRM_Schedule !== 'undefined') {
+            DRM_Schedule.hidePanel();
+            addLog('info', '[Demo] 关闭计划表面板');
+        }
+    }
+
+    function reloadData() {
+        if (typeof DRM_Schedule !== 'undefined') {
+            DRM_Schedule.loadStations();
+            addLog('info', '[Demo] 重新加载数据');
+        }
+    }
+
+    function switchToByService() {
+        if (typeof DRM_Schedule !== 'undefined') {
+            DRM_Schedule.switchMode('BY_SVC');
+            addLog('info', '[Demo] 切换到按服务分组模式');
+        }
+    }
+
+    function switchToByTime() {
+        if (typeof DRM_Schedule !== 'undefined') {
+            DRM_Schedule.switchMode('BY_TIME');
+            addLog('info', '[Demo] 切换到按时间排序模式');
+        }
+    }
+
+    function switchToByFreq() {
+        if (typeof DRM_Schedule !== 'undefined') {
+            DRM_Schedule.switchMode('BY_FREQ');
+            addLog('info', '[Demo] 切换到按频率排序模式');
+        }
+    }
+
+    // 工具函数
+    function addLog(type, message) {
+        var console = $('#console-log');
+        var typeClass = 'log-' + type;
+        var timestamp = new Date().toLocaleTimeString();
+
+        var entry = $('<div>')
+            .addClass('log-entry')
+            .addClass(typeClass)
+            .text('[' + timestamp + '] ' + message);
+
+        console.append(entry);
+
+        // 自动滚动到底部
+        console.scrollTop(console[0].scrollHeight);
+
+        // 限制日志条数
+        var entries = console.find('.log-entry');
+        if (entries.length > 50) {
+            entries.first().remove();
+        }
+    }
+
+    function updatePluginStatus(status) {
+        $('#plugin-status').text(status);
+    }
+
+    function updateStationCount(count) {
+        $('#station-count').text(count);
+    }
+
+    function updateUTCTime() {
+        var now = new Date();
+        var hours = now.getUTCHours().toString().padStart(2, '0');
+        var minutes = now.getUTCMinutes().toString().padStart(2, '0');
+        var seconds = now.getUTCSeconds().toString().padStart(2, '0');
+        $('#current-utc').text(hours + ':' + minutes + ':' + seconds);
+    }
+
+    function checkPluginStatus() {
+        if (typeof DRM_Schedule !== 'undefined') {
+            // 更新电台数量
+            if (DRM_Schedule.stations) {
+                updateStationCount(DRM_Schedule.stations.length);
+            }
+
+            // 更新数据源
+            var dataSource = '本地缓存';
+            if (DRM_Schedule.stations && DRM_Schedule.stations.length > 0) {
+                // 简单判断: 如果有很多电台,可能是远程数据
+                if (DRM_Schedule.stations.length > 50) {
+                    dataSource = 'KiwiSDR远程';
+                }
+            }
+            $('#data-source').text(dataSource);
+        }
+    }
+
+    // 原生console.log拦截
+    var originalLog = console.log;
+    console.log = function() {
+        originalLog.apply(console, arguments);
+
+        var message = Array.prototype.slice.call(arguments).join(' ');
+        if (message.indexOf('[DRM Schedule]') !== -1) {
+            var type = 'info';
+            if (message.indexOf('error') !== -1 || message.indexOf('failed') !== -1) {
+                type = 'error';
+            } else if (message.indexOf('success') !== -1 || message.indexOf('loaded') !== -1) {
+                type = 'success';
+            } else if (message.indexOf('warn') !== -1) {
+                type = 'warning';
+            }
+            addLog(type, message.replace('[DRM Schedule] ', ''));
+        }
+    };
+
+    var originalWarn = console.warn;
+    console.warn = function() {
+        originalWarn.apply(console, arguments);
+        var message = Array.prototype.slice.call(arguments).join(' ');
+        if (message.indexOf('[DRM Schedule]') !== -1) {
+            addLog('warning', message.replace('[DRM Schedule] ', ''));
+        }
+    };
+
+    var originalError = console.error;
+    console.error = function() {
+        originalError.apply(console, arguments);
+        var message = Array.prototype.slice.call(arguments).join(' ');
+        if (message.indexOf('[DRM Schedule]') !== -1) {
+            addLog('error', message.replace('[DRM Schedule] ', ''));
+        }
+    };
+    </script>
+</body>
+</html>

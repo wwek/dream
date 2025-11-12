@@ -1,0 +1,499 @@
+/**
+ * DRM Schedule Plugin Styles - KiwiSDR Aligned Version
+ *
+ * 版本: 1.1.0 (KiwiSDR-aligned)
+ * 功能: 完全匹配KiwiSDR的DRM显示样式
+ */
+
+/* ========== 主容器 (匹配KiwiSDR) ========== */
+.cl-drm-sched {
+    position: relative;
+    background: #f0f0f0;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    color: #333;
+    width: 675px;
+    height: 300px;
+    border: 1px solid #ccc;
+}
+
+/* ========== 时间轴 (匹配KiwiSDR) ========== */
+#id-drm-tscale {
+    position: relative;
+    height: 20px;
+    border-bottom: 1px solid #ccc;
+    background: #f0f0f0;
+}
+
+#id-drm-sched-tscale {
+    position: absolute;
+    top: 0;
+    width: 1px;
+    height: 20px;
+    background: #666;
+}
+
+#id-drm-sched-now {
+    position: absolute;
+    top: 0;
+    width: 2px;
+    height: 20px;
+    background: red;
+    z-index: 10;
+}
+
+/* ========== 内容区域 (匹配KiwiSDR) ========== */
+#id-drm-panel-by-svc {
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: calc(100% - 20px);
+    background: #f0f0f0;
+}
+
+/* ========== 电台条目 (匹配KiwiSDR) ========== */
+.cl-drm-sched-station {
+    position: relative;
+    min-height: 30px;
+    border-bottom: 1px solid #ddd;
+    padding: 2px 0;
+}
+
+.cl-drm-sched-striped:nth-child(even) {
+    background-color: rgba(0,0,0,0.05);
+}
+
+.cl-drm-station-name {
+    position: absolute;
+    top: 2px;
+    font-weight: bold;
+    color: #333;
+    font-size: 12px;
+}
+
+/* ========== 时间段块 (匹配KiwiSDR) ========== */
+.id-drm-sched-time {
+    position: absolute;
+    border: 1px solid #999;
+    cursor: pointer;
+    background: #e0e0e0;
+    opacity: 0.8;
+    height: 30px;
+    min-width: 2px;
+}
+
+.id-drm-sched-time.w3-light-green {
+    background: #90EE90;
+    opacity: 0.9;
+}
+
+.id-drm-sched-time:hover {
+    opacity: 1;
+    border-color: #666;
+}
+
+/* ========== Info图标 (匹配KiwiSDR) ========== */
+.cl-drm-sched-info {
+    position: absolute;
+    left: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    font-size: 16px;
+}
+
+.cl-drm-sched-info:hover {
+    color: #333;
+}
+
+/* ========== 分隔线 (匹配KiwiSDR) ========== */
+.cl-drm-sched-hr-div {
+    text-align: center;
+    margin: 10px 0;
+}
+
+.cl-drm-sched-hr {
+    border: none;
+    border-top: 1px solid #ccc;
+    margin: 0 auto;
+    width: 80%;
+}
+
+/* ========== 加载消息 (匹配KiwiSDR) ========== */
+.drm-loading-msg {
+    padding: 20px;
+    text-align: center;
+    color: #666;
+    font-size: 12px;
+}
+
+/* ========== 控制按钮 ========== */
+.drm-schedule-controls {
+    text-align: center;
+    padding: 10px;
+    background: #f0f0f0;
+    border-top: 1px solid #ccc;
+}
+
+.drm-btn {
+    padding: 6px 14px;
+    background: #e0e0e0;
+    color: #333;
+    border: 1px solid #999;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    margin: 0 2px;
+    font-family: Arial, sans-serif;
+}
+
+.drm-btn:hover {
+    background: #d0d0d0;
+}
+
+.drm-btn.active {
+    background: #3498db;
+    color: white;
+    border-color: #2980b9;
+}
+
+/* ========== 其他显示模式的样式 ========== */
+.drm-station-entry {
+    padding: 8px 10px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.drm-station-entry.drm-active {
+    background: rgba(144, 238, 144, 0.2);
+}
+
+.drm-station-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+}
+
+.drm-name {
+    font-weight: bold;
+    color: #333;
+}
+
+.drm-freq {
+    color: #666;
+    font-family: monospace;
+}
+
+.drm-time {
+    color: #666;
+    font-family: monospace;
+}
+
+.drm-band-separator {
+    background: #e0e0e0;
+    padding: 4px 10px;
+    font-weight: bold;
+    color: #666;
+    font-size: 11px;
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+}
+
+/* ========== 响应式设计 ========== */
+@media (max-width: 768px) {
+    .cl-drm-sched {
+        width: 100%;
+        max-width: 675px;
+        height: 250px;
+    }
+
+    .cl-drm-station-name {
+        font-size: 10px;
+    }
+
+    .id-drm-sched-time {
+        min-height: 20px;
+    }
+
+    .drm-station-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
+    .drm-btn {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+}
+
+/* ========== 警告和错误消息 (匹配KiwiSDR) ========== */
+.w3-yellow {
+    background-color: #ffffcc !important;
+    color: #333 !important;
+}
+
+.w3-padding {
+    padding: 8px 16px !important;
+}
+
+.w3-show-inline-block {
+    display: inline-block !important;
+}
+
+/* ========== 工具提示 (匹配KiwiSDR) ========== */
+.id-drm-sched-time[title] {
+    position: relative;
+}
+
+.id-drm-sched-time[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    white-space: pre;
+    z-index: 1000;
+    margin-bottom: 4px;
+}
+
+/* ========== 滚动条样式 ========== */
+#id-drm-panel-by-svc::-webkit-scrollbar {
+    width: 15px;
+}
+
+#id-drm-panel-by-svc::-webkit-scrollbar-track {
+    background: #f0f0f0;
+}
+
+#id-drm-panel-by-svc::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 7px;
+}
+
+#id-drm-panel-by-svc::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}
+
+/* ========== 菜单项样式 ========== */
+.drm-schedule-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    color: #ecf0f1;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+}
+
+.drm-schedule-menu-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.drm-schedule-menu-item i {
+    width: 16px;
+    text-align: center;
+}
+
+/* ========== 浮动按钮 (备选) ========== */
+.drm-float-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background: #3498db;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    font-size: 24px;
+    z-index: 9999;
+    transition: all 0.3s ease;
+}
+
+.drm-float-btn:hover {
+    background: #2980b9;
+    transform: scale(1.1);
+}
+
+/* ========== 状态显示 ========== */
+.drm-schedule-status {
+    font-size: 11px;
+    color: #666;
+    text-align: center;
+    padding: 4px;
+    background: #f0f0f0;
+}
+
+/* ========== 响应式菜单 ========== */
+@media (max-width: 768px) {
+    .drm-schedule-menu-item {
+        padding: 6px 10px;
+        font-size: 14px;
+    }
+
+    .drm-float-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+        bottom: 15px;
+        right: 15px;
+    }
+}
+
+/* ========== 兼容性样式 ========== */
+.w3-valign {
+    display: flex;
+    align-items: center;
+}
+
+.w3-scroll-y {
+    overflow-y: auto;
+}
+
+.w3-absolute {
+    position: absolute;
+}
+
+.w3-link-darker-color {
+    color: #666;
+}
+
+.w3-link-darker-color:hover {
+    color: #333;
+}
+
+/* ========== 特殊效果 ========== */
+.id-drm-sched-time {
+    transition: opacity 0.2s ease, border-color 0.2s ease;
+}
+
+.id-drm-sched-time:hover {
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+}
+
+/* ========== 打印样式 ========== */
+@media print {
+    .cl-drm-sched {
+        width: 100%;
+        border: 1px solid #000;
+    }
+
+    .drm-schedule-controls,
+    .drm-float-btn {
+        display: none;
+    }
+}
+
+/* ========== 高对比度模式 ========== */
+@media (prefers-contrast: high) {
+    .cl-drm-sched {
+        border: 2px solid #000;
+    }
+
+    .id-drm-sched-time {
+        border: 2px solid #000;
+    }
+
+    .id-drm-sched-time.w3-light-green {
+        border: 2px solid #008000;
+    }
+}
+
+/* ========== 暗色模式支持 ========== */
+@media (prefers-color-scheme: dark) {
+    .cl-drm-sched {
+        background: #2a2a2a;
+        color: #e0e0e0;
+        border-color: #555;
+    }
+
+    #id-drm-tscale {
+        background: #2a2a2a;
+        border-color: #555;
+    }
+
+    #id-drm-panel-by-svc {
+        background: #2a2a2a;
+    }
+
+    .cl-drm-sched-station {
+        border-color: #555;
+    }
+
+    .cl-drm-sched-striped:nth-child(even) {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .cl-drm-station-name {
+        color: #e0e0e0;
+    }
+
+    .id-drm-sched-time {
+        background: #3a3a3a;
+        border-color: #666;
+    }
+
+    .id-drm-sched-time.w3-light-green {
+        background: #2d5a2d;
+    }
+
+    .drm-btn {
+        background: #3a3a3a;
+        color: #e0e0e0;
+        border-color: #666;
+    }
+
+    .drm-btn:hover {
+        background: #4a4a4a;
+    }
+}
+
+/* ========== 动画效果 ========== */
+@keyframes drmFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.cl-drm-sched {
+    animation: drmFadeIn 0.3s ease-out;
+}
+
+/* ========== 最终优化 ========== */
+.cl-drm-sched * {
+    box-sizing: border-box;
+}
+
+.cl-drm-sched {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* 确保与KiwiSDR完全一致 */
+.cl-drm-sched {
+    line-height: 1.2;
+}
+
+.cl-drm-station-name {
+    line-height: 1.3;
+}
+
+.id-drm-sched-time {
+    line-height: 1;
+}
+
+/* ========== 完成! 现在与KiwiSDR完全一致 ========== */

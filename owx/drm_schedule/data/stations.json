@@ -1,0 +1,195 @@
+{
+  "stations": [
+    {
+      "freq": 6180,
+      "service": "China Radio International",
+      "target": "East Asia",
+      "system": "DRM30",
+      "url": "http://english.cri.cn/",
+      "schedule": [
+        {
+          "days": "1111111",
+          "start": "0000",
+          "duration": 120
+        },
+        {
+          "days": "1111111",
+          "start": "1200",
+          "duration": 180
+        }
+      ]
+    },
+    {
+      "freq": 7205,
+      "service": "All India Radio",
+      "target": "South Asia",
+      "system": "DRM30",
+      "schedule": [
+        {
+          "days": "1111111",
+          "start": "0130",
+          "duration": 90
+        },
+        {
+          "days": "1111111",
+          "start": "1430",
+          "duration": 90
+        }
+      ]
+    },
+    {
+      "freq": 9400,
+      "service": "Radio Romania International",
+      "target": "Europe",
+      "system": "DRM30",
+      "url": "https://www.rri.ro/en_gb/",
+      "schedule": [
+        {
+          "days": "1111111",
+          "start": "0600",
+          "duration": 60
+        },
+        {
+          "days": "0111110",
+          "start": "1900",
+          "duration": 60
+        }
+      ]
+    },
+    {
+      "freq": 9580,
+      "service": "Vatican Radio",
+      "target": "Europe",
+      "system": "DRM30",
+      "schedule": [
+        {
+          "days": "0000001",
+          "start": "0700",
+          "duration": 30
+        },
+        {
+          "days": "1111110",
+          "start": "0730",
+          "duration": 30
+        }
+      ]
+    },
+    {
+      "freq": 11700,
+      "service": "BBC World Service",
+      "target": "Southeast Asia",
+      "system": "DRM30",
+      "url": "https://www.bbc.co.uk/worldserviceradio",
+      "schedule": [
+        {
+          "days": "1111111",
+          "start": "0000",
+          "duration": 240
+        },
+        {
+          "days": "1111111",
+          "start": "1200",
+          "duration": 240
+        }
+      ]
+    },
+    {
+      "freq": 12035,
+      "service": "Deutsche Welle",
+      "target": "Africa",
+      "system": "DRM30",
+      "url": "https://www.dw.com/en/",
+      "schedule": [
+        {
+          "days": "1111111",
+          "start": "0500",
+          "duration": 120
+        },
+        {
+          "days": "1111111",
+          "start": "1700",
+          "duration": 120
+        }
+      ]
+    },
+    {
+      "freq": 13820,
+      "service": "Radio France Internationale",
+      "target": "West Africa",
+      "system": "DRM30",
+      "schedule": [
+        {
+          "days": "1111111",
+          "start": "0700",
+          "duration": 180
+        }
+      ]
+    },
+    {
+      "freq": 15400,
+      "service": "Voice of America",
+      "target": "Middle East",
+      "system": "DRM30",
+      "schedule": [
+        {
+          "days": "1111111",
+          "start": "0300",
+          "duration": 120
+        },
+        {
+          "days": "1111111",
+          "start": "1500",
+          "duration": 120
+        }
+      ]
+    },
+    {
+      "freq": 17485,
+      "service": "Radio Australia",
+      "target": "Pacific",
+      "system": "DRM30",
+      "schedule": [
+        {
+          "days": "1111111",
+          "start": "0800",
+          "duration": 180
+        }
+      ]
+    },
+    {
+      "freq": 21600,
+      "service": "Radio Japan NHK World",
+      "target": "Asia Pacific",
+      "system": "DRM30",
+      "schedule": [
+        {
+          "days": "1111111",
+          "start": "0100",
+          "duration": 60
+        },
+        {
+          "days": "1111111",
+          "start": "1300",
+          "duration": 60
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0",
+    "last_updated": "2025-01-12T00:00:00Z",
+    "source": "Example DRM Schedule Data",
+    "description": "Sample DRM shortwave broadcast schedule for testing. Real data should be fetched from drm.kiwisdr.com/drm/stations2.cjson",
+    "notes": {
+      "freq": "Frequency in kHz",
+      "service": "Broadcaster name",
+      "target": "Target region or audience",
+      "system": "DRM system type (DRM30 for shortwave)",
+      "schedule": {
+        "days": "7-digit string representing Mon-Sun (1=active, 0=inactive)",
+        "start": "UTC start time in HHMM format (24-hour)",
+        "duration": "Broadcast duration in minutes"
+      }
+    }
+  }
+}
