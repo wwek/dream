@@ -138,6 +138,7 @@ CParameter::CParameter():
     eSpectOccup(SO_3),
     LastAudioService(),
     LastDataService(),
+    bEnableAudioLPF(false),  /* Disable anti-aliasing LPF by default (experimental feature) */
     Mutex(), lenient_RSCI(false)
 {
     GenerateRandomSerialNumber();

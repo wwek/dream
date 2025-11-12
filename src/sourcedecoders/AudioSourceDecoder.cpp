@@ -46,7 +46,7 @@
 
 CAudioSourceDecoder::CAudioSourceDecoder()
     :	bWriteToFile(false), TextMessage(false),
-      bUseReverbEffect(true), codec(nullptr)
+      init_LPF(false), do_LPF(false), bUseReverbEffect(true), codec(nullptr)
 {
     /* Initialize Audio Codec List */
     CAudioCodec::InitCodecList();
@@ -135,6 +135,44 @@ CAudioSourceDecoder::ProcessDataInternal(CParameter & Parameters)
                         _REAL rRatio = _REAL(outputSampleRate) / _REAL(inputSampleRate);
                         ResampleObjL.Init(vecTempResBufInLeft.Size(), rRatio);
                         ResampleObjR.Init(vecTempResBufInLeft.Size(), rRatio);
+                        init_LPF = true;
+                    }
+
+                    /* Initialize anti-aliasing LPF if needed */
+                    if (init_LPF) {
+                        // Calculate LPF parameters based on output sample rate
+                        // Parameters aligned with KiwiSDR implementation
+                        int attn = 20;  // 20 dB stopband attenuation
+                        int hbw, stop;
+                        bool _20k = (outputSampleRate > 12000);
+
+                        if (_20k) {
+                            hbw  = 8000;   // Passband: 8 kHz (KiwiSDR compatible)
+                            stop = 10125;  // Stopband: 10.125 kHz (KiwiSDR compatible)
+                        } else {
+                            hbw  = 5000;   // Passband: 5 kHz
+                            stop = 6000;   // Stopband: 6 kHz (Nyquist)
+                        }
+
+                        // ntaps=0 means auto-calculate, scale=1, stopAttn, Fpass, Fstop, Fsr
+                        lpfL.InitLPFilter(0, 1, attn, hbw, stop, inputSampleRate);
+                        lpfR.InitLPFilter(0, 1, attn, hbw, stop, inputSampleRate);
+                        do_LPF = true;
+                        init_LPF = false;
+
+                        if (Parameters.GetEnableAudioLPF()) {
+                            cerr << "DRM Audio LPF: ENABLED (sr=" << inputSampleRate << "|" << outputSampleRate
+                                 << " attn=" << attn << "dB pass=" << hbw << "Hz stop=" << stop << "Hz"
+                                 << " taps=" << lpfL.m_NumTaps << ")" << endl;
+                        } else {
+                            cerr << "DRM Audio LPF: DISABLED (resampling without anti-aliasing filter)" << endl;
+                        }
+                    }
+
+                    /* Apply anti-aliasing LPF before resampling to prevent high-frequency noise */
+                    if (do_LPF && Parameters.GetEnableAudioLPF()) {
+                        lpfL.ProcessFilter(vecTempResBufInLeft.Size(), &vecTempResBufInLeft[0], &vecTempResBufInLeft[0]);
+                        lpfR.ProcessFilter(vecTempResBufInRight.Size(), &vecTempResBufInRight[0], &vecTempResBufInRight[0]);
                     }
 
                     ResampleObjL.Resample(vecTempResBufInLeft, vecTempResBufOutCurLeft);

@@ -1584,6 +1584,9 @@ CDRMReceiver::LoadSettings()
     /* Reverberation flag */
     AudioSourceDecoder.SetReverbEffect(s.Get("Receiver", "reverb", true));
 
+    /* Anti-aliasing LPF flag (default: disabled) */
+    Parameters.SetEnableAudioLPF(s.Get("Receiver", "audiolpf", false));
+
     /* Bandpass filter flag */
     FreqSyncAcq.SetRecFilter(s.Get("Receiver", "filter", false));
 

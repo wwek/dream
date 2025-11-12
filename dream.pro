@@ -695,6 +695,7 @@ SOURCES += \
     src/TextMessage.cpp \
     src/util/CRC.cpp \
     src/util/FileTyper.cpp \
+    src/util/Fir.cpp \
     src/util/LogPrint.cpp \
     src/util/Reassemble.cpp \
     src/util/Settings.cpp \

@@ -324,6 +324,13 @@ CSettings::ParseArguments(int argc, char **argv)
 			continue;
 		}
 
+		/* Anti-aliasing LPF flag ------------------------------------------- */
+		if (GetFlagArgument(argc, argv, i, "", "--enable-lpf"))
+		{
+			Put("Receiver", "audiolpf", 1);
+			continue;
+		}
+
 		/* Bandpass filter flag --------------------------------------------- */
 		if (GetNumericArgument(argc, argv, i, "-F", "--filter",
 							   0, 1, rArgument))
@@ -681,6 +688,7 @@ CSettings::UsageArguments()
 		"  -s <r>, --sampleoff <r>      sample rate offset initial value [Hz] (allowed range: -200.0...200.0)\n"
 		"  -m <b>, --muteaudio <b>      mute audio output (0: off; 1: on)\n"
 		"  -b <b>, --reverb <b>         audio reverberation on drop-out (0: off; 1: on)\n"
+		"  --enable-lpf                 enable anti-aliasing low-pass filter before resampling (experimental)\n"
 		"  -f <s>, --fileio <s>         disable sound card, use file <s> instead\n"
 		"  -w <s>, --writewav <s>       write output to wave file\n"
 		"  -S <r>, --fracwinsize <r>    freq. acqu. search window size [Hz] (-1.0: sample rate / 2 (default))\n"
