@@ -7,7 +7,7 @@ AACSuperFrame::AACSuperFrame():AudioSuperFrame (),
 
 void AACSuperFrame::init(const CAudioParam &audioParam, ERobMode eRobMode, unsigned int lengthPartA, unsigned int lengthPartB)
 {
-    printf("DRM AAC init\n");
+    cerr << "DRM AAC init" << endl;
     size_t numFrames = 0;
     switch(eRobMode) {
     case ERobMode::RM_ROBUSTNESS_MODE_A:
@@ -63,16 +63,17 @@ void AACSuperFrame::dump()
     unsigned audioPayloadLength = lengthPartA + lengthPartB - headerBytes - crcBytes; // Table 11 Note 1
     unsigned frameLength, sumOfFrameLengths = 0;
 
-    printf("DRM AAC numFrames=%d apl=%d=%d+%d-%d-%d audioFrame: ",
-        numFrames, audioPayloadLength, lengthPartA, lengthPartB, headerBytes, crcBytes);
+    cerr << "DRM AAC numFrames=" << numFrames << " apl=" << audioPayloadLength
+         << "=" << lengthPartA << "+" << lengthPartB << "-" << headerBytes << "-" << crcBytes
+         << " audioFrame: ";
 
     for (int f=0; f < numFrames; f++) {
         frameLength = (f < numBorders)? (unsigned long) audioFrame[f].size() : lastFrameLength;
-        printf("%d:%d ", f, frameLength);
+        cerr << f << ":" << frameLength << " ";
         sumOfFrameLengths += frameLength;
     }
 
-    printf(" sum=%d(%d)\n", sumOfFrameLengths, audioPayloadLength);
+    cerr << " sum=" << sumOfFrameLengths << "(" << audioPayloadLength << ")" << endl;
 }
 
 bool AACSuperFrame::header(CVectorEx<_BINARY>& header)
@@ -120,7 +121,7 @@ bool AACSuperFrame::header(CVectorEx<_BINARY>& header)
             return true;
         }
     } catch(std::exception& e) {
-        printf("DRM AAC header EXCEPTION %s\n", e.what());
+        cerr << "DRM AAC header EXCEPTION " << e.what() << endl;
         dump();
         return false;
     }
@@ -165,9 +166,11 @@ bool AACSuperFrame::parse(CVectorEx<_BINARY>& asf)
         }
 
     } catch(std::exception& e) {
-        printf("DRM AAC parse EXCEPTION %s %s\n", (protectedPart == HPP)? "HPP" : "LPP", e.what());
-        printf("DRM AAC f=%zu b=%zu asf=%lu higherProtectedBytes=%d lowerProtectedBytes=%d\n",
-            f, b, (unsigned long) asf.size(), higherProtectedBytes, lowerProtectedBytes);
+        cerr << "DRM AAC parse EXCEPTION " << ((protectedPart == HPP)? "HPP" : "LPP")
+             << " " << e.what() << endl;
+        cerr << "DRM AAC f=" << f << " b=" << b << " asf=" << asf.size()
+             << " higherProtectedBytes=" << higherProtectedBytes
+             << " lowerProtectedBytes=" << lowerProtectedBytes << endl;
         dump();
         return false;
     }
