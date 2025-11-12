@@ -8,6 +8,7 @@ XHEAACSuperFrame::XHEAACSuperFrame():AudioSuperFrame (),numChannels(0),superFram
 void
 XHEAACSuperFrame::init(const CAudioParam& audioParam, unsigned frameSize)
 {
+    cerr << "DRM xHE-AAC init" << endl;
     numChannels = audioParam.AM_MONO?1:2;
     superFrameSize = frameSize;
     payload.resize(0);
@@ -80,7 +81,7 @@ bool XHEAACSuperFrame::parse(CVectorEx<_BINARY>& asf)
     // get the payload
     for (size_t i=2; i < directory_offset; i++) {
         if (asf.Size() == 0) {
-            printf("DRM xHE-AAC asf UNDERRUN 1\n");
+            cerr << "DRM xHE-AAC asf UNDERRUN 1" << endl;
             return false;
         }
         payload.push_back(asf.Separate(8));
@@ -94,7 +95,7 @@ bool XHEAACSuperFrame::parse(CVectorEx<_BINARY>& asf)
         // get the directory
         for (int i = int(frameBorderCount-1); i >= 0; i--) {
             if (asf.Size() == 0) {
-                printf("DRM xHE-AAC asf UNDERRUN 2\n");
+                cerr << "DRM xHE-AAC asf UNDERRUN 2" << endl;
                 return false;
             }
             unsigned frameBorderIndex = asf.Separate(12);
@@ -198,7 +199,7 @@ bool XHEAACSuperFrame::parse(CVectorEx<_BINARY>& asf)
         #endif
 
         if (payload.empty()) {
-            printf("DRM xHE-AAC payload UNDERRUN\n");
+            cerr << "DRM xHE-AAC payload UNDERRUN" << endl;
             return false;
         }
         audioFrame[i].push_back(payload.front());
@@ -222,4 +223,5 @@ void
 XHEAACSuperFrame::getFrame(std::vector<uint8_t>& frame, uint8_t& crc, unsigned i)
 {
     frame = audioFrame[i];
+    (void) crc;
 }

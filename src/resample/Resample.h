@@ -44,9 +44,6 @@ public:
 	void Init(const int iNewInputBlockSize);
     int Resample(CVector<_REAL>* prInput, CVector<_REAL>* prOutput, _REAL rRatio);
 
-    /* Soft reset history buffer when signal conditions change drastically */
-    void SoftReset();
-
 protected:
 	_REAL					rTStep;
 	_REAL					rtOut;

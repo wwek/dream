@@ -1,0 +1,54 @@
+# Dream DRM Receiver Configuration File
+# Copy this file to "Dream.ini" in your working directory to customize settings
+# Command line arguments override these settings
+
+[Receiver]
+# Anti-aliasing Low Pass Filter (LPF) for audio resampling
+# 1 = Enable LPF with KiwiSDR-compatible parameters (8kHz passband, 20dB attenuation)
+# 0 = Disable LPF (default)
+audiolpf=0
+
+# Reverberation effect for audio dropouts
+# 1 = Enable reverb effect to mask short audio dropouts (default)
+# 0 = Disable reverb effect
+reverb=1
+
+# Bandpass filter for frequency synchronization acquisition
+# 1 = Enable bandpass filter during frequency sync
+# 0 = Disable bandpass filter (default)
+filter=0
+
+[AM Demodulation]
+# Filter bandwidth settings for AM analog mode (in Hz)
+# These only affect AM analog demodulation, not DRM digital mode
+filterbwam=10000    # Standard AM bandwidth (10 kHz)
+filterbwusb=5000    # Upper Side Band bandwidth (5 kHz)
+filterbwlsb=5000    # Lower Side Band bandwidth (5 kHz)
+filterbwcw=150      # CW (Morse) bandwidth (150 Hz)
+filterbwfm=6000     # FM bandwidth (6 kHz)
+
+[command]
+# Frequency acquisition search window center
+# -1 = Auto-detect (default)
+# Other values = Manual center frequency offset in Hz
+fracwincent=-1
+
+# Example configurations:
+
+# For testing LPF with KiwiSDR-compatible parameters:
+# [Receiver]
+# audiolpf=1
+# reverb=1
+# filter=0
+
+# For minimal processing (all effects disabled):
+# [Receiver]
+# audiolpf=0
+# reverb=0
+# filter=0
+
+# For challenging reception conditions:
+# [Receiver]
+# audiolpf=1      # Enable anti-aliasing
+# reverb=1        # Enable dropout masking
+# filter=1        # Enable sync bandpass filter

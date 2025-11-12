@@ -81,9 +81,9 @@ cerr << "have output device " << n.toStdString() << endl;
     }
 #else
     if(pSound==nullptr) pSound = new CSoundOut;
-    pSound->Enumerate(names, descriptions, defaultOutput);    
+    pSound->Enumerate(names, descriptions, defaultOutput);
 #endif
-    cout << "default output is " << defaultOutput << endl;
+    cerr << "default output is " << defaultOutput << endl;
 }
 
 void CTransmitData::SetSoundInterface(string device)

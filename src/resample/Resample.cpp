@@ -121,17 +121,5 @@ void CResample::Init(const int iNewInputBlockSize)
 	rtOut = (_REAL) RES_FILT_NUM_TAPS_PER_PHASE * INTERP_DECIM_I_D;
 }
 
-void CResample::SoftReset()
-{
-	/* Exponentially decay history buffer to prevent abrupt audio glitches
-	   This gradually reduces accumulated high-amplitude samples from strong signals */
-	const _REAL DECAY_FACTOR = 0.1;  /* Reduce to 10% of current value */
-
-	for (int i = 0; i < iHistorySize; i++)
-	{
-		vecrIntBuff[i] *= DECAY_FACTOR;
-	}
-}
-
 
 

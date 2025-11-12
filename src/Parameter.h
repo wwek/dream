@@ -986,6 +986,18 @@ public:
         return iSigSampleRate * (rFreqOffsetAcqui + rFreqOffsetTrack);
     }
 
+    /* Audio processing options --------------------------------------------- */
+    void SetEnableAudioLPF(const bool bEnable)
+    {
+        Lock();
+        bEnableAudioLPF = bEnable;
+        Unlock();
+    }
+    bool GetEnableAudioLPF() const
+    {
+        return bEnableAudioLPF;
+    }
+
     _REAL GetBitRateKbps(const int iShortID, const bool bAudData) const;
     _REAL PartABLenRatio(const int iShortID) const;
 
@@ -1226,6 +1238,9 @@ protected:
     /* For resync to last service------------------------------------------- */
     CLastService LastAudioService;
     CLastService LastDataService;
+
+    /* Audio processing options -------------------------------------------- */
+    bool bEnableAudioLPF;  /* Enable anti-aliasing low-pass filter before resampling */
 
     CMutex Mutex;
 public:

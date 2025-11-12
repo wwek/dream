@@ -27,7 +27,6 @@
 \******************************************************************************/
 
 #include "InputResample.h"
-#include <cmath>
 
 
 /* Implementation *************************************************************/
@@ -47,20 +46,6 @@ void CInputResample::ProcessDataInternal(CParameter& Parameters)
         _REAL rSamRateOffset = Parameters.rResampleOffset;
         _REAL rSigSampleRate = _REAL(Parameters.GetSigSampleRate());
         Parameters.Unlock();
-
-        /* Conservative soft reset decision: only when offset changes drastically
-           AND we've been running for a while to ensure we have valid signal */
-        iBlocksSinceStart++;
-        if (iBlocksSinceStart > 100)  /* Wait ~4 seconds for stable signal */
-        {
-            const _REAL LARGE_OFFSET_CHANGE = 150.0;  /* Hz */
-            if (fabs(rSamRateOffset - rPrevOffset) > LARGE_OFFSET_CHANGE)
-            {
-                /* Soft reset to gradually reduce history buffer contamination */
-                ResampleObj.SoftReset();
-            }
-        }
-        rPrevOffset = rSamRateOffset;
 
         /* Adjust maximum resample offset to sample rate */
         const _REAL rMaxResampleOffset = ADJ_FOR_SRATE(_REAL(MAX_RESAMPLE_OFFSET), rSigSampleRate);
@@ -99,8 +84,4 @@ void CInputResample::InitInternal(CParameter& Parameters)
        we have to allocate three symbols for output buffer */
     iMaxOutputBlockSize = 3 * Parameters.CellMappingTable.iSymbolBlockSize;
     Parameters.Unlock();
-
-    /* Reset state tracking */
-    rPrevOffset = 0.0;
-    iBlocksSinceStart = 0;
 }

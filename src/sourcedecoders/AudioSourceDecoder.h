@@ -34,6 +34,7 @@
 #include "../resample/Resample.h"
 #include "../datadecoding/DataDecoder.h"
 #include "../util/Utilities.h"
+#include "../util/Fir.h"
 #include "AudioCodec.h"
 #include "../MSC/audiosuperframe.h"
 #include "reverb.h"
@@ -88,6 +89,10 @@ protected:
 
     /* Resampling */
     int inputSampleRate, outputSampleRate;
+
+    /* Anti-aliasing Low Pass Filter for resampling */
+    bool init_LPF, do_LPF;
+    CFir lpfL, lpfR;
 
 #ifdef HAVE_SPEEX
     SpeexResampler ResampleObjL;
