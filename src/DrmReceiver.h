@@ -67,7 +67,7 @@
 
 /* Number of OFDM symbols until the acquisition is activated in case no signal
    could be decoded after previous acquisition try */
-#define	NUM_OFDMSYM_U_ACQ_WITHOUT		150
+#define	NUM_OFDMSYM_U_ACQ_WITHOUT		450  // Aligned with KiwiSDR (150*3) for better signal stability
 
 /* Number of FAC blocks for delayed tracking mode switch (caused by time needed
    for initalizing the channel estimation */
