@@ -213,13 +213,6 @@ CAudioSourceDecoder::ProcessDataInternal(CParameter & Parameters)
 
         // This code is independent of particular audio source type and should work with all codecs
 
-        /* Clear audio buffers on decode error to prevent pop/click noise */
-        if (!bCurBlockOK) {
-            // Decode failed - mute output to avoid corrupted audio data causing pops/clicks
-            vecTempResBufOutCurLeft.Init(iResOutBlockSize, 0.0);
-            vecTempResBufOutCurRight.Init(iResOutBlockSize, 0.0);
-        }
-
         /* Postprocessing of audio blocks, status informations -------------- */
         ETypeRxStatus status = reverb.apply(bCurBlockOK, bCurBlockFaulty, vecTempResBufOutCurLeft, vecTempResBufOutCurRight);
 
