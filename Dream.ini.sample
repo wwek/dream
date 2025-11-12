@@ -5,7 +5,7 @@
 [Receiver]
 # Anti-aliasing Low Pass Filter (LPF) for audio resampling
 # 1 = Enable LPF with KiwiSDR-compatible parameters (8kHz passband, 20dB attenuation)
-# 0 = Disable LPF (default - no anti-aliasing filtering)
+# 0 = Disable LPF (default)
 audiolpf=0
 
 # Reverberation effect for audio dropouts

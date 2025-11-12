@@ -689,7 +689,7 @@ CSettings::UsageArguments()
 		"  -s <r>, --sampleoff <r>      sample rate offset initial value [Hz] (allowed range: -200.0...200.0)\n"
 		"  -m <b>, --muteaudio <b>      mute audio output (0: off; 1: on)\n"
 		"  -b <b>, --reverb <b>         audio reverberation on drop-out (0: off; 1: on)\n"
-		"  --audio-lpf <b>              anti-aliasing low-pass filter before resampling (0: off; 1: on, default: 1)\n"
+		"  --audio-lpf <b>              anti-aliasing low-pass filter before resampling (0: off, default; 1: on)\n"
 		"  -f <s>, --fileio <s>         disable sound card, use file <s> instead\n"
 		"  -w <s>, --writewav <s>       write output to wave file\n"
 		"  -S <r>, --fracwinsize <r>    freq. acqu. search window size [Hz] (-1.0: sample rate / 2 (default))\n"
