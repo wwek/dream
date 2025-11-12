@@ -15,6 +15,9 @@
     width: 675px;
     height: 300px;
     border: 1px solid #ccc;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 /* ========== 时间轴 (匹配KiwiSDR) ========== */
@@ -471,6 +474,32 @@
 
 .cl-drm-sched {
     animation: drmFadeIn 0.3s ease-out;
+}
+
+/* ========== 浮动按钮 (确保可见) ========== */
+#drm-schedule-float-btn {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 9999 !important;
+}
+
+#drm-schedule-float-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* ========== 菜单项高亮 ========== */
+.drm-schedule-menu-item {
+    color: #e74c3c !important;
+    font-weight: bold !important;
+    background: rgba(231, 76, 60, 0.1) !important;
+    border-left: 3px solid #e74c3c !important;
+}
+
+.drm-schedule-menu-item:hover {
+    background: rgba(231, 76, 60, 0.2) !important;
+    color: #c0392b !important;
 }
 
 /* ========== 最终优化 ========== */

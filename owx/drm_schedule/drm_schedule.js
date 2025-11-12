@@ -84,6 +84,10 @@ var DRM_Schedule = {
     initialize: function() {
         console.log('[DRM Schedule] Initializing (KiwiSDR-aligned)...');
 
+        // 添加初始化确认日志
+        console.log('[DRM Schedule] === PANEL WILL BE VISIBLE BY DEFAULT ===');
+        console.log('[DRM Schedule] Look for red menu item or floating 📻 button');
+
         this.createUI();
         this.loadStations();
         this.bindEvents();
@@ -96,9 +100,9 @@ var DRM_Schedule = {
     createUI: function() {
         var self = this;
 
-        // 创建面板HTML (匹配KiwiSDR结构)
+        // 创建面板HTML (匹配KiwiSDR结构) - 默认可见
         var panelHtml = `
-            <div id="id-drm-panel-1-by-svc" class="cl-drm-sched" style="display:none;">
+            <div id="id-drm-panel-1-by-svc" class="cl-drm-sched">
                 <div id="id-drm-tscale"></div>
                 <div id="id-drm-panel-by-svc" class="w3-scroll-y w3-absolute" style="width:100%; height:100%;">
                     <div class="drm-loading-msg">&nbsp;loading data from kiwisdr.com ...</div>
@@ -118,7 +122,17 @@ var DRM_Schedule = {
         // 添加菜单项
         this.addMenuItem();
 
-        console.log('[DRM Schedule] UI created (KiwiSDR structure)');
+        // 立即显示面板
+        this.showPanel();
+
+        console.log('[DRM Schedule] UI created (KiwiSDR structure) - PANEL VISIBLE BY DEFAULT');
+    },
+
+    // 显示面板
+    showPanel: function() {
+        $('#id-drm-panel-1-by-svc').show();
+        this.isPanelVisible = true;
+        console.log('[DRM Schedule] Panel shown by default');
     },
 
     addMenuItem: function() {
@@ -127,12 +141,26 @@ var DRM_Schedule = {
         if (panelList.length > 0) {
             var menuItem = `
                 <li>
-                    <a href="#" class="drm-schedule-menu-item" onclick="DRM_Schedule.togglePanel(); return false;">
-                        <i class="fa fa-calendar"></i> DRM Schedule
+                    <a href="#" class="drm-schedule-menu-item" onclick="DRM_Schedule.togglePanel(); return false;"
+                       style="color: #e74c3c; font-weight: bold; background: rgba(231, 76, 60, 0.1);">
+                        <i class="fa fa-calendar"></i> 📻 DRM Schedule
                     </a>
                 </li>
             `;
             panelList.append(menuItem);
+            console.log('[DRM Schedule] Menu item added with highlighting');
+        } else {
+            // 如果找不到菜单，创建浮动按钮
+            var floatBtn = `
+                <div id="drm-schedule-float-btn" style="position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px;
+                     background: #e74c3c; color: white; border-radius: 50%; display: flex; align-items: center;
+                     justify-content: center; cursor: pointer; z-index: 9999; font-size: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);"
+                     onclick="DRM_Schedule.togglePanel();" title="DRM Schedule">
+                    📻
+                </div>
+            `;
+            $('body').append(floatBtn);
+            console.log('[DRM Schedule] Float button created as menu fallback');
         }
     },
 
