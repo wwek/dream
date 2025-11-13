@@ -191,7 +191,8 @@ var DRM_Schedule = {
                     } else {
                         $('#drm-schedule-row').hide();
                         // 如果面板打开着，关闭它
-                        if (self.isPanelVisible) {
+                        // 但如果正在调频，不要关闭（防止调频过程中模式暂时变为null）
+                        if (self.isPanelVisible && !self.isTuning) {
                             console.log('[DRM Schedule] Closing panel (DRM mode inactive)');
                             self.hidePanel();
                         }
@@ -1090,41 +1091,53 @@ window.kiwi_drm_click = function(index) {
                            (typeof window.demodulatorPanel !== 'undefined' ? window.demodulatorPanel : null);
 
                 if (panel && typeof center_freq !== 'undefined') {
-                    var demod = panel.getDemodulator();
-                    if (demod) {
-                        console.log('[DRM Schedule] Current center_freq:', center_freq, 'Hz, target:', freqHz, 'Hz');
+                    console.log('[DRM Schedule] Current center_freq:', center_freq, 'Hz, target:', freqHz, 'Hz');
 
-                        // 先设置 DRM 模式
-                        if (demod.get_modulation() !== 'drm') {
-                            panel.setMode('drm');
-                            console.log('[DRM Schedule] Set mode to DRM');
-                        }
+                    // 设置调频标志，防止模式检查关闭面板
+                    DRM_Schedule.isTuning = true;
 
-                        // 延迟后设置频率 (等待模式切换完成)
-                        setTimeout(function() {
-                            try {
-                                // 计算 offset_frequency
-                                var offset = freqHz - center_freq;
-                                demod.set_offset_frequency(offset);
+                    // 步骤1: 先设置 DRM 模式
+                    panel.setMode('drm');
+                    console.log('[DRM Schedule] Step 1: Set mode to DRM');
 
-                                // 更新频率显示
-                                if (panel.tuneableFrequencyDisplay) {
-                                    panel.tuneableFrequencyDisplay.setFrequency(freqHz);
+                    // 步骤2: 等待模式切换完成后设置频率
+                    setTimeout(function() {
+                        try {
+                            // 使用 frequencychange 事件触发频率切换 (让 OpenWebRX 自动处理)
+                            if (panel.tuneableFrequencyDisplay && panel.tuneableFrequencyDisplay.element) {
+                                panel.tuneableFrequencyDisplay.element.trigger('frequencychange', freqHz);
+                                console.log('[DRM Schedule] Step 2: Triggered frequencychange to', freqKHz, 'kHz');
+                            } else {
+                                console.warn('[DRM Schedule] tuneableFrequencyDisplay not available');
+                            }
+
+                            // 步骤3: 再次确保模式是 DRM
+                            setTimeout(function() {
+                                var currentDemod = panel.getDemodulator();
+                                if (currentDemod && currentDemod.get_modulation() !== 'drm') {
+                                    panel.setMode('drm');
+                                    console.log('[DRM Schedule] Step 3: Re-set mode to DRM');
+                                } else {
+                                    console.log('[DRM Schedule] Step 3: Mode is already DRM');
                                 }
 
-                                console.log('[DRM Schedule] Tuned to', freqKHz, 'kHz (offset:', offset, 'Hz) in DRM mode');
-                            } catch(err) {
-                                console.error('[DRM Schedule] Frequency setting error:', err);
-                            }
-                        }, 150);
-                    } else {
-                        console.warn('[DRM Schedule] No demodulator found');
-                    }
+                                // 调频完成，清除标志
+                                setTimeout(function() {
+                                    DRM_Schedule.isTuning = false;
+                                    console.log('[DRM Schedule] Tuning completed');
+                                }, 200);
+                            }, 100);
+                        } catch(err) {
+                            console.error('[DRM Schedule] Frequency setting error:', err);
+                            DRM_Schedule.isTuning = false;
+                        }
+                    }, 150);
                 } else {
                     console.warn('[DRM Schedule] demodulatorPanel or center_freq not available. panel:', !!panel, 'center_freq:', center_freq);
                 }
             } catch(e) {
                 console.error('[DRM Schedule] Tuning error:', e);
+                DRM_Schedule.isTuning = false;
             }
         }
     }
