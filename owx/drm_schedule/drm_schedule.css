@@ -1,9 +1,47 @@
 /**
  * DRM Schedule Plugin Styles - Doppler Modal Style
  *
- * 版本: 1.3.0 (doppler-modal)
- * 功能: 完全匹配doppler插件的jQuery Modal风格
+ * 版本: 1.5.0 (doppler-modal + full theme adaptation)
+ * 功能: 完全匹配doppler插件的jQuery Modal风格，自动适配OpenWebRX主题
+ * 使用Bootstrap CSS变量实现主题自动适配
  */
+
+/* ========== OpenWebRX 主题适配 ========== */
+/* 使用 OpenWebRX/Bootstrap 的 CSS 变量自动适配主题 */
+
+/* 从 body 继承颜色 */
+.drm-schedule-modal {
+    background-color: var(--bs-body-bg, var(--bs-white, #fff));
+    color: var(--bs-body-color, var(--bs-gray-dark, #222));
+}
+
+/* 使用 secondary 背景色 */
+.drm-schedule-modal-header,
+.drm-schedule-modal-footer {
+    background-color: var(--bs-secondary-bg, var(--bs-secondary, #444));
+    border-color: var(--bs-border-color, rgba(0,0,0,0.1));
+}
+
+/* 时间轴使用 tertiary 背景色 */
+#id-drm-tscale {
+    background-color: var(--bs-tertiary-bg, #fafafa);
+    border-bottom-color: var(--bs-border-color, rgba(0,0,0,0.1));
+}
+
+/* 电台行使用 body 背景色 */
+.cl-drm-sched-station {
+    background-color: var(--bs-body-bg, #fff);
+    border-bottom-color: var(--bs-border-color-translucent, rgba(0,0,0,0.05));
+}
+
+/* 文本颜色继承 */
+.cl-drm-station-name {
+    color: var(--bs-emphasis-color, var(--bs-body-color, #1d1d1f));
+}
+
+.drm-time-label {
+    color: var(--bs-secondary-color, var(--bs-gray, #888));
+}
 
 /* ========== 动画定义 ========== */
 @keyframes spin {
@@ -11,43 +49,41 @@
     to { transform: rotate(360deg); }
 }
 
-/* ========== 模态窗口容器 (完全匹配doppler) ========== */
+/* ========== 模态窗口容器 (完全匹配doppler + 主题适配) ========== */
 .drm-schedule-modal {
     display: none;
     width: 900px;  /* 增加宽度以显示完整 24 小时 */
     max-width: 95%;
-    background: #fff;
+    /* background 和 color 在上面的主题适配部分定义 */
     padding: 0;
     border-radius: 8px;
-    box-shadow: 0 0 10px #000;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
     text-align: left;
     position: relative;
     z-index: 2;
 }
 
-/* ========== 模态窗口头部 (匹配doppler) ========== */
+/* ========== 模态窗口头部 (匹配doppler + 主题适配) ========== */
 .drm-schedule-modal-header {
-    background: #f5f5f5;
+    /* background 和 border-color 在上面的主题适配部分定义 */
     padding: 15px 20px;
-    border-bottom: 1px solid #e0e0e0;
     font-size: 16px;
     font-weight: 600;
-    color: #333;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-/* ========== 刷新按钮 (匹配doppler的样式) ========== */
+/* ========== 刷新按钮 (匹配doppler的样式 + 主题适配) ========== */
 .drm-refresh-btn {
     padding: 5px 10px;
     margin-left: 10px;
     font-size: 12px;
     border-radius: 3px;
     cursor: pointer;
-    background: #007aff;
-    color: white;
-    border: 1px solid #007aff;
+    background: var(--bs-primary, #007aff);
+    color: var(--bs-btn-color, white);
+    border: 1px solid var(--bs-primary, #007aff);
     transition: all 0.2s;
     display: inline-flex;
     align-items: center;
@@ -55,38 +91,38 @@
 }
 
 .drm-refresh-btn:hover {
-    background: #0051d5;
-    border-color: #0051d5;
+    background: var(--bs-primary-border-subtle, #0051d5);
+    border-color: var(--bs-primary-border-subtle, #0051d5);
 }
 
 #drm-refresh-icon {
     display: inline-block;
 }
 
-/* ========== 模态窗口主体 (匹配doppler的可滚动区域) ========== */
+/* ========== 模态窗口主体 (匹配doppler的可滚动区域 + 主题适配) ========== */
 .drm-schedule-modal-body {
     padding: 0;
-    background: #fff;
+    background: var(--bs-body-bg, #fff);
+    overflow-x: auto;  /* 允许横向滚动 */
+    -webkit-overflow-scrolling: touch;  /* iOS 平滑滚动 */
 }
 
-/* ========== 模态窗口底部 (匹配doppler) ========== */
+/* ========== 模态窗口底部 (匹配doppler + 主题适配) ========== */
 .drm-schedule-modal-footer {
-    background: #f5f5f5;
+    /* background 和 border-top 已在上面的主题适配部分定义 */
     padding: 15px 20px;
-    border-top: 1px solid #e0e0e0;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-/* ========== 时间轴 (KiwiSDR风格) ========== */
+/* ========== 时间轴 (KiwiSDR风格 + 主题适配) ========== */
 #id-drm-tscale {
     position: sticky;
     top: 0;
     width: 100%;  /* 使用100%宽度适应容器 */
     height: 30px;
-    border-bottom: 1px solid #e0e0e0;
-    background: #fafafa;
+    /* border-bottom 和 background 已在上面的主题适配部分定义 */
     padding: 0;
     box-sizing: border-box;
     z-index: 100;
@@ -99,7 +135,7 @@
     top: 0;
     width: 1px;
     height: 30px;
-    background: #999;
+    background: var(--bs-secondary, #999);
     pointer-events: none;
     opacity: 0.8;
     z-index: 1;
@@ -110,7 +146,7 @@
     position: absolute;
     top: 2px;  /* 在时间轴顶部显示 */
     font-size: 9px;
-    color: #666;
+    /* color 已在上面的主题适配部分定义 */
     font-weight: 500;
     pointer-events: none;
     margin-left: -12px;  /* 左移以居中 (大约是 "14h" 宽度的一半) */
@@ -120,13 +156,13 @@
     z-index: 2;  /* 在刻度线之上 */
 }
 
-/* 时间刻度在内容区域的延伸（背景刻度线） */
+/* 时间刻度在内容区域的延伸（背景刻度线 + 主题适配） */
 .drm-tscale-bg {
     position: absolute;
     top: 0;  /* 相对于容器顶部 */
     width: 1px;
     height: 100%;  /* 填满整个容器高度 */
-    background: #e0e0e0;
+    background: var(--bs-border-color, #e0e0e0);
     pointer-events: none;
     opacity: 0.3;
     z-index: 0;  /* 在最底层 */
@@ -147,7 +183,7 @@
     top: 0;
     width: 2px;
     height: 30px;  /* 只在时间轴区域显示 */
-    background: #ff3b30;
+    background: var(--bs-danger, #ff3b30);
     z-index: 10;  /* 在时间轴内的最高层 */
     pointer-events: none;
     box-shadow: 0 0 4px rgba(255, 59, 48, 0.5);
@@ -158,8 +194,8 @@
     position: absolute;
     top: 0;
     left: 4px;
-    background: #ff3b30;
-    color: white;
+    background: var(--bs-danger, #ff3b30);
+    color: var(--bs-white, white);
     padding: 2px 5px;
     font-size: 9px;
     border-radius: 3px;
@@ -170,38 +206,37 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-/* ========== 内容区域 (匹配doppler的可滚动表格，固定高度370px) ========== */
+/* ========== 内容区域 (匹配doppler的可滚动表格，固定高度370px + 主题适配) ========== */
 #id-drm-panel-by-svc {
     position: relative;
     overflow-y: scroll;
     overflow-x: hidden;  /* 不显示水平滚动条 */
     height: 370px;
-    background: #ffffff;
+    background: var(--bs-body-bg, #ffffff);
 }
 
-/* ========== 电台条目 (紧凑型设计) ========== */
+/* ========== 电台条目 (紧凑型设计 + 主题适配) ========== */
 .cl-drm-sched-station {
     position: relative;
     height: 24px;  /* 紧凑高度 */
-    border-bottom: 1px solid #f0f0f0;
+    /* border-bottom 和 background 已在上面的主题适配部分定义 */
     padding: 0;
     transition: background-color 0.15s ease;
     display: flex;
     align-items: center;  /* 垂直居中对齐 */
     z-index: 1;  /* 确保在背景刻度线之上 */
-    background: #fff;  /* 添加背景色遮盖刻度线 */
 }
 
 .cl-drm-sched-station:hover {
-    background-color: rgba(0, 122, 255, 0.05);
+    background-color: var(--bs-primary-bg-subtle, rgba(0, 122, 255, 0.05));
 }
 
 .cl-drm-sched-striped:nth-child(even) {
-    background-color: rgba(0,0,0,0.02);
+    background-color: var(--bs-secondary-bg, rgba(0,0,0,0.02));
 }
 
 .cl-drm-sched-striped:nth-child(even):hover {
-    background-color: rgba(0, 122, 255, 0.06);
+    background-color: var(--bs-primary-bg-subtle, rgba(0, 122, 255, 0.06));
 }
 
 .cl-drm-station-name {
@@ -210,7 +245,7 @@
     top: 50%;
     transform: translateY(-50%);
     font-weight: 600;
-    color: #1d1d1f;
+    /* color 已在上面的主题适配部分定义 */
     font-size: 10px;  /* 紧凑型：减小字体 */
     line-height: 1.2;
     white-space: nowrap;
@@ -243,7 +278,7 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* ========== Info图标 (匹配KiwiSDR) ========== */
+/* ========== Info图标 (匹配KiwiSDR + 主题适配) ========== */
 .drm-info-link {
     position: absolute;
     left: 5px;
@@ -254,16 +289,16 @@
 }
 
 .cl-drm-sched-info {
-    color: #666;
+    color: var(--bs-secondary-color, #666);
     font-size: 14px;
     transition: color 0.2s ease;
 }
 
 .cl-drm-sched-info:hover {
-    color: #007aff;
+    color: var(--bs-primary, #007aff);
 }
 
-/* ========== 分隔线 (匹配KiwiSDR) ========== */
+/* ========== 分隔线 (匹配KiwiSDR + 主题适配) ========== */
 .cl-drm-sched-hr-div {
     text-align: center;
     margin: 10px 0;
@@ -271,20 +306,20 @@
 
 .cl-drm-sched-hr {
     border: none;
-    border-top: 1px solid #ccc;
+    border-top: 1px solid var(--bs-border-color, #ccc);
     margin: 0 auto;
     width: 80%;
 }
 
-/* ========== 加载消息 (匹配KiwiSDR) ========== */
+/* ========== 加载消息 (匹配KiwiSDR + 主题适配) ========== */
 .drm-loading-msg {
     padding: 20px;
     text-align: center;
-    color: #666;
+    color: var(--bs-secondary-color, #666);
     font-size: 12px;
 }
 
-/* ========== 控制按钮 (完全匹配doppler的openwebrx-button风格) ========== */
+/* ========== 控制按钮 (完全匹配doppler的openwebrx-button风格 + 主题适配) ========== */
 .drm-schedule-controls {
     display: flex;
     gap: 8px;
@@ -293,9 +328,9 @@
 
 .drm-btn {
     padding: 6px 12px;
-    background: #007aff;
-    color: #ffffff;
-    border: 1px solid #007aff;
+    background: var(--bs-primary, #007aff);
+    color: var(--bs-btn-color, #ffffff);
+    border: 1px solid var(--bs-primary, #007aff);
     border-radius: 3px;
     cursor: pointer;
     font-size: 12px;
@@ -306,28 +341,28 @@
 }
 
 .drm-btn:hover {
-    background: #0051d5;
-    border-color: #0051d5;
+    background: var(--bs-primary-border-subtle, #0051d5);
+    border-color: var(--bs-primary-border-subtle, #0051d5);
 }
 
 .drm-btn.active {
-    background: #0051d5;
-    color: white;
-    border-color: #0051d5;
+    background: var(--bs-primary-border-subtle, #0051d5);
+    color: var(--bs-white, white);
+    border-color: var(--bs-primary-border-subtle, #0051d5);
     font-weight: 600;
 }
 
 .drm-btn.active:hover {
-    background: #003d9e;
-    border-color: #003d9e;
+    background: var(--bs-primary-text-emphasis, #003d9e);
+    border-color: var(--bs-primary-text-emphasis, #003d9e);
 }
 
-/* ========== 关闭按钮 (匹配doppler的openwebrx-button) ========== */
+/* ========== 关闭按钮 (匹配doppler的openwebrx-button + 主题适配) ========== */
 .drm-schedule-modal-footer .openwebrx-button {
     padding: 6px 20px;
-    background: #e74c3c;
-    color: white;
-    border: 1px solid #e74c3c;
+    background: var(--bs-danger, #e74c3c);
+    color: var(--bs-white, white);
+    border: 1px solid var(--bs-danger, #e74c3c);
     border-radius: 3px;
     cursor: pointer;
     font-size: 12px;
@@ -335,18 +370,18 @@
 }
 
 .drm-schedule-modal-footer .openwebrx-button:hover {
-    background: #c0392b;
-    border-color: #c0392b;
+    background: var(--bs-danger-border-subtle, #c0392b);
+    border-color: var(--bs-danger-border-subtle, #c0392b);
 }
 
-/* ========== 其他显示模式的样式 ========== */
+/* ========== 其他显示模式的样式 (主题适配) ========== */
 .drm-station-entry {
     padding: 8px 10px;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--bs-border-color, #e0e0e0);
 }
 
 .drm-station-entry.drm-active {
-    background: rgba(144, 238, 144, 0.2);
+    background: var(--bs-success-bg-subtle, rgba(144, 238, 144, 0.2));
 }
 
 .drm-station-info {
@@ -358,27 +393,27 @@
 
 .drm-name {
     font-weight: bold;
-    color: #333;
+    color: var(--bs-emphasis-color, #333);
 }
 
 .drm-freq {
-    color: #666;
+    color: var(--bs-secondary-color, #666);
     font-family: monospace;
 }
 
 .drm-time {
-    color: #666;
+    color: var(--bs-secondary-color, #666);
     font-family: monospace;
 }
 
 .drm-band-separator {
-    background: #e0e0e0;
+    background: var(--bs-tertiary-bg, #e0e0e0);
     padding: 4px 10px;
     font-weight: bold;
-    color: #666;
+    color: var(--bs-secondary-color, #666);
     font-size: 11px;
-    border-top: 1px solid #ccc;
-    border-bottom: 1px solid #ccc;
+    border-top: 1px solid var(--bs-border-color, #ccc);
+    border-bottom: 1px solid var(--bs-border-color, #ccc);
 }
 
 /* ========== 响应式设计 ========== */
@@ -434,8 +469,8 @@
     bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
-    background: #333;
-    color: white;
+    background: var(--bs-dark, #333);
+    color: var(--bs-white, white);
     padding: 4px 8px;
     border-radius: 3px;
     font-size: 11px;
@@ -444,37 +479,37 @@
     margin-bottom: 4px;
 }
 
-/* ========== 滚动条样式 ========== */
+/* ========== 滚动条样式 (主题适配) ========== */
 #id-drm-panel-by-svc::-webkit-scrollbar {
     width: 15px;
 }
 
 #id-drm-panel-by-svc::-webkit-scrollbar-track {
-    background: #f0f0f0;
+    background: var(--bs-tertiary-bg, #f0f0f0);
 }
 
 #id-drm-panel-by-svc::-webkit-scrollbar-thumb {
-    background: #ccc;
+    background: var(--bs-border-color, #ccc);
     border-radius: 7px;
 }
 
 #id-drm-panel-by-svc::-webkit-scrollbar-thumb:hover {
-    background: #999;
+    background: var(--bs-secondary, #999);
 }
 
-/* ========== 菜单项样式 ========== */
+/* ========== 菜单项样式 (主题适配) ========== */
 .drm-schedule-menu-item {
     display: flex;
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    color: #ecf0f1;
+    color: var(--bs-body-color, #ecf0f1);
     text-decoration: none;
     transition: background-color 0.2s ease;
 }
 
 .drm-schedule-menu-item:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--bs-secondary-bg, rgba(255, 255, 255, 0.1));
 }
 
 .drm-schedule-menu-item i {
@@ -482,15 +517,15 @@
     text-align: center;
 }
 
-/* ========== 浮动按钮 (备选) ========== */
+/* ========== 浮动按钮 (备选 + 主题适配) ========== */
 .drm-float-btn {
     position: fixed;
     bottom: 20px;
     right: 20px;
     width: 50px;
     height: 50px;
-    background: #3498db;
-    color: white;
+    background: var(--bs-info, #3498db);
+    color: var(--bs-white, white);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -503,17 +538,17 @@
 }
 
 .drm-float-btn:hover {
-    background: #2980b9;
+    background: var(--bs-info-border-subtle, #2980b9);
     transform: scale(1.1);
 }
 
-/* ========== 状态显示 ========== */
+/* ========== 状态显示 (主题适配) ========== */
 .drm-schedule-status {
     font-size: 11px;
-    color: #666;
+    color: var(--bs-secondary-color, #666);
     text-align: center;
     padding: 4px;
-    background: #f0f0f0;
+    background: var(--bs-tertiary-bg, #f0f0f0);
 }
 
 /* ========== 响应式菜单 ========== */
@@ -532,7 +567,7 @@
     }
 }
 
-/* ========== 兼容性样式 ========== */
+/* ========== 兼容性样式 (主题适配) ========== */
 .w3-valign {
     display: flex;
     align-items: center;
@@ -547,11 +582,11 @@
 }
 
 .w3-link-darker-color {
-    color: #666;
+    color: var(--bs-secondary-color, #666);
 }
 
 .w3-link-darker-color:hover {
-    color: #333;
+    color: var(--bs-emphasis-color, #333);
 }
 
 /* ========== 特殊效果 ========== */
@@ -669,17 +704,17 @@
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
-/* ========== 菜单项高亮 ========== */
+/* ========== 菜单项高亮 (主题适配) ========== */
 .drm-schedule-menu-item {
-    color: #e74c3c !important;
+    color: var(--bs-danger, #e74c3c) !important;
     font-weight: bold !important;
-    background: rgba(231, 76, 60, 0.1) !important;
-    border-left: 3px solid #e74c3c !important;
+    background: var(--bs-danger-bg-subtle, rgba(231, 76, 60, 0.1)) !important;
+    border-left: 3px solid var(--bs-danger, #e74c3c) !important;
 }
 
 .drm-schedule-menu-item:hover {
-    background: rgba(231, 76, 60, 0.2) !important;
-    color: #c0392b !important;
+    background: var(--bs-danger-bg-subtle, rgba(231, 76, 60, 0.2)) !important;
+    color: var(--bs-danger-border-subtle, #c0392b) !important;
 }
 
 /* ========== 最终优化 ========== */
@@ -706,3 +741,62 @@
 }
 
 /* ========== 完成! 现在与KiwiSDR完全一致 ========== */
+
+/* ========== 移动端适配 ========== */
+
+/* 电台列表容器设置最小宽度，允许横向滚动 */
+#id-drm-panel-by-svc {
+    min-width: 900px;  /* 确保至少 900px 宽度以显示完整 24 小时 */
+    width: 100%;
+}
+
+/* 移动端响应式设计 */
+@media screen and (max-width: 768px) {
+    /* 模态窗口在小屏幕上占满宽度 */
+    .drm-schedule-modal {
+        width: 100%;
+        max-width: 100%;
+        height: 90vh;  /* 占据 90% 视口高度 */
+        margin: 5vh 0;  /* 顶部和底部留 5% 间距 */
+        border-radius: 0;  /* 移除圆角 */
+    }
+
+    /* 模态窗口主体设置固定高度并允许垂直滚动 */
+    .drm-schedule-modal-body {
+        max-height: calc(90vh - 120px);  /* 减去头部和底部的高度 */
+        overflow-y: auto;  /* 垂直滚动 */
+    }
+
+    /* 底部按钮调整 */
+    .drm-schedule-modal-footer {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .drm-btn {
+        flex: 1;
+        min-width: 80px;
+    }
+}
+
+/* 超小屏幕 (手机竖屏) */
+@media screen and (max-width: 480px) {
+    .drm-schedule-modal-header {
+        font-size: 14px;
+        padding: 12px 15px;
+    }
+
+    .drm-refresh-btn {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+
+    .drm-schedule-modal-footer {
+        padding: 12px 15px;
+    }
+
+    .drm-btn {
+        font-size: 11px;
+        padding: 5px 10px;
+    }
+}

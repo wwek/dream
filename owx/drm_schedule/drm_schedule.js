@@ -24,15 +24,15 @@ Plugins.drm_schedule.init = function() {
     if (typeof $.modal === 'undefined') {
         console.log('[DRM Schedule] Loading jQuery Modal library...');
 
-        // 加载CSS
+        // 加载CSS (使用unpkg.com，在中国可访问)
         var modalCSS = document.createElement('link');
         modalCSS.rel = 'stylesheet';
-        modalCSS.href = 'https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.2/jquery.modal.min.css';
+        modalCSS.href = 'https://unpkg.com/jquery-modal@0.9.2/jquery.modal.min.css';
         document.head.appendChild(modalCSS);
 
-        // 加载JS
+        // 加载JS (使用unpkg.com，在中国可访问)
         var modalJS = document.createElement('script');
-        modalJS.src = 'https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.2/jquery.modal.min.js';
+        modalJS.src = 'https://unpkg.com/jquery-modal@0.9.2/jquery.modal.min.js';
         modalJS.onload = function() {
             console.log('[DRM Schedule] jQuery Modal loaded');
             DRM_Schedule.initializeWhenReady();
