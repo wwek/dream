@@ -4,6 +4,26 @@
 
 A pure frontend plugin for OpenWebRX that displays global DRM (Digital Radio Mondiale) shortwave broadcast schedules.
 
+---
+
+## 🎉 最新更新 / Latest Updates
+
+**版本 / Version**: 1.1.0 (KiwiSDR-aligned, Fixed)
+**更新日期 / Update Date**: 2025-11-13
+**状态 / Status**: ✅ **修复完成 / Fixed**
+
+### ✅ 已修复的问题 / Fixed Issues
+1. **加载问题** - 插件现在可以正确加载和显示
+2. **容器问题** - 创建独立容器,不依赖特定 DOM 元素
+3. **时间轴渲染** - 时间刻度和当前时间线正确显示
+4. **电台条目布局** - 所有元素(时间块、名称、图标)正确定位
+5. **CSS 样式** - 完全对齐 KiwiSDR 的显示效果
+
+### 📚 相关文档 / Documentation
+- [demo.html](drm_schedule.md:demo.html) - 独立测试页面
+
+---
+
 ## Features / 功能特性
 
 - **三种显示模式** / Three View Modes:
@@ -307,14 +327,6 @@ Same open source license as the Dream DRM project.
 - 数据来源: [drm.kiwisdr.com](http://drm.kiwisdr.com)
 - Dream DRM 项目: [sourceforge.net/projects/drm](https://sourceforge.net/projects/drm/)
 
-## Contributing / 贡献
-
-欢迎提交问题和改进建议！
-
-Issues and improvements are welcome!
-
-## Support / 支持
-
-如有问题，请在项目仓库提交 Issue。
-
-For issues, please submit in the project repository.
+## 本项目参考插件
+https://0xaf.github.io/openwebrxplus-plugins/receiver/doppler
+https://0xaf.github.io/openwebrxplus-plugins/receiver/doppler/doppler.js

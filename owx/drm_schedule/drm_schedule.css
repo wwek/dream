@@ -1,97 +1,196 @@
 /**
- * DRM Schedule Plugin Styles - KiwiSDR Aligned Version
+ * DRM Schedule Plugin Styles - Doppler Modal Style
  *
- * 版本: 1.1.0 (KiwiSDR-aligned)
- * 功能: 完全匹配KiwiSDR的DRM显示样式
+ * 版本: 1.3.0 (doppler-modal)
+ * 功能: 完全匹配doppler插件的jQuery Modal风格
  */
 
-/* ========== 主容器 (匹配KiwiSDR) ========== */
-.cl-drm-sched {
-    position: relative;
-    background: #f0f0f0;
-    font-family: Arial, sans-serif;
-    font-size: 12px;
-    color: #333;
-    width: 675px;
-    height: 300px;
-    border: 1px solid #ccc;
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+/* ========== 动画定义 ========== */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
-/* ========== 时间轴 (匹配KiwiSDR) ========== */
+/* ========== 模态窗口容器 (完全匹配doppler) ========== */
+.drm-schedule-modal {
+    display: none;
+    width: 700px;
+    max-width: 90%;
+    background: #fff;
+    padding: 0;
+    border-radius: 8px;
+    box-shadow: 0 0 10px #000;
+    text-align: left;
+    position: relative;
+    z-index: 2;
+}
+
+/* ========== 模态窗口头部 (匹配doppler) ========== */
+.drm-schedule-modal-header {
+    background: #f5f5f5;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* ========== 刷新按钮 (匹配doppler的样式) ========== */
+.drm-refresh-btn {
+    padding: 5px 10px;
+    margin-left: 10px;
+    font-size: 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    background: #007aff;
+    color: white;
+    border: 1px solid #007aff;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.drm-refresh-btn:hover {
+    background: #0051d5;
+    border-color: #0051d5;
+}
+
+#drm-refresh-icon {
+    display: inline-block;
+}
+
+/* ========== 模态窗口主体 (匹配doppler的可滚动区域) ========== */
+.drm-schedule-modal-body {
+    padding: 0;
+    background: #fff;
+}
+
+/* ========== 模态窗口底部 (匹配doppler) ========== */
+.drm-schedule-modal-footer {
+    background: #f5f5f5;
+    padding: 15px 20px;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* ========== 时间轴 (匹配doppler的表头区域) ========== */
 #id-drm-tscale {
     position: relative;
-    height: 20px;
-    border-bottom: 1px solid #ccc;
-    background: #f0f0f0;
+    width: 100%;
+    height: 30px;
+    border-bottom: 1px solid #e0e0e0;
+    background: #fafafa;
+    pointer-events: none;
+    padding: 5px 10px;
+    box-sizing: border-box;
 }
 
-#id-drm-sched-tscale {
+.id-drm-sched-tscale {
     position: absolute;
     top: 0;
     width: 1px;
-    height: 20px;
-    background: #666;
+    height: 24px;
+    background: rgba(0, 0, 0, 0.15);
+    pointer-events: none;
 }
 
 #id-drm-sched-now {
     position: absolute;
     top: 0;
     width: 2px;
-    height: 20px;
-    background: red;
+    height: 24px;
+    background: #ff3b30;
     z-index: 10;
+    pointer-events: none;
+    box-shadow: 0 0 4px rgba(255, 59, 48, 0.5);
 }
 
-/* ========== 内容区域 (匹配KiwiSDR) ========== */
+#id-drm-sched-now::after {
+    content: attr(data-time);
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    background: #ff3b30;
+    color: white;
+    padding: 1px 4px;
+    font-size: 9px;
+    border-radius: 3px;
+    white-space: nowrap;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+/* ========== 内容区域 (匹配doppler的可滚动表格，固定高度370px) ========== */
 #id-drm-panel-by-svc {
-    overflow-y: auto;
+    position: relative;
+    overflow-y: scroll;
     overflow-x: hidden;
-    height: calc(100% - 20px);
-    background: #f0f0f0;
+    height: 370px;
+    background: #ffffff;
 }
 
 /* ========== 电台条目 (匹配KiwiSDR) ========== */
 .cl-drm-sched-station {
     position: relative;
-    min-height: 30px;
-    border-bottom: 1px solid #ddd;
-    padding: 2px 0;
+    min-height: 28px;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 4px 0;
+    transition: background-color 0.15s ease;
+}
+
+.cl-drm-sched-station:hover {
+    background-color: rgba(0, 122, 255, 0.05);
 }
 
 .cl-drm-sched-striped:nth-child(even) {
-    background-color: rgba(0,0,0,0.05);
+    background-color: rgba(0,0,0,0.02);
+}
+
+.cl-drm-sched-striped:nth-child(even):hover {
+    background-color: rgba(0, 122, 255, 0.06);
 }
 
 .cl-drm-station-name {
     position: absolute;
-    top: 2px;
-    font-weight: bold;
-    color: #333;
-    font-size: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: 600;
+    color: #1d1d1f;
+    font-size: 11px;
+    line-height: 1.3;
 }
 
 /* ========== 时间段块 (匹配KiwiSDR) ========== */
 .id-drm-sched-time {
     position: absolute;
-    border: 1px solid #999;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
     cursor: pointer;
-    background: #e0e0e0;
-    opacity: 0.8;
-    height: 30px;
-    min-width: 2px;
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+    opacity: 0.85;
+    height: 20px;
+    min-width: 3px;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
 }
 
 .id-drm-sched-time.w3-light-green {
-    background: #90EE90;
+    background: linear-gradient(135deg, #a8e6cf 0%, #dcedc1 100%);
     opacity: 0.9;
 }
 
 .id-drm-sched-time:hover {
     opacity: 1;
-    border-color: #666;
+    transform: translateY(-50%) scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* ========== Info图标 (匹配KiwiSDR) ========== */
@@ -129,34 +228,59 @@
     font-size: 12px;
 }
 
-/* ========== 控制按钮 ========== */
+/* ========== 控制按钮 (完全匹配doppler的openwebrx-button风格) ========== */
 .drm-schedule-controls {
-    text-align: center;
-    padding: 10px;
-    background: #f0f0f0;
-    border-top: 1px solid #ccc;
+    display: flex;
+    gap: 8px;
+    align-items: center;
 }
 
 .drm-btn {
-    padding: 6px 14px;
-    background: #e0e0e0;
-    color: #333;
-    border: 1px solid #999;
+    padding: 6px 12px;
+    background: #007aff;
+    color: #ffffff;
+    border: 1px solid #007aff;
     border-radius: 3px;
     cursor: pointer;
     font-size: 12px;
-    margin: 0 2px;
-    font-family: Arial, sans-serif;
+    font-weight: normal;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    transition: all 0.2s ease;
+    white-space: nowrap;
 }
 
 .drm-btn:hover {
-    background: #d0d0d0;
+    background: #0051d5;
+    border-color: #0051d5;
 }
 
 .drm-btn.active {
-    background: #3498db;
+    background: #0051d5;
     color: white;
-    border-color: #2980b9;
+    border-color: #0051d5;
+    font-weight: 600;
+}
+
+.drm-btn.active:hover {
+    background: #003d9e;
+    border-color: #003d9e;
+}
+
+/* ========== 关闭按钮 (匹配doppler的openwebrx-button) ========== */
+.drm-schedule-modal-footer .openwebrx-button {
+    padding: 6px 20px;
+    background: #e74c3c;
+    color: white;
+    border: 1px solid #e74c3c;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.drm-schedule-modal-footer .openwebrx-button:hover {
+    background: #c0392b;
+    border-color: #c0392b;
 }
 
 /* ========== 其他显示模式的样式 ========== */

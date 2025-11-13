@@ -173,3 +173,6 @@ MLC Decoding → DRM Protocol Layers → Audio/Data Decoding → Output
 **Platform Integration:**
 - `src/linux/ConsoleIO.cpp/h` - Linux console interface
 - `src/util/StatusBroadcast.cpp/h` - Real-time status broadcasting
+
+## Reminder
+- Unless there are special requirements, please do not create file documents!!!

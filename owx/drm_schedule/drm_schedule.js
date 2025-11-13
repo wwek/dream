@@ -20,15 +20,27 @@ Plugins.drm_schedule.init = function() {
         return false;
     }
 
-    // 等待OpenWebRX初始化完成
-    $(document).on('event:owrx_initialized', function() {
-        console.log('[DRM Schedule] OpenWebRX initialized, loading schedule...');
-        DRM_Schedule.initialize();
-    });
+    // 加载jQuery Modal库
+    if (typeof $.modal === 'undefined') {
+        console.log('[DRM Schedule] Loading jQuery Modal library...');
 
-    // 如果已经初始化,直接加载
-    if (typeof demodulatorPanel !== 'undefined') {
-        DRM_Schedule.initialize();
+        // 加载CSS
+        var modalCSS = document.createElement('link');
+        modalCSS.rel = 'stylesheet';
+        modalCSS.href = 'https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.2/jquery.modal.min.css';
+        document.head.appendChild(modalCSS);
+
+        // 加载JS
+        var modalJS = document.createElement('script');
+        modalJS.src = 'https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.2/jquery.modal.min.js';
+        modalJS.onload = function() {
+            console.log('[DRM Schedule] jQuery Modal loaded');
+            DRM_Schedule.initializeWhenReady();
+        };
+        document.head.appendChild(modalJS);
+    } else {
+        console.log('[DRM Schedule] jQuery Modal already available');
+        DRM_Schedule.initializeWhenReady();
     }
 
     return true;
@@ -50,8 +62,8 @@ var DRM_Schedule = {
         // 缓存时间 (小时)
         cache_hours: 24,
 
-        // 刷新间隔 (毫秒)
-        refresh_interval: 60000, // 1分钟
+        // 手动更新 (移除自动刷新)
+        auto_refresh: false,
 
         // 面板尺寸 (匹配KiwiSDR)
         panel_width: 675,
@@ -80,88 +92,194 @@ var DRM_Schedule = {
         SERVICE: 3
     },
 
+    // ========== 等待依赖库加载后初始化 ==========
+    initializeWhenReady: function() {
+        var self = this;
+
+        // 等待OpenWebRX初始化完成
+        $(document).on('event:owrx_initialized', function() {
+            console.log('[DRM Schedule] OpenWebRX initialized, loading schedule...');
+            self.initialize();
+        });
+
+        // 如果已经初始化,直接加载
+        if (typeof demodulatorPanel !== 'undefined') {
+            this.initialize();
+        }
+    },
+
     // ========== 初始化 ==========
     initialize: function() {
         console.log('[DRM Schedule] Initializing (KiwiSDR-aligned)...');
+        console.log('[DRM Schedule] Panel will be hidden by default. Click panel button to open.');
 
-        // 添加初始化确认日志
-        console.log('[DRM Schedule] === PANEL WILL BE VISIBLE BY DEFAULT ===');
-        console.log('[DRM Schedule] Look for red menu item or floating 📻 button');
-
+        this.createPanelButton();
         this.createUI();
         this.loadStations();
         this.bindEvents();
-        this.startAutoRefresh();
 
         console.log('[DRM Schedule] Initialized successfully (KiwiSDR-aligned)');
     },
 
-    // ========== UI 创建 ==========
+    // ========== 创建面板按钮 (类似doppler插件) ==========
+    createPanelButton: function() {
+        var self = this;
+
+        // 在模式选择器后插入DRM面板按钮行（初始隐藏）
+        if ($('#drm-schedule-row').length === 0) {
+            $('.openwebrx-modes').after(`
+                <div id="drm-schedule-row" class="openwebrx-panel-line openwebrx-panel-flex-line" style="display: none;">
+                    <div id="drm-schedule-open-btn" class="openwebrx-button openwebrx-demodulator-button" style="width: 100%;">
+                        📡 DRM Schedule
+                    </div>
+                </div>
+            `);
+
+            // 绑定打开面板事件
+            $('#drm-schedule-open-btn').on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('[DRM Schedule] Button clicked');
+                self.showPanel();
+            });
+
+            console.log('[DRM Schedule] Panel button created and event bound');
+        }
+
+        // 监听模式变化
+        this.watchModeChanges();
+    },
+
+    // 监听模式变化，只在DRM模式下显示
+    watchModeChanges: function() {
+        var self = this;
+        var lastMode = null;
+
+        // 检查当前模式
+        var checkMode = function() {
+            try {
+                var currentMode = null;
+
+                // 方法1: 检查DRM按钮是否active
+                var drmButton = $('.openwebrx-demodulator-button').filter(function() {
+                    return $(this).text().trim() === 'DRM';
+                });
+
+                if (drmButton.length > 0 && drmButton.hasClass('highlighted')) {
+                    currentMode = 'drm';
+                }
+
+                // 方法2: 尝试通过demodulatorPanel获取
+                if (!currentMode && typeof demodulatorPanel !== 'undefined' && demodulatorPanel.getDemodulator) {
+                    var demod = demodulatorPanel.getDemodulator();
+                    if (demod && typeof demod.get_modulation === 'function') {
+                        var mode = demod.get_modulation();
+                        if (mode === 'drm') {
+                            currentMode = 'drm';
+                        }
+                    }
+                }
+
+                // 只在模式真正改变时才执行操作
+                if (currentMode !== lastMode) {
+                    console.log('[DRM Schedule] Mode changed from', lastMode, 'to', currentMode);
+                    lastMode = currentMode;
+
+                    if (currentMode === 'drm') {
+                        $('#drm-schedule-row').show();
+                        console.log('[DRM Schedule] Button shown (DRM mode active)');
+                    } else {
+                        $('#drm-schedule-row').hide();
+                        // 如果面板打开着，关闭它
+                        if (self.isPanelVisible) {
+                            console.log('[DRM Schedule] Closing panel (DRM mode inactive)');
+                            self.hidePanel();
+                        }
+                    }
+                }
+            } catch(e) {
+                console.warn('[DRM Schedule] Mode check error:', e);
+            }
+        };
+
+        // 延迟初始检查，等待页面完全加载
+        setTimeout(function() {
+            checkMode();
+            console.log('[DRM Schedule] Initial mode check completed');
+        }, 1500);
+
+        // 监听模式按钮点击
+        $(document).on('click', '.openwebrx-demodulator-button', function() {
+            console.log('[DRM Schedule] Mode button clicked, checking in 200ms');
+            setTimeout(checkMode, 200);
+        });
+
+        // 定期检查（备用方案，降低频率）
+        setInterval(checkMode, 5000);
+    },
+
+    // ========== UI 创建 (完全匹配doppler风格) ==========
     createUI: function() {
         var self = this;
 
-        // 创建面板HTML (匹配KiwiSDR结构) - 默认可见
-        var panelHtml = `
-            <div id="id-drm-panel-1-by-svc" class="cl-drm-sched">
-                <div id="id-drm-tscale"></div>
-                <div id="id-drm-panel-by-svc" class="w3-scroll-y w3-absolute" style="width:100%; height:100%;">
-                    <div class="drm-loading-msg">&nbsp;loading data from kiwisdr.com ...</div>
+        // 创建模态窗口HTML (类似doppler的satellite-modal)
+        var modalHtml = `
+            <div id="drm-schedule-modal" class="modal drm-schedule-modal">
+                <div class="drm-schedule-modal-header">
+                    DRM Schedule
+                    <button class="drm-refresh-btn openwebrx-button" onclick="DRM_Schedule.manualRefresh()" title="Refresh data">
+                        <span id="drm-refresh-icon">🔄</span> Refresh
+                    </button>
                 </div>
-            </div>
-
-            <div class="drm-schedule-controls">
-                <button class="drm-btn" data-mode="BY_SVC" onclick="DRM_Schedule.setDisplayMode('BY_SVC')">By Service</button>
-                <button class="drm-btn" data-mode="BY_TIME" onclick="DRM_Schedule.setDisplayMode('BY_TIME')">By Time</button>
-                <button class="drm-btn" data-mode="BY_FREQ" onclick="DRM_Schedule.setDisplayMode('BY_FREQ')">By Frequency</button>
+                <div class="drm-schedule-modal-body">
+                    <div id="id-drm-tscale"></div>
+                    <div id="id-drm-panel-by-svc" class="w3-scroll-y">
+                        <div class="drm-loading-msg">&nbsp;loading data from kiwisdr.com ...</div>
+                    </div>
+                </div>
+                <div class="drm-schedule-modal-footer">
+                    <div class="drm-schedule-controls openwebrx-panel-line">
+                        <button class="drm-btn openwebrx-button active" data-mode="BY_SVC" onclick="DRM_Schedule.setDisplayMode('BY_SVC')">By Service</button>
+                        <button class="drm-btn openwebrx-button" data-mode="BY_TIME" onclick="DRM_Schedule.setDisplayMode('BY_TIME')">By Time</button>
+                        <button class="drm-btn openwebrx-button" data-mode="BY_FREQ" onclick="DRM_Schedule.setDisplayMode('BY_FREQ')">By Frequency</button>
+                    </div>
+                    <div class="openwebrx-button" rel="modal:close" onclick="$.modal.close()">Close</div>
+                </div>
             </div>
         `;
 
-        // 插入到页面
-        $('#openwebrx-panel-container-right').append(panelHtml);
+        // 将模态窗口插入到drm-schedule-row (类似doppler插入到satellite-row)
+        $('#drm-schedule-row').append(modalHtml);
 
-        // 添加菜单项
-        this.addMenuItem();
+        // 监听BEFORE_CLOSE事件 (类似doppler的清理逻辑)
+        $('#drm-schedule-modal').on($.modal.BEFORE_CLOSE, function(event, modal) {
+            self.isPanelVisible = false;
+            console.log('[DRM Schedule] Modal closing');
+        });
 
-        // 立即显示面板
-        this.showPanel();
-
-        console.log('[DRM Schedule] UI created (KiwiSDR structure) - PANEL VISIBLE BY DEFAULT');
+        console.log('[DRM Schedule] Modal UI created (doppler-style)');
     },
 
-    // 显示面板
+    // 显示面板 (使用jQuery Modal库，完全匹配doppler)
     showPanel: function() {
-        $('#id-drm-panel-1-by-svc').show();
+        console.log('[DRM Schedule] showPanel called');
+
+        // 使用jQuery Modal显示 (与doppler完全相同的配置)
+        $('#drm-schedule-modal').modal({
+            escapeClose: true,
+            clickClose: false,
+            showClose: false
+        });
+
         this.isPanelVisible = true;
-        console.log('[DRM Schedule] Panel shown by default');
+        console.log('[DRM Schedule] Modal shown');
     },
 
-    addMenuItem: function() {
-        // 尝试在OpenWebRX菜单中添加入口
-        var panelList = $('#openwebrx-panel-receiver ul, .openwebrx-panel-list');
-        if (panelList.length > 0) {
-            var menuItem = `
-                <li>
-                    <a href="#" class="drm-schedule-menu-item" onclick="DRM_Schedule.togglePanel(); return false;"
-                       style="color: #e74c3c; font-weight: bold; background: rgba(231, 76, 60, 0.1);">
-                        <i class="fa fa-calendar"></i> 📻 DRM Schedule
-                    </a>
-                </li>
-            `;
-            panelList.append(menuItem);
-            console.log('[DRM Schedule] Menu item added with highlighting');
-        } else {
-            // 如果找不到菜单，创建浮动按钮
-            var floatBtn = `
-                <div id="drm-schedule-float-btn" style="position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px;
-                     background: #e74c3c; color: white; border-radius: 50%; display: flex; align-items: center;
-                     justify-content: center; cursor: pointer; z-index: 9999; font-size: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);"
-                     onclick="DRM_Schedule.togglePanel();" title="DRM Schedule">
-                    📻
-                </div>
-            `;
-            $('body').append(floatBtn);
-            console.log('[DRM Schedule] Float button created as menu fallback');
-        }
+    // 隐藏面板 (使用jQuery Modal库)
+    hidePanel: function() {
+        $.modal.close();
+        this.isPanelVisible = false;
+        console.log('[DRM Schedule] Modal closed');
     },
 
     // ========== 数据加载 ==========
@@ -180,21 +298,28 @@ var DRM_Schedule = {
             timeout: 10000,
             cache: false,
             success: function(text) {
-                console.log('[DRM Schedule] Remote data loaded, parsing CJSON...');
+                console.log('[DRM Schedule] Remote data loaded:', text.length, 'bytes');
                 try {
                     // 移除C风格注释 (// 和 /* */)
+                    console.log('[DRM Schedule] Stripping comments...');
                     var cleanJson = self.stripComments(text);
+                    console.log('[DRM Schedule] Clean JSON length:', cleanJson.length, 'bytes');
+
+                    console.log('[DRM Schedule] Parsing JSON...');
                     var data = JSON.parse(cleanJson);
+                    console.log('[DRM Schedule] JSON parsed successfully, entries:', Array.isArray(data) ? data.length : 'N/A');
 
                     self.stations = self.parseStations(data);
+                    console.log('[DRM Schedule] Stations parsed:', self.stations ? self.stations.length : 0);
                     self.onDataLoaded('remote');
                 } catch(e) {
-                    console.warn('[DRM Schedule] CJSON parse failed:', e);
+                    console.error('[DRM Schedule] CJSON parse failed:', e);
+                    console.error('[DRM Schedule] Error details:', e.message, e.stack);
                     self.loadBackupServer();
                 }
             },
             error: function(xhr, status, error) {
-                console.warn('[DRM Schedule] Remote load failed:', error);
+                console.warn('[DRM Schedule] Remote load failed:', status, error);
                 self.loadBackupServer();
             }
         });
@@ -249,11 +374,76 @@ var DRM_Schedule = {
 
     // 移除JSON注释 (支持CJSON格式)
     stripComments: function(text) {
-        // 移除单行注释 //
-        text = text.replace(/\/\/.*$/gm, '');
-        // 移除多行注释 /* */
-        text = text.replace(/\/\*[\s\S]*?\*\//g, '');
-        return text;
+        try {
+            // 更安全的注释移除方法
+            var lines = text.split('\n');
+            var result = [];
+            var inBlockComment = false;
+
+            for (var i = 0; i < lines.length; i++) {
+                var line = lines[i];
+                var processedLine = '';
+                var inString = false;
+                var stringChar = '';
+
+                for (var j = 0; j < line.length; j++) {
+                    var char = line[j];
+                    var nextChar = j + 1 < line.length ? line[j + 1] : '';
+
+                    // 处理字符串
+                    if ((char === '"' || char === "'") && !inBlockComment) {
+                        if (!inString) {
+                            inString = true;
+                            stringChar = char;
+                        } else if (char === stringChar && line[j - 1] !== '\\') {
+                            inString = false;
+                        }
+                        processedLine += char;
+                        continue;
+                    }
+
+                    // 在字符串内，直接添加字符
+                    if (inString) {
+                        processedLine += char;
+                        continue;
+                    }
+
+                    // 处理块注释结束
+                    if (inBlockComment) {
+                        if (char === '*' && nextChar === '/') {
+                            inBlockComment = false;
+                            j++; // 跳过 /
+                        }
+                        continue;
+                    }
+
+                    // 处理块注释开始
+                    if (char === '/' && nextChar === '*') {
+                        inBlockComment = true;
+                        j++; // 跳过 *
+                        continue;
+                    }
+
+                    // 处理单行注释
+                    if (char === '/' && nextChar === '/') {
+                        break; // 忽略行的剩余部分
+                    }
+
+                    processedLine += char;
+                }
+
+                // 只添加非空行
+                if (processedLine.trim().length > 0) {
+                    result.push(processedLine);
+                }
+            }
+
+            return result.join('\n');
+        } catch(e) {
+            console.error('[DRM Schedule] stripComments error:', e);
+            // 如果解析失败，返回原始文本
+            return text;
+        }
     },
 
     onDataLoaded: function(source) {
@@ -276,6 +466,7 @@ var DRM_Schedule = {
         var stations = [];
         var idx = 0;
         var isIndiaMW = false;
+        var self = this; // 保存 this 引用
 
         try {
             // 格式1: KiwiSDR drmrx.cjson格式
@@ -326,8 +517,8 @@ var DRM_Schedule = {
                             if (typeof freq !== 'number') continue;
 
                             // 统一处理时间格式（支持字符串和小数格式）
-                            var startTime = this.parseKiwiTime(startTimeRaw);
-                            var endTime = this.parseKiwiTime(endTimeRaw);
+                            var startTime = self.parseKiwiTime(startTimeRaw);
+                            var endTime = self.parseKiwiTime(endTimeRaw);
 
                             // 根据KiwiSDR逻辑：负数表示需要验证
                             var verified = (startTime < 0 || endTime < 0);
@@ -340,7 +531,7 @@ var DRM_Schedule = {
                             if (absEnd < absStart) {
                                 // 分成两个广播段
                                 stations.push({
-                                    t: this.STATION_TYPES.MULTI,
+                                    t: self.STATION_TYPES.MULTI,
                                     f: freq,
                                     s: prefix + cleanName,
                                     r: regionName,
@@ -354,7 +545,7 @@ var DRM_Schedule = {
                                     mw: (freq >= 530 && freq <= 1700)
                                 });
                                 stations.push({
-                                    t: this.STATION_TYPES.MULTI,
+                                    t: self.STATION_TYPES.MULTI,
                                     f: freq,
                                     s: prefix + cleanName,
                                     r: regionName,
@@ -369,7 +560,7 @@ var DRM_Schedule = {
                                 });
                             } else {
                                 stations.push({
-                                    t: this.STATION_TYPES.MULTI,
+                                    t: self.STATION_TYPES.MULTI,
                                     f: freq,
                                     s: prefix + cleanName,
                                     r: regionName,
@@ -389,7 +580,7 @@ var DRM_Schedule = {
                     // 添加服务分隔符 (匹配KiwiSDR逻辑 - 除了India MW)
                     if (!isIndiaMW) {
                         stations.push({
-                            t: this.STATION_TYPES.SERVICE,
+                            t: self.STATION_TYPES.SERVICE,
                             f: 0,
                             s: prefix + cleanName,
                             r: regionName
@@ -400,7 +591,7 @@ var DRM_Schedule = {
             }
             // 格式2: 本地JSON格式 (备用)
             else if (data.stations && Array.isArray(data.stations)) {
-                var self = this; // Fix: ensure self is defined
+                // self 已在外层定义
                 data.stations.forEach(function(station) {
                     if (!station.schedule) return;
 
@@ -507,17 +698,17 @@ var DRM_Schedule = {
         // 渲染小时标记 (匹配KiwiSDR的drm_tscale)
         for (var hour = 0; hour <= 24; hour++) {
             var pos = this.timeToPixels(hour, narrow);
-            html += '<div id="id-drm-sched-tscale" style="left:' + pos + 'px;"></div>';
+            html += '<div class="id-drm-sched-tscale" style="position:absolute; left:' + pos + 'px;"></div>';
         }
 
-        // 渲染当前时间线
+        // 渲染当前时间线 (使用本地时间)
         var now = new Date();
-        var currentHour = now.getUTCHours() + now.getUTCMinutes() / 60;
+        var currentHour = now.getHours() + now.getMinutes() / 60;
         var currentPos = this.timeToPixels(currentHour, narrow);
-        var currentTime = now.getUTCHours().toString().padStart(2, '0') + ':' +
-                         now.getUTCMinutes().toString().padStart(2, '0');
+        var currentTime = now.getHours().toString().padStart(2, '0') + ':' +
+                         now.getMinutes().toString().padStart(2, '0');
 
-        html += '<div id="id-drm-sched-now" style="left:' + currentPos + 'px;" data-time="' + currentTime + ' UTC"></div>';
+        html += '<div id="id-drm-sched-now" style="position:absolute; left:' + currentPos + 'px;" data-time="' + currentTime + ' Local"></div>';
 
         $('#id-drm-tscale').html(html);
 
@@ -525,11 +716,13 @@ var DRM_Schedule = {
         if (!this.timelineInterval) {
             var self = this;
             this.timelineInterval = setInterval(function() {
-                // 只更新时间线位置,不重新渲染整个时间轴
+                // 只更新时间线位置,不重新渲染整个时间轴 (使用本地时间)
                 var now = new Date();
-                var currentHour = now.getUTCHours() + now.getUTCMinutes() / 60;
+                var currentHour = now.getHours() + now.getMinutes() / 60;
                 var pos = self.timeToPixels(currentHour, false);
-                $('#id-drm-sched-now').css('left', pos + 'px');
+                var currentTime = now.getHours().toString().padStart(2, '0') + ':' +
+                                 now.getMinutes().toString().padStart(2, '0');
+                $('#id-drm-sched-now').css('left', pos + 'px').attr('data-time', currentTime + ' Local');
             }, 60000); // 每分钟更新一次
         }
     },
@@ -600,17 +793,16 @@ var DRM_Schedule = {
         keys.forEach(function(key, index) {
             var service = grouped[key];
             var timeSlotsHtml = '';
-            var time_h = 30; // 标准高度
 
             // 处理所有时间段
             service.schedules.forEach(function(sched) {
                 var b_px = self.timeToPixels(sched.b, narrow);
                 var e_px = self.timeToPixels(sched.e, narrow);
-                var width = Math.max((e_px - b_px + 2), 2); // 最小2px宽度
+                var width = Math.max((e_px - b_px + 2), 3); // 最小3px宽度
 
                 timeSlotsHtml += '<div class="id-drm-sched-time ' +
                     (sched.v ? 'w3-light-green' : '') + '" ' +
-                    'style="left:' + b_px + 'px; width:' + width + 'px; height:' + time_h + 'px;" ' +
+                    'style="left:' + b_px + 'px; width:' + width + 'px;" ' +
                     'title="' + self.formatTimeTooltip(sched) + '" ' +
                     'onclick="kiwi_drm_click(' + sched.i + ');"' +
                     '></div>';
@@ -620,7 +812,7 @@ var DRM_Schedule = {
             var infoIcon = '';
             if (service.url) {
                 infoIcon = '<a href="' + service.url + '" target="_blank" class="w3-valign" ' +
-                          'onclick="event.stopPropagation();">' +
+                          'onclick="event.stopPropagation();" style="position:absolute; left:5px; top:50%; transform:translateY(-50%);">' +
                           '<i class="fa fa-info-circle w3-link-darker-color cl-drm-sched-info"></i>' +
                           '</a>';
             }
@@ -629,12 +821,10 @@ var DRM_Schedule = {
             var station_name = service.name;
             station_name += '&nbsp;&nbsp;&nbsp;' + (narrow ? '<br>' : '') + service.frequency + ' kHz';
 
-            var count = (station_name.match(/<br>/g) || []).length;
-            var em = count + (narrow ? 2 : 1);
+            var stationHeight = 32; // 固定紧凑高度
 
             // 构建电台条目 (完全匹配KiwiSDR)
-            html += '<div class="cl-drm-sched-station cl-drm-sched-striped w3-valign">' +
-                '<div style="font-size:' + em + 'em;">&nbsp;</div>' +
+            html += '<div class="cl-drm-sched-station cl-drm-sched-striped" style="min-height:' + stationHeight + 'px;">' +
                 infoIcon +
                 timeSlotsHtml +
                 '<div class="cl-drm-station-name" style="left:' + toff + 'px;">' + station_name + '</div>' +
@@ -782,14 +972,15 @@ var DRM_Schedule = {
     },
 
     togglePanel: function() {
-        var panel = $('#id-drm-panel-1-by-svc');
-        if (panel.is(':visible')) {
-            panel.hide();
-            this.isPanelVisible = false;
+        if (this.isPanelVisible) {
+            this.hidePanel();
         } else {
-            panel.show();
-            this.isPanelVisible = true;
+            this.showPanel();
         }
+    },
+
+    switchMode: function(mode) {
+        this.setDisplayMode(mode);
     },
 
     bindEvents: function() {
@@ -805,19 +996,26 @@ var DRM_Schedule = {
         this.setDisplayMode(this.DISPLAY_MODES.BY_SVC);
     },
 
-    startAutoRefresh: function() {
-        var self = this;
+    // 手动刷新 (类似doppler插件的toggleRefresh)
+    manualRefresh: function() {
+        var refreshIcon = $('#drm-refresh-icon');
 
-        // 清除现有定时器
-        if (this.refreshTimer) {
-            clearInterval(this.refreshTimer);
-        }
+        console.log('[DRM Schedule] Manual refresh triggered');
 
-        // 启动新定时器
-        this.refreshTimer = setInterval(function() {
-            console.log('[DRM Schedule] Auto-refreshing...');
-            self.loadStations();
-        }, this.config.refresh_interval);
+        // 添加旋转动画
+        refreshIcon.css({
+            animation: 'spin 1s linear infinite'
+        });
+
+        // 重新加载数据
+        this.loadStations();
+
+        // 3秒后停止动画
+        setTimeout(function() {
+            refreshIcon.css({
+                animation: 'none'
+            });
+        }, 3000);
     },
 
     // 全局点击处理
