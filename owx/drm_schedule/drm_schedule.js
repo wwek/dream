@@ -65,8 +65,8 @@ var DRM_Schedule = {
         // 手动更新 (移除自动刷新)
         auto_refresh: false,
 
-        // 面板尺寸 (匹配KiwiSDR)
-        panel_width: 675,
+        // 面板尺寸 (动态获取实际宽度，此处仅作为降级默认值)
+        panel_width: 450,  // 保守的默认宽度，实际使用容器实际宽度
         panel_height: 300
     },
 
@@ -262,6 +262,7 @@ var DRM_Schedule = {
 
     // 显示面板 (使用jQuery Modal库，完全匹配doppler)
     showPanel: function() {
+        var self = this;
         console.log('[DRM Schedule] showPanel called');
 
         // 使用jQuery Modal显示 (与doppler完全相同的配置)
@@ -273,6 +274,13 @@ var DRM_Schedule = {
 
         this.isPanelVisible = true;
         console.log('[DRM Schedule] Modal shown');
+
+        // 模态窗口显示后，等待DOM渲染完成再重新渲染时间轴
+        // 这样可以获取到正确的容器宽度
+        setTimeout(function() {
+            console.log('[DRM Schedule] Re-rendering time scale after modal shown');
+            self.renderSchedule();
+        }, 100);
     },
 
     // 隐藏面板 (使用jQuery Modal库)
@@ -459,6 +467,14 @@ var DRM_Schedule = {
             'Loaded from backup server' :
             'Using default data';
         this.setStatus(statusText);
+
+        // 触发自定义事件，通知数据加载完成
+        $(document).trigger('drm:loaded', {
+            source: source,
+            stations: this.stations,
+            count: this.stations ? this.stations.length : 0
+        });
+        console.log('[DRM Schedule] Triggered drm:loaded event');
     },
 
     // ========== 数据解析 ==========
@@ -693,12 +709,24 @@ var DRM_Schedule = {
 
     renderTimeScale: function() {
         var html = '';
+        var bgHtml = '';
         var narrow = false;
 
-        // 渲染小时标记 (匹配KiwiSDR的drm_tscale)
+        // 渲染小时标记和背景刻度线 (KiwiSDR风格全屏背景)
         for (var hour = 0; hour <= 24; hour++) {
             var pos = this.timeToPixels(hour, narrow);
-            html += '<div class="id-drm-sched-tscale" style="position:absolute; left:' + pos + 'px;"></div>';
+
+            // 时间轴上的刻度
+            html += '<div class="id-drm-sched-tscale" style="left:' + pos + 'px;"></div>';
+
+            // 时间标签（每4小时显示，格式: 0h, 4h, 8h...更紧凑）
+            if (hour % 4 === 0 && hour < 24) {
+                html += '<div class="drm-time-label" style="left:' + pos + 'px;">' +
+                        hour + 'h</div>';
+            }
+
+            // 内容区域的背景刻度线
+            bgHtml += '<div class="drm-tscale-bg" style="left:' + pos + 'px;"></div>';
         }
 
         // 渲染当前时间线 (使用本地时间)
@@ -710,7 +738,11 @@ var DRM_Schedule = {
 
         html += '<div id="id-drm-sched-now" style="position:absolute; left:' + currentPos + 'px;" data-time="' + currentTime + ' Local"></div>';
 
+        // 更新时间轴
         $('#id-drm-tscale').html(html);
+
+        // 在内容区域添加背景刻度线
+        $('#id-drm-panel-by-svc').prepend('<div class="drm-tscale-bg-container" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0;">' + bgHtml + '</div>');
 
         // 启动时间线更新定时器 (仅一次)
         if (!this.timelineInterval) {
@@ -729,8 +761,22 @@ var DRM_Schedule = {
 
     // 将时间转换为像素位置 (匹配KiwiSDR的drm_tscale)
     timeToPixels: function(hours, narrow) {
-        var Lmargin = 27, Rmargin = narrow ? 0 : 20, scrollBar = 15;
-        var width = this.config.panel_width;
+        var Lmargin = 27, Rmargin = narrow ? 0 : 20, scrollBar = 0;  // 不考虑滚动条宽度
+
+        // 尝试多种方式获取实际容器宽度
+        var width = $('#id-drm-tscale').width() ||
+                    $('#id-drm-panel-by-svc').width() ||
+                    $('.drm-schedule-modal-body').width() ||
+                    this.config.panel_width;
+
+        // 调试日志（仅在第一次调用时输出）
+        if (hours === 0) {
+            console.log('[DRM Schedule] timeToPixels width:', width,
+                       'tscale:', $('#id-drm-tscale').width(),
+                       'panel:', $('#id-drm-panel-by-svc').width(),
+                       'modal:', $('.drm-schedule-modal-body').width());
+        }
+
         return (Lmargin + hours * (width - Lmargin - Rmargin - scrollBar) / 24).toFixed(0);
     },
 
@@ -765,9 +811,6 @@ var DRM_Schedule = {
         if (usingDefault) {
             html += '<div class="w3-yellow w3-padding w3-show-inline-block">can\'t contact kiwisdr.com<br>using default data</div>';
         }
-
-        // 计算时间偏移
-        var toff = this.calculateTimeOffset(narrow);
 
         // 按服务名称分组 (匹配KiwiSDR逻辑)
         var grouped = {};
@@ -811,9 +854,9 @@ var DRM_Schedule = {
             // 构建info图标 (如果有URL)
             var infoIcon = '';
             if (service.url) {
-                infoIcon = '<a href="' + service.url + '" target="_blank" class="w3-valign" ' +
-                          'onclick="event.stopPropagation();" style="position:absolute; left:5px; top:50%; transform:translateY(-50%);">' +
-                          '<i class="fa fa-info-circle w3-link-darker-color cl-drm-sched-info"></i>' +
+                infoIcon = '<a href="' + service.url + '" target="_blank" class="drm-info-link" ' +
+                          'onclick="event.stopPropagation();">' +
+                          '<i class="fa fa-info-circle cl-drm-sched-info"></i>' +
                           '</a>';
             }
 
@@ -824,10 +867,10 @@ var DRM_Schedule = {
             var stationHeight = 32; // 固定紧凑高度
 
             // 构建电台条目 (完全匹配KiwiSDR)
-            html += '<div class="cl-drm-sched-station cl-drm-sched-striped" style="min-height:' + stationHeight + 'px;">' +
+            html += '<div class="cl-drm-sched-station cl-drm-sched-striped" style="height:' + stationHeight + 'px;">' +
                 infoIcon +
                 timeSlotsHtml +
-                '<div class="cl-drm-station-name" style="left:' + toff + 'px;">' + station_name + '</div>' +
+                '<div class="cl-drm-station-name">' + station_name + '</div>' +
                 '</div>';
 
             // 添加服务分隔符 (匹配KiwiSDR)

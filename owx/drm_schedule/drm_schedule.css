@@ -14,8 +14,8 @@
 /* ========== 模态窗口容器 (完全匹配doppler) ========== */
 .drm-schedule-modal {
     display: none;
-    width: 700px;
-    max-width: 90%;
+    width: 900px;  /* 增加宽度以显示完整 24 小时 */
+    max-width: 95%;
     background: #fff;
     padding: 0;
     border-radius: 8px;
@@ -79,34 +79,76 @@
     align-items: center;
 }
 
-/* ========== 时间轴 (匹配doppler的表头区域) ========== */
+/* ========== 时间轴 (KiwiSDR风格) ========== */
 #id-drm-tscale {
-    position: relative;
-    width: 100%;
+    position: sticky;
+    top: 0;
+    width: 100%;  /* 使用100%宽度适应容器 */
     height: 30px;
     border-bottom: 1px solid #e0e0e0;
     background: #fafafa;
-    pointer-events: none;
-    padding: 5px 10px;
+    padding: 0;
     box-sizing: border-box;
+    z-index: 100;
+    overflow: hidden;  /* 裁剪超出部分，保持整洁 */
 }
 
+/* KiwiSDR风格：时间刻度线 */
 .id-drm-sched-tscale {
     position: absolute;
     top: 0;
     width: 1px;
-    height: 24px;
-    background: rgba(0, 0, 0, 0.15);
+    height: 30px;
+    background: #999;
     pointer-events: none;
+    opacity: 0.8;
+    z-index: 1;
+}
+
+/* 时间标签（每2小时显示） */
+.drm-time-label {
+    position: absolute;
+    top: 2px;  /* 在时间轴顶部显示 */
+    font-size: 9px;
+    color: #666;
+    font-weight: 500;
+    pointer-events: none;
+    margin-left: -12px;  /* 左移以居中 (大约是 "14h" 宽度的一半) */
+    text-align: center;
+    min-width: 24px;
+    white-space: nowrap;
+    z-index: 2;  /* 在刻度线之上 */
+}
+
+/* 时间刻度在内容区域的延伸（背景刻度线） */
+.drm-tscale-bg {
+    position: absolute;
+    top: 0;  /* 相对于容器顶部 */
+    width: 1px;
+    height: 100%;  /* 填满整个容器高度 */
+    background: #e0e0e0;
+    pointer-events: none;
+    opacity: 0.3;
+    z-index: 0;  /* 在最底层 */
+}
+
+.drm-tscale-bg-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;  /* 在最底层 */
 }
 
 #id-drm-sched-now {
     position: absolute;
     top: 0;
     width: 2px;
-    height: 24px;
+    height: 30px;  /* 只在时间轴区域显示 */
     background: #ff3b30;
-    z-index: 10;
+    z-index: 10;  /* 在时间轴内的最高层 */
     pointer-events: none;
     box-shadow: 0 0 4px rgba(255, 59, 48, 0.5);
 }
@@ -114,34 +156,40 @@
 #id-drm-sched-now::after {
     content: attr(data-time);
     position: absolute;
-    top: 2px;
+    top: 0;
     left: 4px;
     background: #ff3b30;
     color: white;
-    padding: 1px 4px;
+    padding: 2px 5px;
     font-size: 9px;
     border-radius: 3px;
     white-space: nowrap;
     font-weight: 600;
     letter-spacing: 0.3px;
+    line-height: 1.2;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 /* ========== 内容区域 (匹配doppler的可滚动表格，固定高度370px) ========== */
 #id-drm-panel-by-svc {
     position: relative;
     overflow-y: scroll;
-    overflow-x: hidden;
+    overflow-x: hidden;  /* 不显示水平滚动条 */
     height: 370px;
     background: #ffffff;
 }
 
-/* ========== 电台条目 (匹配KiwiSDR) ========== */
+/* ========== 电台条目 (匹配KiwiSDR，固定高度确保对齐) ========== */
 .cl-drm-sched-station {
     position: relative;
-    min-height: 28px;
+    height: 32px;  /* 改为固定高度 */
     border-bottom: 1px solid #f0f0f0;
-    padding: 4px 0;
+    padding: 0;
     transition: background-color 0.15s ease;
+    display: flex;
+    align-items: center;  /* 垂直居中对齐 */
+    z-index: 1;  /* 确保在背景刻度线之上 */
+    background: #fff;  /* 添加背景色遮盖刻度线 */
 }
 
 .cl-drm-sched-station:hover {
@@ -158,19 +206,22 @@
 
 .cl-drm-station-name {
     position: absolute;
+    left: 27px;  /* 固定左侧位置，与时间轴对齐 */
     top: 50%;
     transform: translateY(-50%);
     font-weight: 600;
     color: #1d1d1f;
     font-size: 11px;
     line-height: 1.3;
+    white-space: nowrap;
+    z-index: 2;  /* 确保在时间块之上 */
+    pointer-events: none;  /* 不阻止点击时间块 */
 }
 
-/* ========== 时间段块 (匹配KiwiSDR) ========== */
+/* ========== 时间段块 (匹配KiwiSDR，精确对齐) ========== */
 .id-drm-sched-time {
     position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 6px;  /* 固定top位置：(32px行高 - 20px块高) / 2 = 6px */
     border: none;
     cursor: pointer;
     background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
@@ -189,22 +240,28 @@
 
 .id-drm-sched-time:hover {
     opacity: 1;
-    transform: translateY(-50%) scale(1.05);
+    transform: scale(1.05);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* ========== Info图标 (匹配KiwiSDR) ========== */
-.cl-drm-sched-info {
+.drm-info-link {
     position: absolute;
     left: 5px;
     top: 50%;
     transform: translateY(-50%);
+    z-index: 3;
+    text-decoration: none;
+}
+
+.cl-drm-sched-info {
     color: #666;
-    font-size: 16px;
+    font-size: 14px;
+    transition: color 0.2s ease;
 }
 
 .cl-drm-sched-info:hover {
-    color: #333;
+    color: #007aff;
 }
 
 /* ========== 分隔线 (匹配KiwiSDR) ========== */

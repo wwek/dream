@@ -293,7 +293,18 @@
     window.demodulatorPanel = {
         getDemodulator: function() {
             return {
-                set_offset_frequency: function(freqHz) {
+                get_modulation: function() {
+                    return 'drm';  // 模拟DRM模式
+                },
+                set_modulation: function(mode) {
+                    console.log('[Demo] Set modulation to:', mode);
+                    addLog('info', '[Demo] 切换模式: ' + mode);
+                },
+                set_offset_frequency: function(offset) {
+                    console.log('[Demo] Set offset:', offset, 'Hz');
+                    addLog('info', '[Demo] 设置offset: ' + offset + ' Hz');
+                },
+                set_center_freq: function(freqHz) {
                     console.log('[Demo] Tuning to:', freqHz, 'Hz');
                     addLog('success', '[Demo] 调谐到: ' + (freqHz / 1000) + ' kHz');
                 }
@@ -301,11 +312,18 @@
         }
     };
 
-    // 3. 模拟 set_offset_frequency 全局函数
-    window.set_offset_frequency = function(freqHz) {
+    // 3. 模拟 set_center_freq 全局函数
+    window.set_center_freq = function(freqHz) {
         console.log('[Demo] Global tune function called:', freqHz, 'Hz');
         addLog('success', '[Demo] 全局调谐: ' + (freqHz / 1000) + ' kHz');
     };
+
+    // 4. 模拟 .openwebrx-modes 元素（用于插入按钮）
+    $(document).ready(function() {
+        if ($('.openwebrx-modes').length === 0) {
+            $('body').append('<div class="openwebrx-modes" style="display:none;"></div>');
+        }
+    });
 
     // ========== 初始化插件 ==========
     $(document).ready(function() {
@@ -321,14 +339,22 @@
             addLog('success', '[Demo] 插件脚本加载成功');
 
             // 检查插件对象
-            if (typeof DRM_Schedule !== 'undefined') {
-                addLog('info', '[Demo] 初始化DRM Schedule...');
+            if (typeof Plugins.drm_schedule !== 'undefined') {
+                addLog('info', '[Demo] 初始化DRM Schedule插件...');
 
-                // 直接初始化插件
-                DRM_Schedule.initialize();
+                // 使用正确的初始化方法（会自动加载jQuery Modal）
+                Plugins.drm_schedule.init();
 
-                addLog('success', '[Demo] 插件初始化完成');
-                updatePluginStatus('已加载');
+                addLog('success', '[Demo] 插件初始化已启动');
+                updatePluginStatus('加载中...');
+
+                // 等待插件完全初始化后更新状态
+                setTimeout(function() {
+                    if (typeof DRM_Schedule !== 'undefined' && DRM_Schedule.stations) {
+                        updatePluginStatus('已加载');
+                        addLog('success', '[Demo] 插件初始化完成');
+                    }
+                }, 2000);
             } else {
                 addLog('error', '[Demo] 插件对象未找到');
                 updatePluginStatus('加载失败');
@@ -342,6 +368,12 @@
         $(document).on('drm:loaded', function(event, data) {
             addLog('success', '[Event] 数据加载完成');
             updateStationCount(data.stations ? data.stations.length : 0);
+
+            // Demo模式：数据加载完成后自动打开弹窗展示
+            setTimeout(function() {
+                addLog('info', '[Demo] 自动打开弹窗进行演示...');
+                openSchedule();
+            }, 500);
         });
 
         $(document).on('drm:tune', function(event, data) {
@@ -358,11 +390,18 @@
 
     // 控制函数
     function openSchedule() {
-        if (typeof DRM_Schedule !== 'undefined') {
+        if (typeof DRM_Schedule !== 'undefined' && typeof DRM_Schedule.showPanel === 'function') {
+            // 检查jQuery Modal是否加载
+            if (typeof $.modal === 'undefined') {
+                addLog('warning', '[Demo] jQuery Modal库尚未加载，请稍后再试...');
+                setTimeout(openSchedule, 500);
+                return;
+            }
+
             DRM_Schedule.showPanel();
             addLog('info', '[Demo] 打开计划表面板');
         } else {
-            addLog('error', '[Demo] 插件未初始化');
+            addLog('error', '[Demo] 插件未初始化，请等待加载完成');
         }
     }
 
