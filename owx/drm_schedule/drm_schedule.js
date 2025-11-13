@@ -1067,7 +1067,7 @@ var DRM_Schedule = {
     }
 };
 
-// 全局点击处理函数 (KiwiSDR交互 - 自动调谐)
+// 全局点击处理函数 (调频到选中电台)
 window.kiwi_drm_click = function(index) {
     console.log('[DRM Schedule] Station clicked:', index);
 
@@ -1079,47 +1079,46 @@ window.kiwi_drm_click = function(index) {
 
             console.log('[DRM Schedule] Tuning to:', freqKHz, 'kHz', '(', freqHz, 'Hz)');
 
-            // 显示电台信息
-            DRM_Schedule.showStationInfo(station);
+            // 直接调频，不显示详情弹窗
+            // DRM_Schedule.showStationInfo(station);
 
-            // 尝试调谐 (OpenWebRX API集成)
+            // OpenWebRX 调频 (多种方法兼容)
             try {
-                // 方法1: 使用demodulatorPanel (OpenWebRX标准方式)
-                if (typeof demodulatorPanel !== 'undefined' && demodulatorPanel.getDemodulator) {
+                // 方法1: 直接操作频率输入框 (最简单直接)
+                var freqInput = $('.webrx-actual-freq');
+                if (freqInput.length > 0) {
+                    // 触发 frequencychange 事件
+                    freqInput.trigger('frequencychange', freqHz);
+                    console.log('[DRM Schedule] Tuned via webrx-actual-freq input (frequencychange)');
+                }
+                // 方法2: 使用 tuneableFrequencyDisplay 触发事件
+                else if (typeof demodulatorPanel !== 'undefined' &&
+                    demodulatorPanel.tuneableFrequencyDisplay) {
+                    demodulatorPanel.tuneableFrequencyDisplay.element.trigger('frequencychange', freqHz);
+                    console.log('[DRM Schedule] Tuned via tuneableFrequencyDisplay');
+                }
+                // 方法3: 直接设置 offset_frequency (OpenWebRX 核心方法)
+                else if (typeof demodulatorPanel !== 'undefined' &&
+                         typeof center_freq !== 'undefined') {
                     var demod = demodulatorPanel.getDemodulator();
                     if (demod) {
-                        // 设置频率
-                        demod.set_offset_frequency(0); // 先重置offset
-
-                        // 等待一下再设置中心频率
-                        setTimeout(function() {
-                            if (typeof demod.set_center_freq === 'function') {
-                                demod.set_center_freq(freqHz);
-                                console.log('[DRM Schedule] Tuned via demodulator API');
-                            }
-                        }, 100);
-
-                        // 确保是DRM模式
-                        if (typeof demod.set_modulation === 'function') {
-                            setTimeout(function() {
-                                demod.set_modulation('drm');
-                                console.log('[DRM Schedule] Set modulation to DRM');
-                            }, 200);
-                        }
+                        demod.set_offset_frequency(freqHz - center_freq);
+                        console.log('[DRM Schedule] Tuned via offset_frequency');
                     }
                 }
-                // 方法2: 直接设置中心频率 (备用方案)
-                else if (typeof set_center_freq === 'function') {
-                    set_center_freq(freqHz);
-                    console.log('[DRM Schedule] Tuned via set_center_freq');
-                }
-                // 方法3: 通过频率输入框 (最后备选)
-                else if ($('#webrx-actual-freq').length > 0) {
-                    $('#webrx-actual-freq').val(freqKHz).trigger('change');
-                    console.log('[DRM Schedule] Tuned via frequency input');
-                }
                 else {
-                    console.warn('[DRM Schedule] No tuning API available');
+                    console.warn('[DRM Schedule] No tuning method available');
+                }
+
+                // 确保是DRM模式
+                if (typeof demodulatorPanel !== 'undefined') {
+                    var demod = demodulatorPanel.getDemodulator();
+                    if (demod && demod.get_modulation() !== 'drm') {
+                        setTimeout(function() {
+                            demodulatorPanel.setMode('drm');
+                            console.log('[DRM Schedule] Set modulation to DRM');
+                        }, 100);
+                    }
                 }
             } catch(e) {
                 console.error('[DRM Schedule] Tuning error:', e);
