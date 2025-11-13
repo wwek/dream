@@ -864,7 +864,7 @@ var DRM_Schedule = {
             var station_name = service.name;
             station_name += '&nbsp;&nbsp;&nbsp;' + (narrow ? '<br>' : '') + service.frequency + ' kHz';
 
-            var stationHeight = 32; // 固定紧凑高度
+            var stationHeight = 24; // 紧凑型设计
 
             // 构建电台条目 (完全匹配KiwiSDR)
             html += '<div class="cl-drm-sched-station cl-drm-sched-striped" style="height:' + stationHeight + 'px;">' +

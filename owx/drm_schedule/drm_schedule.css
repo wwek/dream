@@ -179,10 +179,10 @@
     background: #ffffff;
 }
 
-/* ========== 电台条目 (匹配KiwiSDR，固定高度确保对齐) ========== */
+/* ========== 电台条目 (紧凑型设计) ========== */
 .cl-drm-sched-station {
     position: relative;
-    height: 32px;  /* 改为固定高度 */
+    height: 24px;  /* 紧凑高度 */
     border-bottom: 1px solid #f0f0f0;
     padding: 0;
     transition: background-color 0.15s ease;
@@ -211,24 +211,24 @@
     transform: translateY(-50%);
     font-weight: 600;
     color: #1d1d1f;
-    font-size: 11px;
-    line-height: 1.3;
+    font-size: 10px;  /* 紧凑型：减小字体 */
+    line-height: 1.2;
     white-space: nowrap;
     z-index: 2;  /* 确保在时间块之上 */
     pointer-events: none;  /* 不阻止点击时间块 */
 }
 
-/* ========== 时间段块 (匹配KiwiSDR，精确对齐) ========== */
+/* ========== 时间段块 (紧凑型，精确对齐) ========== */
 .id-drm-sched-time {
     position: absolute;
-    top: 6px;  /* 固定top位置：(32px行高 - 20px块高) / 2 = 6px */
+    top: 4px;  /* 紧凑型：(24px行高 - 16px块高) / 2 = 4px */
     border: none;
     cursor: pointer;
     background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
     opacity: 0.85;
-    height: 20px;
+    height: 16px;  /* 减小高度以适应紧凑布局 */
     min-width: 3px;
-    border-radius: 10px;
+    border-radius: 8px;  /* 对应调整圆角 */
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     transition: all 0.2s ease;
 }
