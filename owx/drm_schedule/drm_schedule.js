@@ -1024,20 +1024,95 @@ var DRM_Schedule = {
     }
 };
 
-// 全局点击处理函数 (需要与您的系统集成)
+// 全局点击处理函数 (KiwiSDR交互 - 自动调谐)
 window.kiwi_drm_click = function(index) {
     console.log('[DRM Schedule] Station clicked:', index);
 
     if (typeof DRM_Schedule !== 'undefined' && DRM_Schedule.stations) {
         var station = DRM_Schedule.stations[index];
         if (station) {
-            console.log('Tuning to:', station.f, 'kHz');
+            var freqKHz = station.f;
+            var freqHz = freqKHz * 1000; // 转换为Hz
 
-            // 这里应该调用您的频率调谐函数
-            // 例如: if (typeof tune_to === 'function') {
-            //         tune_to(station.f, 'drm', undefined);
-            //       }
+            console.log('[DRM Schedule] Tuning to:', freqKHz, 'kHz', '(', freqHz, 'Hz)');
+
+            // 显示电台信息
+            DRM_Schedule.showStationInfo(station);
+
+            // 尝试调谐 (OpenWebRX API集成)
+            try {
+                // 方法1: 使用demodulatorPanel (OpenWebRX标准方式)
+                if (typeof demodulatorPanel !== 'undefined' && demodulatorPanel.getDemodulator) {
+                    var demod = demodulatorPanel.getDemodulator();
+                    if (demod) {
+                        // 设置频率
+                        demod.set_offset_frequency(0); // 先重置offset
+
+                        // 等待一下再设置中心频率
+                        setTimeout(function() {
+                            if (typeof demod.set_center_freq === 'function') {
+                                demod.set_center_freq(freqHz);
+                                console.log('[DRM Schedule] Tuned via demodulator API');
+                            }
+                        }, 100);
+
+                        // 确保是DRM模式
+                        if (typeof demod.set_modulation === 'function') {
+                            setTimeout(function() {
+                                demod.set_modulation('drm');
+                                console.log('[DRM Schedule] Set modulation to DRM');
+                            }, 200);
+                        }
+                    }
+                }
+                // 方法2: 直接设置中心频率 (备用方案)
+                else if (typeof set_center_freq === 'function') {
+                    set_center_freq(freqHz);
+                    console.log('[DRM Schedule] Tuned via set_center_freq');
+                }
+                // 方法3: 通过频率输入框 (最后备选)
+                else if ($('#webrx-actual-freq').length > 0) {
+                    $('#webrx-actual-freq').val(freqKHz).trigger('change');
+                    console.log('[DRM Schedule] Tuned via frequency input');
+                }
+                else {
+                    console.warn('[DRM Schedule] No tuning API available');
+                }
+            } catch(e) {
+                console.error('[DRM Schedule] Tuning error:', e);
+            }
         }
+    }
+};
+
+// 显示电台详细信息 (KiwiSDR风格信息提示)
+DRM_Schedule.showStationInfo = function(station) {
+    var info = '📻 ' + station.s + '\n' +
+               '📡 ' + station.f + ' kHz\n' +
+               '🌍 ' + station.r + '\n' +
+               '⏰ ' + this.formatTime(station.b) + ' - ' + this.formatTime(station.e) + ' UTC';
+
+    // 简单的信息提示
+    if (typeof $.modal !== 'undefined') {
+        // 创建临时信息弹窗
+        var infoHtml = '<div style="text-align:center; padding:20px; white-space:pre-line;">' +
+                       info.replace(/\n/g, '<br>') +
+                       '</div>';
+
+        // 显示3秒后自动关闭
+        var $info = $('<div>' + infoHtml + '</div>').appendTo('body');
+        $info.modal({
+            escapeClose: true,
+            clickClose: true,
+            showClose: false
+        });
+
+        setTimeout(function() {
+            $.modal.close();
+        }, 3000);
+    } else {
+        // 备用方案：console输出
+        console.log('[DRM Schedule] Station Info:\n' + info);
     }
 };
 
