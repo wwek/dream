@@ -54,10 +54,6 @@ protected:
     CResample	ResampleObj;
     bool		bSyncInput;
 
-    /* Conservative reset decision state */
-    _REAL		rPrevOffset;
-    int			iBlocksSinceStart;
-
     virtual void InitInternal(CParameter& Parameters);
     virtual void ProcessDataInternal(CParameter& Parameters);
 };
