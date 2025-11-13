@@ -190,12 +190,12 @@ var DRM_Schedule = {
                         console.log('[DRM Schedule] Button shown (DRM mode active)');
                     } else {
                         $('#drm-schedule-row').hide();
-                        // 如果面板打开着，关闭它
-                        // 但如果正在调频，不要关闭（防止调频过程中模式暂时变为null）
-                        if (self.isPanelVisible && !self.isTuning) {
-                            console.log('[DRM Schedule] Closing panel (DRM mode inactive)');
-                            self.hidePanel();
-                        }
+                        // 不自动关闭面板，让用户手动关闭
+                        // 注释原因：频率切换过程中模式可能暂时变为null，导致面板被误关闭
+                        // if (self.isPanelVisible && !self.isTuning) {
+                        //     console.log('[DRM Schedule] Closing panel (DRM mode inactive)');
+                        //     self.hidePanel();
+                        // }
                     }
                 }
             } catch(e) {
@@ -1121,10 +1121,19 @@ window.kiwi_drm_click = function(index) {
                                     console.log('[DRM Schedule] Step 3: Mode is already DRM');
                                 }
 
-                                // 调频完成，清除标志
+                                // 步骤4: 最后再次确认 DRM 模式并清除标志
                                 setTimeout(function() {
-                                    DRM_Schedule.isTuning = false;
-                                    console.log('[DRM Schedule] Tuning completed');
+                                    var finalDemod = panel.getDemodulator();
+                                    if (finalDemod && finalDemod.get_modulation() !== 'drm') {
+                                        panel.setMode('drm');
+                                        console.log('[DRM Schedule] Step 4: Final set mode to DRM');
+                                    }
+
+                                    // 延长等待时间再清除标志
+                                    setTimeout(function() {
+                                        DRM_Schedule.isTuning = false;
+                                        console.log('[DRM Schedule] Tuning completed');
+                                    }, 500);
                                 }, 200);
                             }, 100);
                         } catch(err) {
