@@ -218,10 +218,10 @@
     pointer-events: none;  /* 不阻止点击时间块 */
 }
 
-/* ========== 时间段块 (紧凑型，精确对齐) ========== */
+/* ========== 时间段块 (紧凑型，精确居中) ========== */
 .id-drm-sched-time {
     position: absolute;
-    top: 4px;  /* 紧凑型：(24px行高 - 16px块高) / 2 = 4px */
+    top: 5px;  /* 视觉居中调整 */
     border: none;
     cursor: pointer;
     background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
@@ -240,7 +240,6 @@
 
 .id-drm-sched-time:hover {
     opacity: 1;
-    transform: scale(1.05);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
