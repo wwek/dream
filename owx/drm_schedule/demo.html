@@ -194,7 +194,10 @@
     <div class="demo-container">
         <div class="demo-header">
             <h1>📻 DRM Broadcast Schedule Plugin</h1>
-            <p>纯前端短波广播计划表插件演示 / Pure Frontend DRM Schedule Demo</p>
+            <p>轻量级原生模态框实现 / Lightweight Native Modal Implementation</p>
+            <p style="font-size: 14px; margin-top: 10px; color: #95a5a6;">
+                v2.0 - 无第三方依赖 | 主题自动适配 | 移动端友好
+            </p>
         </div>
 
         <div class="demo-controls">
@@ -231,29 +234,29 @@
 
         <div class="feature-grid">
             <div class="feature-card">
-                <h3>🎯 三种显示模式</h3>
+                <h3>⚡ 轻量级实现</h3>
                 <p>
-                    • 按服务分组 - 相同电台合并显示<br>
-                    • 按时间排序 - 最早播出的在前<br>
-                    • 按频率排序 - 低频到高频排列
+                    • 原生CSS模态框，无第三方依赖<br>
+                    • 文件大小减少90%以上<br>
+                    • 即时加载，无CDN请求
                 </p>
             </div>
 
             <div class="feature-card">
-                <h3>🔴 实时状态</h3>
+                <h3>🎨 主题自动适配</h3>
                 <p>
-                    • 绿色高亮显示正在播出的节目<br>
-                    • 每分钟自动刷新状态<br>
-                    • UTC时间轴准确显示
+                    • 使用Bootstrap CSS变量<br>
+                    • 自动适配浅色/深色主题<br>
+                    • 完美融入OpenWebRX界面
                 </p>
             </div>
 
             <div class="feature-card">
-                <h3>🌐 双重数据源</h3>
+                <h3>📱 移动端友好</h3>
                 <p>
-                    • 优先加载远程数据 (KiwiSDR)<br>
-                    • 失败时自动降级到本地缓存<br>
-                    • 支持CJSON格式 (带注释)
+                    • 响应式布局设计<br>
+                    • 支持横向滚动查看24小时<br>
+                    • 触摸操作优化
                 </p>
             </div>
 
@@ -261,8 +264,8 @@
                 <h3>🎛️ 点击调谐</h3>
                 <p>
                     • 点击任意时间块即可调谐<br>
-                    • 自动转换频率单位 (kHz → Hz)<br>
-                    • 多种调谐API兼容
+                    • 自动切换到DRM模式<br>
+                    • ESC键快速关闭
                 </p>
             </div>
         </div>
@@ -318,10 +321,16 @@
         addLog('success', '[Demo] 全局调谐: ' + (freqHz / 1000) + ' kHz');
     };
 
-    // 4. 模拟 .openwebrx-modes 元素（用于插入按钮）
+    // 4. 模拟OpenWebRX必需的DOM元素
     $(document).ready(function() {
+        // 模拟 .openwebrx-modes 元素（用于插入按钮）
         if ($('.openwebrx-modes').length === 0) {
             $('body').append('<div class="openwebrx-modes" style="display:none;"></div>');
+        }
+
+        // 模拟 #drm-schedule-row 元素（用于插入模态框）
+        if ($('#drm-schedule-row').length === 0) {
+            $('body').append('<div id="drm-schedule-row" style="display:block;"></div>');
         }
     });
 
@@ -342,10 +351,10 @@
             if (typeof Plugins.drm_schedule !== 'undefined') {
                 addLog('info', '[Demo] 初始化DRM Schedule插件...');
 
-                // 使用正确的初始化方法（会自动加载jQuery Modal）
+                // 使用正确的初始化方法（原生模态框实现）
                 Plugins.drm_schedule.init();
 
-                addLog('success', '[Demo] 插件初始化已启动');
+                addLog('success', '[Demo] 插件初始化已启动（原生模态框）');
                 updatePluginStatus('加载中...');
 
                 // 等待插件完全初始化后更新状态
@@ -391,13 +400,6 @@
     // 控制函数
     function openSchedule() {
         if (typeof DRM_Schedule !== 'undefined' && typeof DRM_Schedule.showPanel === 'function') {
-            // 检查jQuery Modal是否加载
-            if (typeof $.modal === 'undefined') {
-                addLog('warning', '[Demo] jQuery Modal库尚未加载，请稍后再试...');
-                setTimeout(openSchedule, 500);
-                return;
-            }
-
             DRM_Schedule.showPanel();
             addLog('info', '[Demo] 打开计划表面板');
         } else {

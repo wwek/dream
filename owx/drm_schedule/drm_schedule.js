@@ -1,18 +1,18 @@
 /**
- * DRM Schedule Plugin for OpenWebRX - KiwiSDR Aligned Version
+ * DRM Schedule Plugin for OpenWebRX
  *
- * 版本: 1.1.0 (KiwiSDR-aligned)
- * 功能: 显示全球DRM短波广播时间表，完全对齐KiwiSDR显示
+ * 版本: 2.0.0
+ * 功能: 显示全球DRM短波广播时间表
  */
 
 // 设置插件版本
 Plugins.drm_schedule = {
-    _version: 1.1
+    _version: 2.0
 };
 
 // 插件初始化函数
 Plugins.drm_schedule.init = function() {
-    console.log('[DRM Schedule] Plugin initializing (KiwiSDR-aligned)...');
+    console.log('[DRM Schedule] Plugin initializing...');
 
     // 检查依赖
     if (typeof $ === 'undefined') {
@@ -20,44 +20,25 @@ Plugins.drm_schedule.init = function() {
         return false;
     }
 
-    // 加载jQuery Modal库
-    if (typeof $.modal === 'undefined') {
-        console.log('[DRM Schedule] Loading jQuery Modal library...');
-
-        // 加载CSS (使用unpkg.com，在中国可访问)
-        var modalCSS = document.createElement('link');
-        modalCSS.rel = 'stylesheet';
-        modalCSS.href = 'https://unpkg.com/jquery-modal@0.9.2/jquery.modal.min.css';
-        document.head.appendChild(modalCSS);
-
-        // 加载JS (使用unpkg.com，在中国可访问)
-        var modalJS = document.createElement('script');
-        modalJS.src = 'https://unpkg.com/jquery-modal@0.9.2/jquery.modal.min.js';
-        modalJS.onload = function() {
-            console.log('[DRM Schedule] jQuery Modal loaded');
-            DRM_Schedule.initializeWhenReady();
-        };
-        document.head.appendChild(modalJS);
-    } else {
-        console.log('[DRM Schedule] jQuery Modal already available');
-        DRM_Schedule.initializeWhenReady();
-    }
+    // 直接初始化 (不再依赖jQuery Modal)
+    console.log('[DRM Schedule] Initializing with native modal...');
+    DRM_Schedule.initializeWhenReady();
 
     return true;
 };
 
 /**
- * DRM Schedule Core Class - KiwiSDR Aligned
+ * DRM Schedule Core Class
  */
 var DRM_Schedule = {
-    // 配置 (KiwiSDR数据源)
+    // 配置
     config: {
         // 远程数据源 (KiwiSDR官方数据)
         remote_url: 'https://drm.kiwisdr.com/drm/drmrx.cjson',
         backup_url: 'https://drm.kiwisdr.com/drm/stations2.cjson',
 
         // 本地备份数据
-        local_backup: 'static/plugins/receiver/drm_schedule/data/stations.json',
+        local_backup: 'static/plugins/receiver/drm_schedule/data/drmrx.cjson',
 
         // 缓存时间 (小时)
         cache_hours: 24,
@@ -223,9 +204,13 @@ var DRM_Schedule = {
     createUI: function() {
         var self = this;
 
-        // 创建模态窗口HTML (类似doppler的satellite-modal)
+        // 创建模态窗口HTML (原生实现，不依赖jQuery Modal)
         var modalHtml = `
-            <div id="drm-schedule-modal" class="modal drm-schedule-modal">
+            <!-- 遮罩层 -->
+            <div id="drm-schedule-overlay" class="drm-modal-overlay"></div>
+
+            <!-- 模态框 -->
+            <div id="drm-schedule-modal" class="drm-schedule-modal">
                 <div class="drm-schedule-modal-header">
                     DRM Schedule
                     <button class="drm-refresh-btn openwebrx-button" onclick="DRM_Schedule.manualRefresh()" title="Refresh data">
@@ -244,34 +229,32 @@ var DRM_Schedule = {
                         <button class="drm-btn openwebrx-button" data-mode="BY_TIME" onclick="DRM_Schedule.setDisplayMode('BY_TIME')">By Time</button>
                         <button class="drm-btn openwebrx-button" data-mode="BY_FREQ" onclick="DRM_Schedule.setDisplayMode('BY_FREQ')">By Frequency</button>
                     </div>
-                    <div class="openwebrx-button" rel="modal:close" onclick="$.modal.close()">Close</div>
+                    <div class="openwebrx-button drm-close-btn" onclick="DRM_Schedule.hidePanel()">Close</div>
                 </div>
             </div>
         `;
 
-        // 将模态窗口插入到drm-schedule-row (类似doppler插入到satellite-row)
+        // 将模态窗口插入到drm-schedule-row
         $('#drm-schedule-row').append(modalHtml);
 
-        // 监听BEFORE_CLOSE事件 (类似doppler的清理逻辑)
-        $('#drm-schedule-modal').on($.modal.BEFORE_CLOSE, function(event, modal) {
-            self.isPanelVisible = false;
-            console.log('[DRM Schedule] Modal closing');
+        // ESC键关闭模态框
+        $(document).on('keydown.drm-modal', function(e) {
+            if (e.keyCode === 27 && DRM_Schedule.isPanelVisible) {
+                DRM_Schedule.hidePanel();
+            }
         });
 
-        console.log('[DRM Schedule] Modal UI created (doppler-style)');
+        console.log('[DRM Schedule] Modal UI created (native modal)');
     },
 
-    // 显示面板 (使用jQuery Modal库，完全匹配doppler)
+    // 显示面板 (原生实现，不依赖jQuery Modal)
     showPanel: function() {
         var self = this;
         console.log('[DRM Schedule] showPanel called');
 
-        // 使用jQuery Modal显示 (与doppler完全相同的配置)
-        $('#drm-schedule-modal').modal({
-            escapeClose: true,
-            clickClose: false,
-            showClose: false
-        });
+        // 显示遮罩层和模态框
+        $('#drm-schedule-overlay').fadeIn(200);
+        $('#drm-schedule-modal').fadeIn(200);
 
         this.isPanelVisible = true;
         console.log('[DRM Schedule] Modal shown');
@@ -284,9 +267,10 @@ var DRM_Schedule = {
         }, 100);
     },
 
-    // 隐藏面板 (使用jQuery Modal库)
+    // 隐藏面板 (原生实现)
     hidePanel: function() {
-        $.modal.close();
+        $('#drm-schedule-modal').fadeOut(200);
+        $('#drm-schedule-overlay').fadeOut(200);
         this.isPanelVisible = false;
         console.log('[DRM Schedule] Modal closed');
     },
@@ -817,6 +801,7 @@ var DRM_Schedule = {
         var grouped = {};
         this.stations.forEach(function(station) {
             if (station.t === self.STATION_TYPES.REGION) return; // 跳过区域条目
+            if (!station.f || station.f === 0) return; // 过滤0Hz频率
 
             var key = station.s + '|' + station.f;
             if (!grouped[key]) {
@@ -885,19 +870,23 @@ var DRM_Schedule = {
 
     // ========== 其他渲染模式 ==========
     renderByTime: function() {
-        // 按开始时间排序
-        var sorted = this.stations.slice().sort(function(a, b) {
-            return a.b - b.b;
-        });
+        // 过滤并按开始时间排序
+        var sorted = this.stations.slice()
+            .filter(function(s) { return s.f && s.f !== 0; })
+            .sort(function(a, b) {
+                return a.b - b.b;
+            });
 
         return this.renderStationList(sorted);
     },
 
     renderByFrequency: function() {
-        // 按频率排序
-        var sorted = this.stations.slice().sort(function(a, b) {
-            return a.f - b.f;
-        });
+        // 过滤并按频率排序
+        var sorted = this.stations.slice()
+            .filter(function(s) { return s.f && s.f !== 0; })
+            .sort(function(a, b) {
+                return a.f - b.f;
+            });
 
         // 添加波段分隔
         return this.renderStationListWithBands(sorted);
@@ -1159,28 +1148,8 @@ DRM_Schedule.showStationInfo = function(station) {
                '🌍 ' + station.r + '\n' +
                '⏰ ' + this.formatTime(station.b) + ' - ' + this.formatTime(station.e) + ' UTC';
 
-    // 简单的信息提示
-    if (typeof $.modal !== 'undefined') {
-        // 创建临时信息弹窗
-        var infoHtml = '<div style="text-align:center; padding:20px; white-space:pre-line;">' +
-                       info.replace(/\n/g, '<br>') +
-                       '</div>';
-
-        // 显示3秒后自动关闭
-        var $info = $('<div>' + infoHtml + '</div>').appendTo('body');
-        $info.modal({
-            escapeClose: true,
-            clickClose: true,
-            showClose: false
-        });
-
-        setTimeout(function() {
-            $.modal.close();
-        }, 3000);
-    } else {
-        // 备用方案：console输出
-        console.log('[DRM Schedule] Station Info:\n' + info);
-    }
+    // 使用浏览器原生alert (简单直接)
+    alert(info);
 };
 
 console.log('[DRM Schedule] KiwiSDR-aligned module loaded');
