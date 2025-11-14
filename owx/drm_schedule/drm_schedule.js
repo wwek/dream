@@ -33,7 +33,7 @@ Plugins.drm_schedule.init = function() {
 var DRM_Schedule = {
     // 配置
     config: {
-        // 远程数据源 (KiwiSDR官方数据)
+        // 远程数据源
         remote_url: 'https://drm.kiwisdr.com/drm/drmrx.cjson',
         backup_url: 'https://drm.kiwisdr.com/drm/stations2.cjson',
 
@@ -91,7 +91,7 @@ var DRM_Schedule = {
 
     // ========== 初始化 ==========
     initialize: function() {
-        console.log('[DRM Schedule] Initializing (KiwiSDR-aligned)...');
+        console.log('[DRM Schedule] Initializing...');
         console.log('[DRM Schedule] Panel will be hidden by default. Click panel button to open.');
 
         this.createPanelButton();
@@ -99,7 +99,7 @@ var DRM_Schedule = {
         this.loadStations();
         this.bindEvents();
 
-        console.log('[DRM Schedule] Initialized successfully (KiwiSDR-aligned)');
+        console.log('[DRM Schedule] Initialized successfully');
     },
 
     // ========== 创建面板按钮 (类似doppler插件) ==========
@@ -1152,4 +1152,4 @@ DRM_Schedule.showStationInfo = function(station) {
     alert(info);
 };
 
-console.log('[DRM Schedule] KiwiSDR-aligned module loaded');
+console.log('[DRM Schedule] Module loaded');
