@@ -35,7 +35,6 @@ var DRM_Schedule = {
     config: {
         // 远程数据源
         remote_url: 'https://drm.kiwisdr.com/drm/drmrx.cjson',
-        backup_url: 'https://drm.kiwisdr.com/drm/stations2.cjson',
 
         // 本地备份数据
         local_backup: 'static/plugins/receiver/drm_schedule/data/drmrx.cjson',
@@ -234,8 +233,9 @@ var DRM_Schedule = {
             </div>
         `;
 
-        // 将模态窗口插入到drm-schedule-row
-        $('#drm-schedule-row').append(modalHtml);
+        // 将模态窗口插入到body (而不是drm-schedule-row)
+        // 这样可以避免父容器的定位样式影响模态框居中
+        $('body').append(modalHtml);
 
         // ESC键关闭模态框
         $(document).on('keydown.drm-modal', function(e) {
