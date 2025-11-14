@@ -308,38 +308,11 @@ var DRM_Schedule = {
                 } catch(e) {
                     console.error('[DRM Schedule] CJSON parse failed:', e);
                     console.error('[DRM Schedule] Error details:', e.message, e.stack);
-                    self.loadBackupServer();
+                    self.loadLocalBackup();
                 }
             },
             error: function(xhr, status, error) {
                 console.warn('[DRM Schedule] Remote load failed:', status, error);
-                self.loadBackupServer();
-            }
-        });
-    },
-
-    loadBackupServer: function() {
-        var self = this;
-        console.log('[DRM Schedule] Trying backup server:', this.config.backup_url);
-
-        $.ajax({
-            url: this.config.backup_url,
-            dataType: 'text',
-            timeout: 10000,
-            success: function(text) {
-                try {
-                    var cleanJson = self.stripComments(text);
-                    var data = JSON.parse(cleanJson);
-
-                    self.stations = self.parseStations(data);
-                    self.onDataLoaded('backup');
-                } catch(e) {
-                    console.warn('[DRM Schedule] Backup server parse failed:', e);
-                    self.loadLocalBackup();
-                }
-            },
-            error: function() {
-                console.warn('[DRM Schedule] Backup server failed');
                 self.loadLocalBackup();
             }
         });
@@ -448,9 +421,7 @@ var DRM_Schedule = {
 
         var statusText = source === 'remote' ?
             'Loaded from kiwisdr.com' :
-            source === 'backup' ?
-            'Loaded from backup server' :
-            'Using default data';
+            'Using local data';
         this.setStatus(statusText);
 
         // 触发自定义事件，通知数据加载完成
