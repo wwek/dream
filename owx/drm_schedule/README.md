@@ -2,7 +2,7 @@
 
 全球DRM短波广播时间表插件
 
-**v2.0** - 轻量级 | 主题自适应 | 移动端友好
+轻量级 | 主题自适应 | 移动端友好
 
 ---
 
@@ -20,7 +20,7 @@
 cp -r drm_schedule /usr/lib/python3/dist-packages/htdocs/plugins/receiver
 
 # 2. 加载插件（编辑 init.js）
-Plugins.load('receiver', 'drm_schedule');
+Plugins.load('drm_schedule');
 
 # 3. 刷新OpenWebRX页面
 ```
